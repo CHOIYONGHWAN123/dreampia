@@ -36,6 +36,24 @@ export default async function DashboardLayout({
           >
             대시보드
           </a>
+          <a
+            href="/company-info"
+            className="flex items-center px-2 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50"
+          >
+            회사소개
+          </a>
+          <a
+            href="/terms"
+            className="flex items-center px-2 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50"
+          >
+            이용약관
+          </a>
+          <a
+            href="/announcements"
+            className="flex items-center px-2 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50"
+          >
+            공지사항
+          </a>
         </nav>
         <div className="p-4 border-t border-gray-100 space-y-2">
           <p className="text-sm font-medium text-gray-800">{admin?.name}</p>
