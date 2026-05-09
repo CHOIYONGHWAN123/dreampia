@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { LogoutButton } from '@/components/ui/LogoutButton'
+import { NavMenu } from '@/components/ui/NavMenu'
 
 export default async function DashboardLayout({
   children,
@@ -28,33 +29,7 @@ export default async function DashboardLayout({
           <p className="font-bold text-gray-900">드림피아</p>
           <p className="text-xs text-gray-400 mt-0.5">관리자 시스템</p>
         </div>
-        <nav className="flex-1 p-3">
-          <p className="text-xs font-medium text-gray-400 px-2 mb-2">메뉴</p>
-          <a
-            href="/dashboard"
-            className="flex items-center px-2 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50"
-          >
-            대시보드
-          </a>
-          <a
-            href="/company-info"
-            className="flex items-center px-2 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50"
-          >
-            회사소개
-          </a>
-          <a
-            href="/terms"
-            className="flex items-center px-2 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50"
-          >
-            이용약관
-          </a>
-          <a
-            href="/announcements"
-            className="flex items-center px-2 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50"
-          >
-            공지사항
-          </a>
-        </nav>
+        <NavMenu />
         <div className="p-4 border-t border-gray-100 space-y-2">
           <p className="text-sm font-medium text-gray-800">{admin?.name}</p>
           <p className="text-xs text-gray-400 truncate">{admin?.email}</p>
