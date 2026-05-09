@@ -2,13 +2,11 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth'
 
 export default function LoginPage() {
-  const router = useRouter()
   const supabase = createClient()
 
   const {
@@ -31,9 +29,8 @@ export default function LoginPage() {
       return
     }
 
-    // 미들웨어가 is_authenticated 값에 따라 /dashboard 또는 /pending으로 리다이렉트
-    router.refresh() // 서버 컴포넌트를 다시 렌더링, supabase 세션 쿠키를 브라우저에 반영
-    router.push('/')
+    // 풀 페이지 이동으로 쿠키가 포함된 새 요청을 보내 프록시가 올바르게 리다이렉트
+    window.location.href = '/'
   }
 
   return (
