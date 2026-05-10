@@ -7,6 +7,7 @@ const menus = [
   { href: '/company-info', label: '회사소개' },
   { href: '/terms', label: '이용약관' },
   { href: '/announcements', label: '공지사항' },
+  { href: '/banners', label: '배너 관리' },
 ]
 
 export function NavMenu() {
