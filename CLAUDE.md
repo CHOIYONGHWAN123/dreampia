@@ -82,6 +82,7 @@ Table occupations {
   id       uuid    [pk, default: `gen_random_uuid()`]
   field_id uuid    [ref: > fields.id]
   name     varchar [not null]
+  content  text    
 }
 
 

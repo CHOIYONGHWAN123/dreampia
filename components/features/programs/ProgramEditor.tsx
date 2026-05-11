@@ -1,24 +1,27 @@
 'use client'
 
+import { useState, useTransition, useRef } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import ImageExtension from '@tiptap/extension-image'
 import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
-import { useState, useTransition, useRef } from 'react'
-import { saveCompanyInfo } from '@/app/(dashboard)/company-info/actions'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { createOccupation, updateOccupation } from '@/app/(dashboard)/programs/actions'
 
 type Mode = 'editor' | 'html' | 'preview'
 
 interface Props {
-  initialContent: string
-  onSaved: (content: string) => void
-  onCancel: () => void
+  id?: string
+  initialName?: string
+  initialContent?: string
 }
 
-export function CompanyInfoEditor({ initialContent, onSaved, onCancel }: Props) {
+export function ProgramEditor({ id, initialName = '', initialContent = '' }: Props) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [name, setName] = useState(initialName)
   const [mode, setMode] = useState<Mode>('html')
   const [htmlValue, setHtmlValue] = useState(initialContent)
   const [previewContent, setPreviewContent] = useState(initialContent)
@@ -42,90 +45,87 @@ export function CompanyInfoEditor({ initialContent, onSaved, onCancel }: Props) 
   })
 
   const switchMode = (next: Mode) => {
-    // 현재 모드의 최신 HTML을 로컬 변수로 확보
-    const currentHtml = mode === 'editor' && editor
-      ? editor.getHTML()
-      : htmlValue
-
+    const currentHtml = mode === 'editor' && editor ? editor.getHTML() : htmlValue
     if (mode === 'editor') setHtmlValue(currentHtml)
     if (next === 'preview') setPreviewContent(currentHtml)
-    if (next === 'editor' && editor) editor.commands.setContent(currentHtml, false)
-
+    if (next === 'editor' && editor) editor.commands.setContent(currentHtml)
     setMode(next)
   }
 
   const handleSave = () => {
+    if (!name.trim()) {
+      alert('프로그램명을 입력해주세요.')
+      return
+    }
     const content = mode === 'editor' ? (editor?.getHTML() ?? '') : htmlValue
     startTransition(async () => {
-      await saveCompanyInfo(content)
-      onSaved(content)
+      if (id) {
+        await updateOccupation(id, name.trim(), content)
+      } else {
+        await createOccupation(name.trim(), content)
+      }
+      router.push('/programs')
     })
-  }
-
-  const addImage = () => {
-    fileInputRef.current?.click()
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
     setIsUploading(true)
     try {
       const supabase = createClient()
       const ext = file.name.split('.').pop()
-      const path = `company-info/${Date.now()}.${ext}`
-
-      const { error } = await supabase.storage
-        .from('images')
-        .upload(path, file, { upsert: false })
-
+      const path = `programs/${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('images').upload(path, file, { upsert: false })
       if (error) throw error
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('images')
-        .getPublicUrl(path)
-
+      const { data: { publicUrl } } = supabase.storage.from('images').getPublicUrl(path)
       if (mode === 'editor' && editor) {
         editor.chain().focus().setImage({ src: publicUrl }).run()
       } else {
         // HTML 모드: textarea에 img 태그 직접 삽입
         setHtmlValue(prev => prev + `<img src="${publicUrl}" />`)
       }
-    } catch (err) {
+    } catch {
       alert('이미지 업로드에 실패했습니다.')
-      console.error(err)
     } finally {
       setIsUploading(false)
-      // 같은 파일 재선택 가능하도록 초기화
       e.target.value = ''
     }
   }
 
   return (
-    <div>
+    <div className="p-8">
       {/* 헤더 */}
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">회사소개</h1>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
+        <div className="flex items-center gap-3">
           <button
-            onClick={onCancel}
-            disabled={isPending}
-            className="px-4 py-1.5 border border-gray-300 rounded text-sm text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+            onClick={() => router.push('/programs')}
+            className="text-xl text-gray-500 hover:text-gray-900 transition-colors leading-none"
           >
-            취소
+            ←
           </button>
-          <button
-            onClick={handleSave}
-            disabled={isPending}
-            className="px-5 py-1.5 bg-gray-900 text-white rounded text-sm hover:bg-gray-700 disabled:opacity-50"
-          >
-            {isPending ? '저장 중...' : '저장'}
-          </button>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {id ? '프로그램 수정' : '프로그램 추가'}
+          </h1>
         </div>
+        <button
+          onClick={handleSave}
+          disabled={isPending}
+          className="px-5 py-1.5 bg-gray-900 text-white rounded text-sm hover:bg-gray-700 disabled:opacity-50"
+        >
+          {isPending ? '저장 중...' : '저장'}
+        </button>
       </div>
 
-      {/* hidden 파일 인풋 */}
+      {/* 프로그램명 입력 */}
+      <input
+        type="text"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        placeholder="프로그램명을 입력해주세요."
+        className="w-full border border-gray-200 rounded px-4 py-2.5 text-sm mb-4 focus:outline-none focus:border-gray-400"
+      />
+
       <input
         ref={fileInputRef}
         type="file"
@@ -136,7 +136,6 @@ export function CompanyInfoEditor({ initialContent, onSaved, onCancel }: Props) 
 
       {/* 에디터 */}
       <div className="border border-gray-200 rounded">
-        {/* 툴바 - 미리보기 모드에서는 숨김 */}
         <div className={`flex items-center gap-0.5 px-2 py-1.5 border-b border-gray-200 bg-gray-50 flex-wrap ${mode === 'preview' ? 'hidden' : ''}`}>
           <ToolbarButton
             onClick={() => editor?.chain().focus().toggleBold().run()}
@@ -217,19 +216,22 @@ export function CompanyInfoEditor({ initialContent, onSaved, onCancel }: Props) 
 
           <Divider />
 
-          <ToolbarButton onClick={addImage} disabled={isUploading} title="사진 삽입">
+          <ToolbarButton
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            title="사진 삽입"
+          >
             {isUploading ? '업로드 중...' : '사진'}
           </ToolbarButton>
         </div>
 
-        {/* 에디터 본문 */}
         <div className={mode === 'editor' ? '' : 'hidden'}>
           <EditorContent editor={editor} />
         </div>
         {mode === 'html' && (
           <textarea
             value={htmlValue}
-            onChange={(e) => setHtmlValue(e.target.value)}
+            onChange={e => setHtmlValue(e.target.value)}
             className="w-full min-h-125 p-4 font-mono text-sm outline-none resize-none"
             spellCheck={false}
           />
@@ -239,24 +241,21 @@ export function CompanyInfoEditor({ initialContent, onSaved, onCancel }: Props) 
             srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;margin:0;padding:16px;}img{max-width:100%;}</style></head><body>${previewContent}</body></html>`}
             className="w-full border-0 min-h-125"
             title="미리보기"
-            onLoad={(e) => {
+            onLoad={e => {
               const body = e.currentTarget.contentDocument?.body
               if (body) e.currentTarget.style.height = body.scrollHeight + 'px'
             }}
           />
         )}
 
-        {/* 하단 모드 탭 */}
         <div className="flex justify-end border-t border-gray-200 bg-gray-50">
-          {(['editor', 'html', 'preview'] as Mode[]).map((m) => (
+          {(['editor', 'html', 'preview'] as Mode[]).map(m => (
             <button
               key={m}
               type="button"
               onClick={() => switchMode(m)}
               className={`px-4 py-1.5 text-xs border-l border-gray-200 transition-colors ${
-                mode === m
-                  ? 'bg-white font-medium text-gray-900'
-                  : 'text-gray-500 hover:bg-gray-100'
+                mode === m ? 'bg-white font-medium text-gray-900' : 'text-gray-500 hover:bg-gray-100'
               }`}
             >
               {m === 'editor' ? 'Editor' : m === 'html' ? 'HTML' : '미리보기'}
