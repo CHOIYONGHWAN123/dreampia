@@ -9,6 +9,7 @@ const menus = [
   { href: '/announcements', label: '공지사항' },
   { href: '/banners', label: '배너 관리' },
   { href: '/programs', label: '프로그램 관리' },
+  { href: '/institutions', label: '학교' },
 ]
 
 export function NavMenu() {

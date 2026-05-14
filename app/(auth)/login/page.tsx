@@ -7,8 +7,6 @@ import { createClient } from '@/lib/supabase'
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth'
 
 export default function LoginPage() {
-  const supabase = createClient()
-
   const {
     register,
     handleSubmit,
@@ -19,6 +17,7 @@ export default function LoginPage() {
   })
 
   const onSubmit = async (data: LoginFormData) => {
+    const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,

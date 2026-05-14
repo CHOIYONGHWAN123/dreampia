@@ -9,7 +9,6 @@ import { signupSchema, type SignupFormData } from '@/lib/validations/auth'
 
 export default function SignupPage() {
   const router = useRouter()
-  const supabase = createClient()
 
   const {
     register,
@@ -21,6 +20,7 @@ export default function SignupPage() {
   })
 
   const onSubmit = async (data: SignupFormData) => {
+    const supabase = createClient()
     const { error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
