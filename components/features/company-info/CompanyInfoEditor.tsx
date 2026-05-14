@@ -49,7 +49,7 @@ export function CompanyInfoEditor({ initialContent, onSaved, onCancel }: Props) 
 
     if (mode === 'editor') setHtmlValue(currentHtml)
     if (next === 'preview') setPreviewContent(currentHtml)
-    if (next === 'editor' && editor) editor.commands.setContent(currentHtml, false)
+    if (next === 'editor' && editor) editor.commands.setContent(currentHtml, { emitUpdate: false })
 
     setMode(next)
   }
