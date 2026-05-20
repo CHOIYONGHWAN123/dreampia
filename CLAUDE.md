@@ -41,6 +41,8 @@ Table mentors {
   agreement_file_url varchar  [note: '동의서 Supabase Storage URL']
   is_available      boolean   [not null, default: false, note: '강의 가능 여부']
   profile_file_url varchar [note: '프로필 파일 URL (hwp 또는 pdf)']
+  score [note: '강사등급을 위한 점수']
+
   created_at  timestamp [not null, default: `now()`]
 }
 
@@ -78,6 +80,8 @@ Table fields {
   name varchar [not null, note: '분야 예: 요리, 마술, 공예']
 }
 
+
+// --- 직종
 Table occupations {
   id       uuid    [pk, default: `gen_random_uuid()`]
   field_id uuid    [ref: > fields.id]
@@ -156,6 +160,24 @@ enum inflow_source {
   "소개"
 }
 
+enum crime_check_method {
+  "회보서"
+  "동의서"
+}
+
+enum student_rotation{
+  "1교시마다 변경"
+  "2교시마다 변경"
+}
+
+enum institution_type {
+  "유치원"
+  "초등"
+  "중등"
+  "고등"
+  "기관"
+}
+
 Table events {
   id                uuid      [pk, default: `gen_random_uuid()`]
   institution_id    uuid      [ref: > institutions.id]
@@ -164,10 +186,11 @@ Table events {
   comm_admin_id     uuid      [ref: > admins.id, note: '소통담당자']
   name              varchar   [not null]
   requested_dates   date[]    [note: '행사 요청일 배열']
-  event_at          timestamp [note: '행사 일시']
+  event_start_at          timestamp [note: '행사 시작 일시']
+  event_end_at            timestamp [note: '행사 종료 일시']
   target_grade      varchar   [note: '대상 학년']
   laptop_wifi_note  text
-  crime_check_method  varchar [note: '회보소 or 동의서']
+  crime_check_method  crime_check_method [note: '회보서 or 동의서']
   crime_check_info    text    [note: '기관아이디/검증번호']
   crime_check_notified boolean [default: false]
   crime_check_status  varchar
@@ -181,7 +204,7 @@ Table events {
   contact_email       varchar
   contact_phone       varchar
   inflow_source       inflow_source [note: '유입경로']
-  institution_type    varchar [note: '유치원/초등/중등/고등/기관']
+  institution_type    institution_type [note: '유치원/초등/중등/고등/기관']
   budget              integer [note: '예산']
   estimate_file_url   varchar [note: '견적서 파일 URL']
   recruit_start_date  date
@@ -236,12 +259,15 @@ Table event_rows {
   event_id              uuid    [ref: > events.id]
   event_schedule_id     uuid    [ref: > event_schedules.id, note: '교시 참조']
   mentor_id         uuid    [ref: > mentors.id]
+  start_time            time    [not null]
+  end_time              time    [not null]
   occupation_program_id uuid    [ref: > occupation_programs.id]
   lecture_fee_payer_id  uuid    [ref: > mentors.id, note: '강의료 입금자']
   material_fee_payer_id uuid    [ref: > mentors.id, note: '재료비 입금자']
   event_date            date    [not null]
   target_grade          varchar
   classroom             varchar [note: '강의실 예: 1-1반']
+  instructor_waiting_room varchar [note: '강사대기실 예: 2층 2학년 학년연구실']
   attendance            boolean [default: false]
   lecture_fee           integer
   lecture_fee_after_tax integer [note: '세후 강의료']
@@ -250,6 +276,7 @@ Table event_rows {
   material_fee          integer [note: '재료비']
   remarks               text
   school_request_response text [note: '학교 요청사항 답변']
+
 }
 
 // ── 행사 사진 ──────────────────────────────
