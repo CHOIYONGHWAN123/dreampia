@@ -178,6 +178,19 @@ enum institution_type {
   "기관"
 }
 
+enum recruit_status{
+  "섭외대기"
+  "섭외진행중"
+  "섭외완료"
+}
+
+
+enum institution_request_status{
+  "예정"
+  "전달"
+  "회신"
+}
+
 Table events {
   id                uuid      [pk, default: `gen_random_uuid()`]
   institution_id    uuid      [ref: > institutions.id]
@@ -212,7 +225,9 @@ Table events {
   contract_type       varchar
   contract_status     varchar
   supplies_status     varchar [note: '체크전/재고이상무/준비완료 등']
-  recruit_status      varchar [note: '섭외대기/섭외진행중/섭외완료']
+  recruit_status      recruit_status [note: '섭외대기/섭외진행중/섭외완료']
+  institution_request_status      recruit_status [note: '예정/전달/회신']
+  start_recruit_at    timestamp [note: '강사 섭외 시작일']   
   recruit_delivered   boolean [default: false, note: '강사섭외 전달 여부']
   school_request_delivered boolean [default: false]
   admin_docs          text    [note: '행정서류']
@@ -275,6 +290,7 @@ Table event_rows {
   session_headcount     integer [note: '차시별 인원수']
   material_fee          integer [note: '재료비']
   remarks               text
+  criminal_background_check varchar [note: '회보서 파일 URL']
   school_request_response text [note: '학교 요청사항 답변']
 
 }

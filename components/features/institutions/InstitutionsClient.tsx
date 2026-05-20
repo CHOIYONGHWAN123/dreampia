@@ -121,9 +121,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
               <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-24">지역2</th>
               <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">기관</th>
               <th className="px-4 py-2.5 text-center font-medium text-gray-700">학교명</th>
-              <th className="px-4 py-2.5 w-16" />
-              <th className="px-4 py-2.5 w-16" />
-              <th className="px-4 py-2.5 w-20" />
+              <th className="px-4 py-2.5 w-52" />
             </tr>
           </thead>
           <tbody>
@@ -135,37 +133,36 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
                   <td className="px-4 py-2.5 text-center text-gray-800">{institution.region2 ?? '-'}</td>
                   <td className="px-4 py-2.5 text-center text-gray-800">{institution.category ?? '-'}</td>
                   <td className="px-4 py-2.5 text-gray-800">{institution.name}</td>
-                  <td className="px-4 py-2.5 text-center">
-                    <button
-                      type="button"
-                      className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-                    >
-                      보기
-                    </button>
-                  </td>
-                  <td className="px-4 py-2.5 text-center">
-                    <button
-                      type="button"
-                      className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-                      onClick={() => router.push(`/institutions/${institution.id}/edit`)}
-                    >
-                      수정
-                    </button>
-                  </td>
-                  <td className="px-4 py-2.5 text-center">
-                    <button
-                      type="button"
-                      className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-                      onClick={() => router.push(`/events/new?institutionId=${institution.id}`)}
-                    >
-                      행사 등록
-                    </button>
+                  <td className="px-4 py-2.5 text-center" colSpan={3}>
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        type="button"
+                        className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
+                        onClick={() => router.push(`/institutions/${institution.id}`)}
+                      >
+                        보기
+                      </button>
+                      <button
+                        type="button"
+                        className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
+                        onClick={() => router.push(`/institutions/${institution.id}/edit`)}
+                      >
+                        수정
+                      </button>
+                      <button
+                        type="button"
+                        className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
+                        onClick={() => router.push(`/events/new?institutionId=${institution.id}`)}
+                      >
+                        행사 등록
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={8} className="py-16 text-center text-gray-400">
+                <td colSpan={6} className="py-16 text-center text-gray-400">
                   등록된 학교가 없습니다.
                 </td>
               </tr>
