@@ -66,6 +66,7 @@ export async function createEvent(data: {
     estimate_file_url: data.estimate_file_url || null,
     comm_admin_id: data.comm_admin_id || null,
     event_check_status: 1,
+    recruit_status: '섭외대기',
   }
 
   if (data.reception_date) {
