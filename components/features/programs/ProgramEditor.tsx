@@ -8,7 +8,7 @@ import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { createOccupation, updateOccupation } from '@/app/(dashboard)/programs/actions'
+import { createCampaign, updateCampaign } from '@/app/(dashboard)/programs/actions'
 
 type Mode = 'editor' | 'html' | 'preview'
 
@@ -60,9 +60,9 @@ export function ProgramEditor({ id, initialName = '', initialContent = '' }: Pro
     const content = mode === 'editor' ? (editor?.getHTML() ?? '') : htmlValue
     startTransition(async () => {
       if (id) {
-        await updateOccupation(id, name.trim(), content)
+        await updateCampaign(id, name.trim(), content)
       } else {
-        await createOccupation(name.trim(), content)
+        await createCampaign(name.trim(), content)
       }
       router.push('/programs')
     })

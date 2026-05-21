@@ -34,16 +34,24 @@ Table mentors {
   name        varchar   [not null]
   phone       varchar
   email       varchar
+  address     varchar
   bank_account varchar
   terms_agreed_at   timestamp  [note: 'null이면 미동의']
   terms_version_id  uuid       [ref: > terms.id, note: '동의 시점의 약관 버전']
   id_number   varchar   [note: '주민번호']
   agreement_file_url varchar  [note: '동의서 Supabase Storage URL']
   is_available      boolean   [not null, default: false, note: '강의 가능 여부']
+  available_areas   [varchar]
+  is_authenticated  boolean [not null, default: false, note: '인증 여부']
   profile_file_url varchar [note: '프로필 파일 URL (hwp 또는 pdf)']
   score [note: '강사등급을 위한 점수']
-
   created_at  timestamp [not null, default: `now()`]
+}
+
+enum school_level{
+  "초등"
+  "중고등"
+  "유치원"
 }
 
 
@@ -53,6 +61,7 @@ Table mentor_occupation_programs {
   occupation_program_id uuid [ref: > occupation_programs.id]
   lecture_fee_payer_id  uuid [ref: > mentors.id, note: '강사료 입금자']
   material_fee_payer_id uuid [ref: > mentors.id, note: '재료비 입금자']
+  school_level varchar [note: '교급 예: 초등/중고등/유치원']
   ppt_file_url varchar [note: 'Supabase Storage URL']
 
 
@@ -97,6 +106,8 @@ Table institutions {
 
 // ── 프로그램 / 직업 ────────────────────────
 
+
+// 분야
 Table fields {
   id   uuid    [pk, default: `gen_random_uuid()`]
   name varchar [not null, note: '분야 예: 요리, 마술, 공예']
@@ -104,13 +115,11 @@ Table fields {
 
 
 // --- 직종
-Table occupations {
-  id       uuid    [pk, default: `gen_random_uuid()`]
-  field_id uuid    [ref: > fields.id]
-  name     varchar [not null]
-  content  text    
-}
+Table occupations{
+    id       uuid    [pk, default: `gen_random_uuid()`]
+    name     varchar [not null]
 
+}
 
 enum prep_by {
   "강사"
@@ -204,6 +213,14 @@ enum institution_request_status{
   "전달"
   "회신"
 }
+
+
+Table campaign {
+  id       uuid    [pk, default: `gen_random_uuid()`]
+  name     varchar [not null]
+  content  text    
+}
+
 
 Table events {
   id                uuid      [pk, default: `gen_random_uuid()`]

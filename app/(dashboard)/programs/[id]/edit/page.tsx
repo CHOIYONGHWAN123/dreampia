@@ -10,7 +10,7 @@ export default async function ProgramEditPage({
   const { id } = await params
   const supabase = await createServerSupabaseClient()
   const { data } = await supabase
-    .from('occupations')
+    .from('campaign')
     .select('id, name, content')
     .eq('id', id)
     .single()

@@ -5,7 +5,7 @@ import { ProgramDeleteButton } from '@/components/features/programs/ProgramDelet
 export default async function ProgramsPage() {
   const supabase = await createServerSupabaseClient()
   const { data } = await supabase
-    .from('occupations')
+    .from('campaign')
     .select('id, name')
     .order('created_at', { ascending: true })
 
