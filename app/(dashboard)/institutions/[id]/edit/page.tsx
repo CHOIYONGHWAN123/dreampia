@@ -26,6 +26,20 @@ export default async function InstitutionEditPage({ params }: { params: Promise<
           address: data.address ?? '',
           region1: data.region1,
           region2: data.region2 ?? '',
+          institution_type: data.institution_type ?? '',
+          teacher_name: data.teacher_name ?? '',
+          admin_contact: data.admin_contact ?? '',
+          instructor_waiting_room: data.instructor_waiting_room ?? '',
+          has_elevator: data.has_elevator ?? false,
+          floor_map_url: data.floor_map_url ?? '',
+          contact_name: data.contact_name ?? '',
+          contact_email: data.contact_email ?? '',
+          contact_phone: data.contact_phone ?? '',
+          laptop_wifi_note: data.laptop_wifi_note ?? '',
+          crime_check_method: data.crime_check_method ?? '',
+          crime_check_info: data.crime_check_info ?? '',
+          indoor_shoes_note: data.indoor_shoes_note ?? '',
+          parking_note: data.parking_note ?? '',
         }}
       />
     </div>

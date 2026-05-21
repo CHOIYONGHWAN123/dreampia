@@ -22,6 +22,17 @@ type Institution = {
   region1: string
   region2: string | null
   category: string | null
+  teacher_name: string | null
+  admin_contact: string | null
+  institution_type: string | null
+  contact_name: string | null
+  contact_email: string | null
+  contact_phone: string | null
+  laptop_wifi_note: string | null
+  crime_check_method: string | null
+  crime_check_info: string | null
+  indoor_shoes_note: string | null
+  parking_note: string | null
 }
 
 type Program = {
@@ -98,6 +109,16 @@ export function EventForm({ institutions, programs, salesAdmins, commAdmins, def
     setSelectedInstitution(inst)
     setInstitutionSearch(inst.name)
     setValue('institution_id', inst.id)
+    // contact_name/email/phone 우선, 없으면 기존 teacher_name/admin_contact로 폴백
+    setValue('contact_name', inst.contact_name || inst.teacher_name || '')
+    setValue('contact_email', inst.contact_email || '')
+    setValue('contact_phone', inst.contact_phone || inst.admin_contact || '')
+    if (inst.institution_type) setValue('institution_type', inst.institution_type as EventFormData['institution_type'])
+    if (inst.laptop_wifi_note) setValue('laptop_wifi_note', inst.laptop_wifi_note)
+    if (inst.crime_check_method) setValue('crime_check_method', inst.crime_check_method as EventFormData['crime_check_method'])
+    if (inst.crime_check_info) setValue('crime_check_info', inst.crime_check_info)
+    if (inst.indoor_shoes_note) setValue('indoor_shoes_note', inst.indoor_shoes_note)
+    if (inst.parking_note) setValue('parking_note', inst.parking_note)
     setShowDropdown(false)
   }
 

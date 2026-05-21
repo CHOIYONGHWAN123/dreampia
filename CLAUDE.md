@@ -63,6 +63,14 @@ Table mentor_occupation_programs {
 
 // ── 기관 ───────────────────────────────────
 
+enum institution_type {
+  "유치원"
+  "초등"
+  "중등"
+  "고등"
+  "기관"
+}
+
 Table institutions {
   id        uuid      [pk, default: `gen_random_uuid()`]
   region1   varchar   [not null, note: '예: 부산']
@@ -70,6 +78,20 @@ Table institutions {
   name      varchar   [not null]
   address   varchar
   category  varchar   [note: '유치원/초등/중등/고등/기관/특수학교/문화센터']
+  instructor_waiting_room varchar [note: '강사대기실 예: 2층 2학년 학년연구실']
+  teacher_name        varchar [note: '담당 선생님 성함 예: 3학년 부장 홍길동']
+  admin_contact       varchar [note: '계약담당 행정실 연락처']
+  has_elevator        boolean [note: '엘리베이터 유무']
+  floor_map_url       varchar [note: '학교 배치도 파일 URL']
+  institution_type    institution_type [note: '유치원/초등/중등/고등/기관']
+  contact_name        varchar [note: '담당자 이름']
+  contact_email       varchar [note: '담당자 이메일']
+  contact_phone       varchar [note: '담당자 연락처']
+  laptop_wifi_note    text    [note: 노트북/와이파이]
+  crime_check_method  crime_check_method [note: '회보서 or 동의서']
+  crime_check_info    text    [note: '기관아이디/검증번호']
+  indoor_shoes_note   text
+  parking_note        text
   created_at timestamp [not null, default: `now()`]
 }
 
@@ -170,14 +192,6 @@ enum student_rotation{
   "2교시마다 변경"
 }
 
-enum institution_type {
-  "유치원"
-  "초등"
-  "중등"
-  "고등"
-  "기관"
-}
-
 enum recruit_status{
   "섭외대기"
   "섭외진행중"
@@ -202,7 +216,7 @@ Table events {
   event_start_at          timestamp [note: '행사 시작 일시']
   event_end_at            timestamp [note: '행사 종료 일시']
   target_grade      varchar   [note: '대상 학년']
-  laptop_wifi_note  text
+  laptop_wifi_note    text    [note: 노트북/와이파이]
   crime_check_method  crime_check_method [note: '회보서 or 동의서']
   crime_check_info    text    [note: '기관아이디/검증번호']
   crime_check_notified boolean [default: false]
@@ -213,11 +227,10 @@ Table events {
   notice              text
   prep_note           text    [note: '준비사항(드림피아)']
   memo                text
-  contact_name        varchar
-  contact_email       varchar
-  contact_phone       varchar
+  contact_name        varchar [note: '담당자 이름']
+  contact_email       varchar [note: '담당자 이메일']
+  contact_phone       varchar [note: '담당자 연락처']
   inflow_source       inflow_source [note: '유입경로']
-  institution_type    institution_type [note: '유치원/초등/중등/고등/기관']
   budget              integer [note: '예산']
   estimate_file_url   varchar [note: '견적서 파일 URL']
   recruit_start_date  date
