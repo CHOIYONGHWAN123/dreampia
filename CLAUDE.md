@@ -48,6 +48,9 @@ Table mentors {
   created_at  timestamp [not null, default: `now()`]
 }
 
+
+
+
 enum school_level{
   "초등"
   "중고등"
@@ -61,7 +64,6 @@ Table mentor_occupation_programs {
   occupation_program_id uuid [ref: > occupation_programs.id]
   lecture_fee_payer_id  uuid [ref: > mentors.id, note: '강사료 입금자']
   material_fee_payer_id uuid [ref: > mentors.id, note: '재료비 입금자']
-  school_level varchar [note: '교급 예: 초등/중고등/유치원']
   ppt_file_url varchar [note: 'Supabase Storage URL']
 
 
@@ -136,10 +138,20 @@ Table occupation_programs {
   prep_by                prep_by [note: '강사 or 드림피아 or 모두가능']
   title                   varchar  [not null, note: '프로그램 이름']
   school_request_note     text     [note: '학교요청사항']
-  final_product_available text     [note: '완성품제공가능 여부']
+  final_product_available boolean     [note: '완성품제공가능 여부']
   description             text     [note: '프로그램 설명']
   is_delivery_available boolean [not null, default: false, note: '택배 가능 여부']
+  school_level school_level [note: '교급 예: 초등/중고등/유치원']
+  program_category_id      uuid      [ref: > program_categories.id, note: '프로그램 카테고리 연결]
   created_at            timestamp [not null, default: `now()`]  
+}
+
+
+//
+Table program_categories {
+    id                     uuid    [pk, default: `gen_random_uuid()`]
+    name                   varchar [not null, note: '예: 초등 직업체험, 초등 문화예술체험']
+    sort_order             integer
 }
 
 
@@ -545,3 +557,6 @@ institutions → events → event_rows ← mentors
 
 - `event_check_status` 1~4 단계별 의미 정의
 - 도메인 확정 후 Vercel 환경변수 업데이트
+
+
+## 디비 테이블 생성 쿼리문 작성시 RLS 쿼리도 같이 작성
