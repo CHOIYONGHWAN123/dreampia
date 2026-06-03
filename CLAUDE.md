@@ -27,23 +27,30 @@ Table admins {
   created_at    timestamp   [not null, default: `now()`]
 }
 
+enum area{
+  "부산"
+  "김해"
+  "울산"
+  "창원"
+}
+
 // 멘토(강사)
 Table mentors {
   id          uuid      [pk, default: `gen_random_uuid()`]
-  belongs_to        uuid      [ref: > mentors.id, note: '소속 멘토']
+  email       varchar
   name        varchar   [not null]
   phone       varchar
-  email       varchar
   address     varchar
-  bank_account varchar
+  id_number   varchar   [note: '주민번호']
+  bank_account varchar [note: '계좌번호']
+  belongs_to        uuid      [ref: > mentors.id, note: '소속 멘토']
+  agreement_file_url varchar  [note: '동의서 Supabase Storage URL']
+  available_areas   [area]
+  profile_file_url varchar [note: '프로필 파일 URL (hwp 또는 pdf)']
   terms_agreed_at   timestamp  [note: 'null이면 미동의']
   terms_version_id  uuid       [ref: > terms.id, note: '동의 시점의 약관 버전']
-  id_number   varchar   [note: '주민번호']
-  agreement_file_url varchar  [note: '동의서 Supabase Storage URL']
   is_available      boolean   [not null, default: false, note: '강의 가능 여부']
-  available_areas   [varchar]
   is_authenticated  boolean [not null, default: false, note: '인증 여부']
-  profile_file_url varchar [note: '프로필 파일 URL (hwp 또는 pdf)']
   score [note: '강사등급을 위한 점수']
   created_at  timestamp [not null, default: `now()`]
 }

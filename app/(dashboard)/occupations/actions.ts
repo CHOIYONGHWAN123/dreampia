@@ -211,6 +211,34 @@ export async function createOccupationProgram(payload: {
   return data.id
 }
 
+// 등록된 멘토 목록 (is_available + is_authenticated 모두 true인 것만)
+export type RegisteredMentorData = {
+  mentor_occupation_program_id: string
+  mentor_id: string
+  name: string
+  phone: string | null
+  is_available: boolean
+}
+
+export async function getRegisteredMentorsByProgramId(
+  programId: string
+): Promise<RegisteredMentorData[]> {
+  const supabase = await createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from('mentor_occupation_programs')
+    .select('id, mentor_id, mentors!mentor_id(name, phone, is_available, is_authenticated)')
+    .eq('occupation_program_id', programId)
+  if (error) throw new Error(error.message)
+
+  return (data ?? []).map((row: any) => ({
+    mentor_occupation_program_id: row.id,
+    mentor_id: row.mentor_id,
+    name: row.mentors?.name ?? '-',
+    phone: row.mentors?.phone ?? null,
+    is_available: row.mentors?.is_available ?? false,
+  }))
+}
+
 // 강의계획안 목록 조회
 export async function getLessonPlansByProgramId(programId: string): Promise<LessonPlanData[]> {
   const supabase = await createServerSupabaseClient()

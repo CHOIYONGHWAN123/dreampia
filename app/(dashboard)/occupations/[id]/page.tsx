@@ -12,6 +12,7 @@ import {
 import type { OccupationProgramData, OccupationData, ProgramCategoryData } from '../actions'
 import { SCHOOL_LEVELS } from '../constants'
 import { LessonPlanSection } from '@/components/features/occupations/LessonPlanSection'
+import { RegisteredMentorsTable } from '@/components/features/occupations/RegisteredMentorsTable'
 
 const PREP_BY_OPTIONS = ['강사', '드림피아', '모두가능'] as const
 
@@ -360,6 +361,9 @@ export default function OccupationDetailPage() {
           </div>
         </div>
       )}
+
+      {/* 등록된 멘토 */}
+      <RegisteredMentorsTable programId={id} />
 
       {/* 강의계획안 */}
       <div className="mt-6 space-y-2">
