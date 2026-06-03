@@ -11,7 +11,7 @@ const menus = [
   { href: '/programs', label: '프로그램 관리' },
   { href: '/institutions', label: '학교' },
   { href: '/mentors', label: '강사' },
-  { href: '/occupations', label: '직업' },
+  { href: '/occupations', label: '프로그램' },
 ]
 
 export function NavMenu() {

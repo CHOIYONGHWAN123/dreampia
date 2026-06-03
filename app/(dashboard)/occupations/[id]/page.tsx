@@ -11,6 +11,7 @@ import {
 } from '../actions'
 import type { OccupationProgramData, OccupationData, ProgramCategoryData } from '../actions'
 import { SCHOOL_LEVELS } from '../constants'
+import { LessonPlanSection } from '@/components/features/occupations/LessonPlanSection'
 
 const PREP_BY_OPTIONS = ['강사', '드림피아', '모두가능'] as const
 
@@ -35,7 +36,7 @@ export default function OccupationDetailPage() {
   const [materialCost, setMaterialCost] = useState('')
   const [prepBy, setPrepBy] = useState('')
   const [schoolRequestNote, setSchoolRequestNote] = useState('')
-  const [finalProductAvailable, setFinalProductAvailable] = useState('')
+  const [finalProductAvailable, setFinalProductAvailable] = useState(false)
   const [isDeliveryAvailable, setIsDeliveryAvailable] = useState(false)
   const [schoolLevel, setSchoolLevel] = useState('')
   const [programCategoryId, setProgramCategoryId] = useState('')
@@ -63,7 +64,7 @@ export default function OccupationDetailPage() {
         setMaterialCost(data.material_cost_per_person != null ? String(data.material_cost_per_person) : '')
         setPrepBy(data.prep_by ?? '')
         setSchoolRequestNote(data.school_request_note ?? '')
-        setFinalProductAvailable(data.final_product_available ?? '')
+        setFinalProductAvailable(data.final_product_available ?? false)
         setIsDeliveryAvailable(data.is_delivery_available)
         setSchoolLevel(data.school_level ?? '')
         setProgramCategoryId(data.program_category_id ?? '')
@@ -83,7 +84,7 @@ export default function OccupationDetailPage() {
     setMaterialCost(program.material_cost_per_person != null ? String(program.material_cost_per_person) : '')
     setPrepBy(program.prep_by ?? '')
     setSchoolRequestNote(program.school_request_note ?? '')
-    setFinalProductAvailable(program.final_product_available ?? '')
+    setFinalProductAvailable(program.final_product_available ?? false)
     setIsDeliveryAvailable(program.is_delivery_available)
     setSchoolLevel(program.school_level ?? '')
     setProgramCategoryId(program.program_category_id ?? '')
@@ -109,7 +110,7 @@ export default function OccupationDetailPage() {
         material_cost_per_person: materialCost ? parseInt(materialCost, 10) : null,
         prep_by: prepBy || null,
         school_request_note: schoolRequestNote.trim() || null,
-        final_product_available: finalProductAvailable.trim() || null,
+        final_product_available: finalProductAvailable,
         is_delivery_available: isDeliveryAvailable,
       })
       const updated = await getOccupationProgramById(id)
@@ -149,7 +150,7 @@ export default function OccupationDetailPage() {
     <div className="p-8 max-w-2xl">
       {/* 헤더 */}
       <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">직업 상세</h1>
+        <h1 className="text-2xl font-bold text-gray-900">프로그램 상세</h1>
         <div className="flex items-center gap-2">
           {!isEditing && (
             <>
@@ -225,7 +226,7 @@ export default function OccupationDetailPage() {
           />
           <DetailRow label="준비 주체" value={program.prep_by ?? '-'} />
           <DetailRow label="학교 요청사항" value={program.school_request_note ?? '-'} multiline />
-          <DetailRow label="완성품 제공 가능" value={program.final_product_available ?? '-'} />
+          <DetailRow label="완성품 제공 가능" value={program.final_product_available == null ? '-' : program.final_product_available ? '가능' : '불가능'} />
           <DetailRow label="택배 가능" value={program.is_delivery_available ? '가능' : '불가능'} />
         </div>
       ) : (
@@ -307,7 +308,18 @@ export default function OccupationDetailPage() {
           </div>
 
           <EditTextarea label="학교 요청사항" value={schoolRequestNote} onChange={setSchoolRequestNote} placeholder="학교 요청사항" />
-          <EditField label="완성품 제공 가능 여부" value={finalProductAvailable} onChange={setFinalProductAvailable} placeholder="예: 가능 / 불가능" />
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="editFinalProduct"
+              checked={finalProductAvailable}
+              onChange={(e) => setFinalProductAvailable(e.target.checked)}
+              className="w-4 h-4"
+            />
+            <label htmlFor="editFinalProduct" className="text-sm text-gray-700 cursor-pointer">
+              완성품 제공 가능
+            </label>
+          </div>
 
           <div className="flex items-center gap-2">
             <input
@@ -348,6 +360,12 @@ export default function OccupationDetailPage() {
           </div>
         </div>
       )}
+
+      {/* 강의계획안 */}
+      <div className="mt-6 space-y-2">
+        <h2 className="text-sm font-semibold text-gray-700">강의계획안</h2>
+        <LessonPlanSection programId={id} />
+      </div>
     </div>
   )
 }

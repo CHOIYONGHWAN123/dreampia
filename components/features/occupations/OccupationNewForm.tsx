@@ -1,26 +1,42 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   createOccupationProgram,
   createOccupation,
+  createField,
+  upsertLessonPlan,
   type OccupationData,
   type ProgramCategoryData,
+  type FieldData,
 } from '@/app/(dashboard)/occupations/actions'
-import { SCHOOL_LEVELS } from '@/app/(dashboard)/occupations/constants'
+import {
+  SCHOOL_LEVELS,
+  LESSON_CATEGORIES,
+  LESSON_GRADES,
+  LESSON_CATEGORY_STORAGE_KEY,
+  LESSON_GRADE_STORAGE_KEY,
+} from '@/app/(dashboard)/occupations/constants'
+import { createClient } from '@/lib/supabase'
 
 const PREP_BY_OPTIONS = ['강사', '드림피아', '모두가능'] as const
 
 type Props = {
   existingOccupations: OccupationData[]
   programCategories: ProgramCategoryData[]
+  existingFields: FieldData[]
 }
 
-export function OccupationNewForm({ existingOccupations, programCategories }: Props) {
+export function OccupationNewForm({ existingOccupations, programCategories, existingFields }: Props) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // ── 분야 ────────────────────────────────────────────────────────────
+  const [fieldMode, setFieldMode] = useState<'new' | 'existing'>('existing')
+  const [fieldId, setFieldId] = useState('')
+  const [fieldName, setFieldName] = useState('')
 
   // ── 직업군 ──────────────────────────────────────────────────────────
   const [occupationMode, setOccupationMode] = useState<'new' | 'existing'>('new')
@@ -33,12 +49,39 @@ export function OccupationNewForm({ existingOccupations, programCategories }: Pr
   const [materialCost, setMaterialCost] = useState('')
   const [prepBy, setPrepBy] = useState('')
   const [schoolRequestNote, setSchoolRequestNote] = useState('')
-  const [finalProductAvailable, setFinalProductAvailable] = useState('')
+  const [finalProductAvailable, setFinalProductAvailable] = useState(false)
   const [isDeliveryAvailable, setIsDeliveryAvailable] = useState(false)
   const [schoolLevel, setSchoolLevel] = useState('')
 
   // ── PPT 카테고리 체크박스 (program_categories.id 기준) ────────────
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<string>>(new Set())
+
+  // ── 강의계획안 파일 (key: `${category}__${grade}`) ───────────────
+  const [lessonFiles, setLessonFiles] = useState<Map<string, File>>(new Map())
+  const lessonFileInputRef = useRef<HTMLInputElement>(null)
+  const pendingLessonKeyRef = useRef<string | null>(null)
+
+  const handleLessonUploadClick = (key: string) => {
+    pendingLessonKeyRef.current = key
+    lessonFileInputRef.current?.click()
+  }
+
+  const handleLessonFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    const key = pendingLessonKeyRef.current
+    if (!file || !key) return
+    setLessonFiles((prev) => new Map(prev).set(key, file))
+    pendingLessonKeyRef.current = null
+    e.target.value = ''
+  }
+
+  const removeLessonFile = (key: string) => {
+    setLessonFiles((prev) => {
+      const next = new Map(prev)
+      next.delete(key)
+      return next
+    })
+  }
 
   const toggleCategory = (id: string) => {
     setSelectedCategoryIds((prev) => {
@@ -78,10 +121,20 @@ export function OccupationNewForm({ existingOccupations, programCategories }: Pr
     try {
       setIsSubmitting(true)
 
+      // 신규 직업군일 때만 분야 처리
+      let finalFieldId: string | null = null
+      if (occupationMode === 'new') {
+        if (fieldMode === 'new' && fieldName.trim()) {
+          finalFieldId = await createField(fieldName.trim())
+        } else if (fieldMode === 'existing' && fieldId) {
+          finalFieldId = fieldId
+        }
+      }
+
       // 신규 직업군이면 먼저 생성
       let finalOccupationId = occupationId
       if (occupationMode === 'new') {
-        finalOccupationId = await createOccupation(occupationName.trim())
+        finalOccupationId = await createOccupation(occupationName.trim(), finalFieldId)
       }
 
       // 선택된 카테고리 수만큼 occupation_programs 생성
@@ -94,15 +147,35 @@ export function OccupationNewForm({ existingOccupations, programCategories }: Pr
         material_cost_per_person: materialCost ? parseInt(materialCost, 10) : null,
         prep_by: prepBy || null,
         school_request_note: schoolRequestNote.trim() || null,
-        final_product_available: finalProductAvailable.trim() || null,
+        final_product_available: finalProductAvailable,
         is_delivery_available: isDeliveryAvailable,
       }
 
-      await Promise.all(
+      const createdIds = await Promise.all(
         [...selectedCategoryIds].map((catId) =>
           createOccupationProgram({ ...common, program_category_id: catId })
         )
       )
+
+      // 강의계획안 파일 업로드
+      if (lessonFiles.size > 0) {
+        const supabase = createClient()
+        for (const programId of createdIds) {
+          for (const [key, file] of lessonFiles.entries()) {
+            const [category, grade] = key.split('__')
+            const ext = file.name.split('.').pop() ?? 'bin'
+            const catKey = LESSON_CATEGORY_STORAGE_KEY[category as keyof typeof LESSON_CATEGORY_STORAGE_KEY] ?? category
+            const gradeKey = LESSON_GRADE_STORAGE_KEY[grade as keyof typeof LESSON_GRADE_STORAGE_KEY] ?? grade
+            const storagePath = `${programId}/${catKey}_${gradeKey}.${ext}`
+            const { error: uploadError } = await supabase.storage
+              .from('lesson-plans')
+              .upload(storagePath, file, { upsert: true })
+            if (uploadError) throw new Error(uploadError.message)
+            const { data: { publicUrl } } = supabase.storage.from('lesson-plans').getPublicUrl(storagePath)
+            await upsertLessonPlan({ occupation_program_id: programId, grade, lesson_category: category, file_url: publicUrl })
+          }
+        }
+      }
 
       router.push('/occupations')
       router.refresh()
@@ -117,7 +190,7 @@ export function OccupationNewForm({ existingOccupations, programCategories }: Pr
     <div className="p-8 max-w-2xl">
       {/* 헤더 */}
       <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">직업 추가</h1>
+        <h1 className="text-2xl font-bold text-gray-900">프로그램 추가</h1>
         <button
           type="button"
           className="px-4 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors"
@@ -157,16 +230,67 @@ export function OccupationNewForm({ existingOccupations, programCategories }: Pr
           </div>
 
           {occupationMode === 'new' && (
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">직업군 이름 *</label>
-              <input
-                type="text"
-                value={occupationName}
-                onChange={(e) => setOccupationName(e.target.value)}
-                placeholder="예: 아동요리전문가"
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
-              />
-            </div>
+            <>
+              {/* 분야 */}
+              <div className="bg-gray-50 rounded p-3 space-y-3">
+                <p className="text-xs font-medium text-gray-600">분야 (Fields)</p>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="fieldMode"
+                      value="existing"
+                      checked={fieldMode === 'existing'}
+                      onChange={() => { setFieldMode('existing'); setFieldId(''); setFieldName('') }}
+                    />
+                    기존 분야 선택
+                  </label>
+                  <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="fieldMode"
+                      value="new"
+                      checked={fieldMode === 'new'}
+                      onChange={() => { setFieldMode('new'); setFieldId(''); setFieldName('') }}
+                    />
+                    신규 분야 등록
+                  </label>
+                </div>
+                {fieldMode === 'existing' && (
+                  <select
+                    value={fieldId}
+                    onChange={(e) => setFieldId(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+                  >
+                    <option value="">분야를 선택하세요 (선택 안 함)</option>
+                    {existingFields.map((f) => (
+                      <option key={f.id} value={f.id}>{f.name}</option>
+                    ))}
+                  </select>
+                )}
+                {fieldMode === 'new' && (
+                  <input
+                    type="text"
+                    value={fieldName}
+                    onChange={(e) => setFieldName(e.target.value)}
+                    placeholder="예: 요리"
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
+                  />
+                )}
+              </div>
+
+              {/* 직업군 이름 */}
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">직업군 이름 *</label>
+                <input
+                  type="text"
+                  value={occupationName}
+                  onChange={(e) => setOccupationName(e.target.value)}
+                  placeholder="예: 아동요리전문가"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
+                />
+              </div>
+            </>
           )}
 
           {occupationMode === 'existing' && (
@@ -306,15 +430,17 @@ export function OccupationNewForm({ existingOccupations, programCategories }: Pr
           </div>
 
           {/* 완성품 제공 가능 여부 */}
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">완성품 제공 가능 여부</label>
+          <div className="flex items-center gap-2">
             <input
-              type="text"
-              value={finalProductAvailable}
-              onChange={(e) => setFinalProductAvailable(e.target.value)}
-              placeholder="예: 가능 / 불가능 / 별도 문의"
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
+              type="checkbox"
+              id="finalProductAvailable"
+              checked={finalProductAvailable}
+              onChange={(e) => setFinalProductAvailable(e.target.checked)}
+              className="w-4 h-4"
             />
+            <label htmlFor="finalProductAvailable" className="text-sm text-gray-700 cursor-pointer">
+              완성품 제공 가능
+            </label>
           </div>
 
           {/* 택배 가능 여부 */}
@@ -330,6 +456,73 @@ export function OccupationNewForm({ existingOccupations, programCategories }: Pr
               택배 가능
             </label>
           </div>
+        </div>
+
+        {/* ── 강의계획안 ──────────────────────────────── */}
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <input
+            type="file"
+            ref={lessonFileInputRef}
+            className="hidden"
+            accept=".pdf,.hwp,.hwpx,.ppt,.pptx,.doc,.docx"
+            onChange={handleLessonFileChange}
+          />
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th colSpan={4} className="px-4 py-2.5 text-center font-medium text-gray-700">
+                  강의계획안 <span className="text-xs font-normal text-gray-400">(선택 사항)</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {LESSON_CATEGORIES.flatMap((category) =>
+                LESSON_GRADES.map((grade, gradeIdx) => {
+                  const key = `${category}__${grade}`
+                  const file = lessonFiles.get(key)
+                  return (
+                    <tr key={key} className="border-b border-gray-100 last:border-0">
+                      {gradeIdx === 0 && (
+                        <td
+                          rowSpan={LESSON_GRADES.length}
+                          className="px-4 py-2.5 text-center text-sm font-medium text-gray-700 bg-gray-50 border-r border-gray-100 w-28"
+                        >
+                          {category}
+                        </td>
+                      )}
+                      <td className="px-4 py-2.5 text-center text-gray-600 w-28">{grade}</td>
+                      <td className="px-4 py-2.5 text-center w-44">
+                        {file ? (
+                          <span className="text-xs text-gray-600 truncate block max-w-35 mx-auto" title={file.name}>
+                            {file.name}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleLessonUploadClick(key)}
+                            className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                          >
+                            선택
+                          </button>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 text-center w-20">
+                        {file && (
+                          <button
+                            type="button"
+                            onClick={() => removeLessonFile(key)}
+                            className="px-3 py-1 text-xs text-red-500 border border-red-200 rounded hover:bg-red-50 transition-colors"
+                          >
+                            취소
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
         </div>
 
         {/* 에러 메시지 */}

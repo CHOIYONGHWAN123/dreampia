@@ -154,6 +154,33 @@ Table program_categories {
     sort_order             integer
 }
 
+enum lesson_category{
+  "직업체험"
+  "문화예술체험"
+  "진로박람회"
+}
+
+enum grade {
+  "유치원"
+  "초등학교"
+  "중학교"
+  "고등학교"
+}
+
+Table lesson_plans{
+      id                     uuid    [pk, default: `gen_random_uuid()`]
+      occupation_program_id  uuid    [ref: > occupation_programs.id]
+      grade                  grade   [not null]
+      lesson_category        lesson_category [not null]
+      file_url       varchar [note: '강의계획서 파일 URL']
+      created_at timestamp [not null, default: `now()`]
+
+      indexes {
+        (occupation_program_id, grade, lesson_category) [unique]
+      }
+
+}
+
 
 
 // ── 준비물 / 재고 ──────────────────────────

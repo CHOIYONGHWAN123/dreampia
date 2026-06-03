@@ -13,12 +13,22 @@ export type FieldData = {
 export type OccupationData = {
   id: string
   name: string
+  field_id?: string | null
 }
 
 export type ProgramCategoryData = {
   id: string
   name: string
   sort_order: number
+}
+
+export type LessonPlanData = {
+  id: string
+  occupation_program_id: string
+  grade: string
+  lesson_category: string
+  file_url: string | null
+  created_at: string
 }
 
 export type OccupationProgramData = {
@@ -31,7 +41,7 @@ export type OccupationProgramData = {
   material_cost_per_person: number | null
   prep_by: string | null
   school_request_note: string | null
-  final_product_available: string | null
+  final_product_available: boolean | null
   description: string | null
   is_delivery_available: boolean
   created_at: string
@@ -49,7 +59,7 @@ async function buildOccupationsMap(
   ids: string[]
 ): Promise<Map<string, OccupationData>> {
   if (!ids.length) return new Map()
-  const { data } = await supabase.from('occupations').select('id, name').in('id', ids)
+  const { data } = await supabase.from('occupations').select('id, name, field_id').in('id', ids)
   const map = new Map<string, OccupationData>()
   for (const o of data ?? []) map.set(o.id, o)
   return map
@@ -155,12 +165,24 @@ export async function getProgramCategories(): Promise<ProgramCategoryData[]> {
 
 // ── 등록 / 수정 / 삭제 ───────────────────────────────────────────────
 
+// 분야 등록
+export async function createField(name: string): Promise<string> {
+  const supabase = await createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from('fields')
+    .insert({ name })
+    .select('id')
+    .single()
+  if (error) throw new Error(error.message)
+  return data.id
+}
+
 // 직업군 등록
-export async function createOccupation(name: string): Promise<string> {
+export async function createOccupation(name: string, fieldId?: string | null): Promise<string> {
   const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase
     .from('occupations')
-    .insert({ name })
+    .insert({ name, field_id: fieldId ?? null })
     .select('id')
     .single()
   if (error) throw new Error(error.message)
@@ -178,14 +200,47 @@ export async function createOccupationProgram(payload: {
   material_cost_per_person?: number | null
   prep_by?: string | null
   school_request_note?: string | null
-  final_product_available?: string | null
+  final_product_available?: boolean | null
   description?: string | null
   is_delivery_available: boolean
-}): Promise<void> {
+}): Promise<string> {
   const supabase = await createServerSupabaseClient()
-  const { error } = await supabase.from('occupation_programs').insert(payload)
+  const { data, error } = await supabase.from('occupation_programs').insert(payload).select('id').single()
   if (error) throw new Error(error.message)
   revalidatePath('/occupations')
+  return data.id
+}
+
+// 강의계획안 목록 조회
+export async function getLessonPlansByProgramId(programId: string): Promise<LessonPlanData[]> {
+  const supabase = await createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from('lesson_plans')
+    .select('*')
+    .eq('occupation_program_id', programId)
+  if (error) throw new Error(error.message)
+  return data ?? []
+}
+
+// 강의계획안 등록/수정 (upsert)
+export async function upsertLessonPlan(payload: {
+  occupation_program_id: string
+  grade: string
+  lesson_category: string
+  file_url: string
+}): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase
+    .from('lesson_plans')
+    .upsert(payload, { onConflict: 'occupation_program_id,grade,lesson_category' })
+  if (error) throw new Error(error.message)
+}
+
+// 강의계획안 삭제
+export async function deleteLessonPlan(id: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase.from('lesson_plans').delete().eq('id', id)
+  if (error) throw new Error(error.message)
 }
 
 // 직업 프로그램 수정
@@ -200,7 +255,7 @@ export async function updateOccupationProgram(
     material_cost_per_person?: number | null
     prep_by?: string | null
     school_request_note?: string | null
-    final_product_available?: string | null
+    final_product_available?: boolean | null
     description?: string | null
     is_delivery_available?: boolean
   }
