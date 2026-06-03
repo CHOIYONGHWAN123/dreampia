@@ -127,6 +127,7 @@ Table fields {
 Table occupations{
     id       uuid    [pk, default: `gen_random_uuid()`]
     name     varchar [not null]
+    field_id   uuid      [ref: > fields.id, note: '분야']
 
 }
 
