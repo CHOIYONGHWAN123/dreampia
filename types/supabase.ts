@@ -686,6 +686,7 @@ export type Database = {
           mentor_id: string | null
           occupation_program_unit_id: string | null
           ppt_file_url: string | null
+          profile_file_url: string | null
         }
         Insert: {
           id?: string
@@ -694,6 +695,7 @@ export type Database = {
           mentor_id?: string | null
           occupation_program_unit_id?: string | null
           ppt_file_url?: string | null
+          profile_file_url?: string | null
         }
         Update: {
           id?: string
@@ -702,6 +704,7 @@ export type Database = {
           mentor_id?: string | null
           occupation_program_unit_id?: string | null
           ppt_file_url?: string | null
+          profile_file_url?: string | null
         }
         Relationships: [
           {
@@ -742,17 +745,17 @@ export type Database = {
           bank_account: string | null
           belongs_to: string | null
           created_at: string
-          email: string | null
+          detail_address: string | null
           id: string
           id_number: string | null
           is_authenticated: boolean
           is_available: boolean
           name: string
           phone: string | null
-          profile_file_url: string | null
           score: number | null
           terms_agreed_at: string | null
           terms_version_id: string | null
+          user_id: string | null
         }
         Insert: {
           address?: string | null
@@ -761,17 +764,17 @@ export type Database = {
           bank_account?: string | null
           belongs_to?: string | null
           created_at?: string
-          email?: string | null
+          detail_address?: string | null
           id?: string
           id_number?: string | null
           is_authenticated?: boolean
           is_available?: boolean
           name: string
           phone?: string | null
-          profile_file_url?: string | null
           score?: number | null
           terms_agreed_at?: string | null
           terms_version_id?: string | null
+          user_id?: string | null
         }
         Update: {
           address?: string | null
@@ -780,17 +783,17 @@ export type Database = {
           bank_account?: string | null
           belongs_to?: string | null
           created_at?: string
-          email?: string | null
+          detail_address?: string | null
           id?: string
           id_number?: string | null
           is_authenticated?: boolean
           is_available?: boolean
           name?: string
           phone?: string | null
-          profile_file_url?: string | null
           score?: number | null
           terms_agreed_at?: string | null
           terms_version_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {

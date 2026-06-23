@@ -37,16 +37,16 @@ enum area{
 // 멘토(강사)
 Table mentors {
   id          uuid      [pk, default: `gen_random_uuid()`]
-  email       varchar
+  user_id     varchar
   name        varchar   [not null]
   phone       varchar
   address     varchar
+  detail_address varchar
   id_number   varchar   [note: '주민번호']
   bank_account varchar [note: '계좌번호']
   belongs_to        uuid      [ref: > mentors.id, note: '소속 멘토']
   agreement_file_url varchar  [note: '동의서 Supabase Storage URL']
   available_areas   [area]
-  profile_file_url varchar [note: '프로필 파일 URL (hwp 또는 pdf)']
   terms_agreed_at   timestamp  [note: 'null이면 미동의']
   terms_version_id  uuid       [ref: > terms.id, note: '동의 시점의 약관 버전']
   is_available      boolean   [not null, default: false, note: '강의 가능 여부']
@@ -150,7 +150,7 @@ Table mentor_occupation_programs {
   lecture_fee_payer_id  uuid [ref: > mentors.id, note: '강사료 입금자']
   material_fee_payer_id uuid [ref: > mentors.id, note: '재료비 입금자']
   ppt_file_url varchar [note: 'Supabase Storage URL']
-
+  profile_file_url text [note: '프로필 파일 URL (hwp 또는 pdf)']
 
   indexes {
     (mentor_id, occupation_program_unit_id) [unique]

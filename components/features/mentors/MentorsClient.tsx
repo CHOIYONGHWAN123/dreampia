@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useTransition, useRef } from 'react'
+import { useState, useMemo, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import type {
@@ -12,13 +12,15 @@ import {
   updateMentorAvailable,
   updateMentorAuthenticated,
   updateMentorFields,
-  updateMentorProfileUrl,
   updateMentorAgreementUrl,
   updateMopPptUrl,
+  updateMopProfileUrl,
   deleteMopById,
   addMentorOccupationProgram,
 } from '@/app/(dashboard)/mentors/actions'
-import { createClient } from '@/lib/supabase'
+import { AreaSelector, MentorSearchSelect, FileCell, uploadFile } from './shared'
+import { ProgramUnitPicker, type ProgramSelectionValue } from './ProgramUnitPicker'
+import { LevelFileInputs } from './LevelFileInputs'
 
 // ── 유틸 ─────────────────────────────────────────────────────────────
 
@@ -46,67 +48,10 @@ function groupByOccupation(programs: MentorOccupationProgramRow[]): OccupationGr
   return Array.from(map.values())
 }
 
-function safeFileName(file: File): string {
-  const ext = file.name.includes('.') ? file.name.split('.').pop() : ''
-  return ext ? `${Date.now()}.${ext}` : String(Date.now())
-}
-
-async function uploadFile(bucket: string, dir: string, file: File): Promise<string> {
-  const supabase = createClient()
-  const path = `${dir}/${safeFileName(file)}`
-  const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true })
-  if (error) throw new Error(error.message)
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path)
-  return data.publicUrl
-}
-
 // ── 공통 셀 스타일 ────────────────────────────────────────────────────
 
 const td = 'px-2 py-1.5 text-center text-xs text-gray-700 border-b border-r border-gray-100 align-middle'
 const tdL = 'px-2 py-1.5 text-xs text-gray-700 border-b border-r border-gray-100 align-middle'
-
-// ── FileCell ──────────────────────────────────────────────────────────
-
-function FileCell({
-  url,
-  uploading,
-  onUpload,
-}: {
-  url: string | null
-  uploading: boolean
-  onUpload: (file: File) => void
-}) {
-  const ref = useRef<HTMLInputElement>(null)
-  return (
-    <div className="flex flex-col items-center gap-0.5">
-      {url ? (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-xs">
-          다운로드
-        </a>
-      ) : (
-        <span className="text-gray-300 text-xs">없음</span>
-      )}
-      <button
-        type="button"
-        disabled={uploading}
-        onClick={() => ref.current?.click()}
-        className="text-[10px] text-gray-500 border border-gray-300 rounded px-1.5 py-0.5 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
-      >
-        {uploading ? '업로드중…' : '파일 업로드'}
-      </button>
-      <input
-        ref={ref}
-        type="file"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0]
-          if (file) onUpload(file)
-          e.target.value = ''
-        }}
-      />
-    </div>
-  )
-}
 
 // ── EditInput ─────────────────────────────────────────────────────────
 
@@ -132,150 +77,28 @@ function EditInput({
   )
 }
 
-// ── AreaSelector ──────────────────────────────────────────────────────
-
-const AREA_OPTIONS = ['부산', '김해', '울산', '창원'] as const
-
-function AreaSelector({
-  value,
-  onChange,
-}: {
-  value: string[]
-  onChange: (areas: string[]) => void
-}) {
-  const toggle = (area: string) =>
-    onChange(value.includes(area) ? value.filter((a) => a !== area) : [...value, area])
-
-  return (
-    <div className="flex flex-wrap gap-1 justify-center">
-      {AREA_OPTIONS.map((area) => (
-        <button
-          key={area}
-          type="button"
-          onClick={() => toggle(area)}
-          className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${
-            value.includes(area)
-              ? 'bg-blue-100 text-blue-700 border-blue-300 font-medium'
-              : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
-          }`}
-        >
-          {area}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-// ── MentorSearchSelect ────────────────────────────────────────────────
-
-function MentorSearchSelect({
-  mentors,
-  value,
-  onChange,
-  placeholder = '멘토 검색',
-}: {
-  mentors: { id: string; name: string }[]
-  value: string
-  onChange: (id: string) => void
-  placeholder?: string
-}) {
-  const [search, setSearch] = useState('')
-  const [open, setOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  const selected = mentors.find((m) => m.id === value)
-
-  const filtered = useMemo(
-    () => (search ? mentors.filter((m) => m.name.includes(search)) : mentors).slice(0, 8),
-    [mentors, search]
-  )
-
-  const handleSelect = (id: string) => {
-    onChange(id)
-    setSearch('')
-    setOpen(false)
-  }
-
-  const handleClear = () => {
-    onChange('')
-    setSearch('')
-  }
-
-  // 외부 클릭 시 닫기
-  const handleBlur = (e: React.FocusEvent) => {
-    if (!containerRef.current?.contains(e.relatedTarget as Node)) {
-      setOpen(false)
-    }
-  }
-
-  return (
-    <div ref={containerRef} className="relative" onBlur={handleBlur}>
-      {selected && !open ? (
-        <div className="flex items-center gap-1 border border-gray-300 rounded px-2 py-1.5 bg-white">
-          <span className="text-sm flex-1 text-gray-800">{selected.name}</span>
-          <button
-            type="button"
-            onClick={handleClear}
-            className="text-gray-400 hover:text-gray-600 text-xs"
-          >
-            ✕
-          </button>
-        </div>
-      ) : (
-        <input
-          type="text"
-          value={search}
-          placeholder={placeholder}
-          onChange={(e) => { setSearch(e.target.value); setOpen(true) }}
-          onFocus={() => setOpen(true)}
-          className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-300"
-        />
-      )}
-      {open && (
-        <ul className="absolute z-20 left-0 right-0 mt-0.5 bg-white border border-gray-200 rounded shadow-lg max-h-40 overflow-y-auto">
-          {filtered.length > 0 ? (
-            filtered.map((m) => (
-              <li key={m.id}>
-                <button
-                  type="button"
-                  tabIndex={0}
-                  onMouseDown={(e) => { e.preventDefault(); handleSelect(m.id) }}
-                  className="w-full text-left px-3 py-1.5 text-sm hover:bg-blue-50"
-                >
-                  {m.name}
-                </button>
-              </li>
-            ))
-          ) : (
-            <li className="px-3 py-2 text-xs text-gray-400">검색 결과 없음</li>
-          )}
-        </ul>
-      )}
-    </div>
-  )
-}
-
 // ── AddProgramModal ───────────────────────────────────────────────────
 
 function AddProgramModal({
   mentorId,
-  linkedProgramIds,
+  linkedUnitIds,
   selectData,
   onClose,
   onAdded,
 }: {
   mentorId: string
-  linkedProgramIds: Set<string>
+  linkedUnitIds: Set<string>
   selectData: AddProgramSelectData
   onClose: () => void
-  onAdded: (prog: MentorOccupationProgramRow) => void
+  onAdded: (progs: MentorOccupationProgramRow[]) => void
 }) {
   const [fieldId, setFieldId] = useState('')
   const [occupationId, setOccupationId] = useState('')
-  const [schoolLevel, setSchoolLevel] = useState('')
-  const [programId, setProgramId] = useState('')
+  const [selection, setSelection] = useState<ProgramSelectionValue>({ occupationProgramId: '', levels: [] })
   const [lectureFeePayerId, setLectureFeePayerId] = useState('')
   const [materialFeePayerId, setMaterialFeePayerId] = useState('')
+  const [pptFiles, setPptFiles] = useState<Record<string, File | null>>({})
+  const [profileFiles, setProfileFiles] = useState<Record<string, File | null>>({})
   const [pending, startTransition] = useTransition()
 
   const filteredOccupations = useMemo(
@@ -283,39 +106,35 @@ function AddProgramModal({
     [selectData.occupations, fieldId]
   )
 
-  const schoolLevels = useMemo(
-    () => [
-      ...new Set(
-        selectData.programs
-          .filter((p) => p.occupation_id === occupationId)
-          .map((p) => p.school_level)
-          .filter(Boolean) as string[]
-      ),
-    ],
+  const filteredPrograms = useMemo(
+    () => selectData.programs.filter((p) => p.occupation_id === occupationId),
     [selectData.programs, occupationId]
   )
 
-  const filteredPrograms = useMemo(
-    () =>
-      selectData.programs.filter(
-        (p) =>
-          p.occupation_id === occupationId &&
-          (!schoolLevel || p.school_level === schoolLevel) &&
-          !linkedProgramIds.has(p.id)
-      ),
-    [selectData.programs, occupationId, schoolLevel, linkedProgramIds]
-  )
+  const levelSelections = selection.levels.filter((l) => l.unitId)
 
   const handleSubmit = () => {
-    if (!programId) return
+    if (!levelSelections.length) return
     startTransition(async () => {
-      const newProg = await addMentorOccupationProgram(
-        mentorId,
-        programId,
-        lectureFeePayerId || null,
-        materialFeePayerId || null
+      const added = await Promise.all(
+        levelSelections.map(async (l) => {
+          const pptFile = pptFiles[l.schoolLevel]
+          const profileFile = profileFiles[l.schoolLevel]
+          const pptFileUrl = pptFile ? await uploadFile('ppt-file', `${mentorId}/${l.unitId}`, pptFile) : null
+          const profileFileUrl = profileFile
+            ? await uploadFile('profile-file', `${mentorId}/${l.unitId}`, profileFile)
+            : null
+          return addMentorOccupationProgram(
+            mentorId,
+            l.unitId,
+            lectureFeePayerId || null,
+            materialFeePayerId || null,
+            pptFileUrl,
+            profileFileUrl
+          )
+        })
       )
-      onAdded(newProg)
+      onAdded(added)
       onClose()
     })
   }
@@ -342,8 +161,7 @@ function AddProgramModal({
               onChange={(e) => {
                 setFieldId(e.target.value)
                 setOccupationId('')
-                setSchoolLevel('')
-                setProgramId('')
+                setSelection({ occupationProgramId: '', levels: [] })
               }}
             >
               <option value="">분야 선택</option>
@@ -360,8 +178,7 @@ function AddProgramModal({
               disabled={!fieldId}
               onChange={(e) => {
                 setOccupationId(e.target.value)
-                setSchoolLevel('')
-                setProgramId('')
+                setSelection({ occupationProgramId: '', levels: [] })
               }}
             >
               <option value="">직종 선택</option>
@@ -371,38 +188,26 @@ function AddProgramModal({
             </select>
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">③ 교급</label>
-            <select
-              className={selCls}
-              value={schoolLevel}
-              disabled={!occupationId}
-              onChange={(e) => {
-                setSchoolLevel(e.target.value)
-                setProgramId('')
+            <label className="text-xs text-gray-500 mb-1 block">③ 프로그램 / 교급 / 유닛</label>
+            <ProgramUnitPicker
+              programs={filteredPrograms}
+              units={selectData.units}
+              programCategories={selectData.programCategories}
+              excludedUnitIds={linkedUnitIds}
+              value={selection}
+              onChange={(next) => {
+                setSelection(next)
+                setPptFiles({})
+                setProfileFiles({})
               }}
-            >
-              <option value="">교급 선택</option>
-              {schoolLevels.map((l) => (
-                <option key={l} value={l}>{l}</option>
-              ))}
-            </select>
+            />
           </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">④ 프로그램명</label>
-            <select
-              className={selCls}
-              value={programId}
-              disabled={!occupationId}
-              onChange={(e) => setProgramId(e.target.value)}
-            >
-              <option value="">프로그램 선택</option>
-              {filteredPrograms.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.title}{p.school_level ? ` (${p.school_level})` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
+
+          <LevelFileInputs
+            levels={levelSelections}
+            onPptChange={(level, file) => setPptFiles((prev) => ({ ...prev, [level]: file }))}
+            onProfileChange={(level, file) => setProfileFiles((prev) => ({ ...prev, [level]: file }))}
+          />
 
           <hr className="border-gray-100" />
 
@@ -437,7 +242,7 @@ function AddProgramModal({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!programId || pending}
+            disabled={!levelSelections.length || pending}
             className="px-3 py-1.5 text-sm bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-50"
           >
             {pending ? '추가 중…' : '추가'}
@@ -483,12 +288,14 @@ function MentorRows({
   const [pptUrls, setPptUrls] = useState<Record<string, string | null>>(
     Object.fromEntries(mentor.occupation_programs.map((p) => [p.mop_id, p.ppt_file_url]))
   )
+  const [profileUrls, setProfileUrls] = useState<Record<string, string | null>>(
+    Object.fromEntries(mentor.occupation_programs.map((p) => [p.mop_id, p.profile_file_url]))
+  )
 
-  const [profileUrl, setProfileUrl] = useState(mentor.profile_file_url)
   const [agreementUrl, setAgreementUrl] = useState(mentor.agreement_file_url)
-  const [uploadingProfile, setUploadingProfile] = useState(false)
   const [uploadingAgreement, setUploadingAgreement] = useState(false)
   const [uploadingPpt, setUploadingPpt] = useState<Record<string, boolean>>({})
+  const [uploadingProfile, setUploadingProfile] = useState<Record<string, boolean>>({})
   const [showAddModal, setShowAddModal] = useState(false)
 
   const groups = useMemo(() => groupByOccupation(localPrograms), [localPrograms])
@@ -496,8 +303,8 @@ function MentorRows({
   // totalRows: 프로그램 행 수 + 1(추가 버튼 행). 프로그램 없을 땐 빈 행(1) + 추가 행(1) = 2
   const totalRows = Math.max(programCount, 1) + 1
 
-  const linkedProgramIds = useMemo(
-    () => new Set(localPrograms.map((p) => p.occupation_program_id)),
+  const linkedUnitIds = useMemo(
+    () => new Set(localPrograms.map((p) => p.occupation_program_unit_id)),
     [localPrograms]
   )
 
@@ -542,22 +349,34 @@ function MentorRows({
         delete next[mopId]
         return next
       })
+      setProfileUrls((prev) => {
+        const next = { ...prev }
+        delete next[mopId]
+        return next
+      })
     })
   }
 
-  const handleProgramAdded = (newProg: MentorOccupationProgramRow) => {
-    setLocalPrograms((prev) => [...prev, newProg])
-    setPptUrls((prev) => ({ ...prev, [newProg.mop_id]: newProg.ppt_file_url }))
+  const handleProgramsAdded = (newProgs: MentorOccupationProgramRow[]) => {
+    setLocalPrograms((prev) => [...prev, ...newProgs])
+    setPptUrls((prev) => ({
+      ...prev,
+      ...Object.fromEntries(newProgs.map((p) => [p.mop_id, p.ppt_file_url])),
+    }))
+    setProfileUrls((prev) => ({
+      ...prev,
+      ...Object.fromEntries(newProgs.map((p) => [p.mop_id, p.profile_file_url])),
+    }))
   }
 
-  const handleProfileUpload = async (file: File) => {
-    setUploadingProfile(true)
+  const handleProfileUpload = async (mopId: string, file: File) => {
+    setUploadingProfile((prev) => ({ ...prev, [mopId]: true }))
     try {
-      const url = await uploadFile('profile-file', mentor.id, file)
-      await updateMentorProfileUrl(mentor.id, url)
-      setProfileUrl(url)
+      const url = await uploadFile('profile-file', `${mentor.id}/${mopId}`, file)
+      await updateMopProfileUrl(mopId, url)
+      setProfileUrls((prev) => ({ ...prev, [mopId]: url }))
     } finally {
-      setUploadingProfile(false)
+      setUploadingProfile((prev) => ({ ...prev, [mopId]: false }))
     }
   }
 
@@ -587,9 +406,6 @@ function MentorRows({
 
   const mentorInfoCells = (
     <>
-      <td className={td} rowSpan={totalRows}>
-        <FileCell url={profileUrl} uploading={uploadingProfile} onUpload={handleProfileUpload} />
-      </td>
       <td className={td} rowSpan={totalRows} style={{ minWidth: 100 }}>
         <AreaSelector
           value={editFields.available_areas}
@@ -679,12 +495,12 @@ function MentorRows({
     </>
   )
 
-  // ── 프로그램 추가 버튼 행 (9개 program 컬럼에만 셀 필요) ──────────────
+  // ── 프로그램 추가 버튼 행 (10개 program 컬럼에만 셀 필요) ─────────────
 
   const addRow = (
     <tr key={`${mentor.id}-add`}>
       <td
-        colSpan={9}
+        colSpan={10}
         className="px-2 py-1 text-center border-b border-r border-dashed border-gray-200"
       >
         <button
@@ -707,7 +523,7 @@ function MentorRows({
         <tr className="hover:bg-gray-50 border-t-2 border-gray-300">
           <td className={`${td} font-semibold`} rowSpan={2}>{index + 1}</td>
           <td className={`${td} font-medium text-gray-800`} rowSpan={2}>{mentor.name}</td>
-          <td colSpan={9} className="px-2 py-1.5 text-center text-xs text-gray-300 border-b border-r border-gray-100">
+          <td colSpan={10} className="px-2 py-1.5 text-center text-xs text-gray-300 border-b border-r border-gray-100">
             등록된 프로그램 없음
           </td>
           {mentorInfoCells}
@@ -716,10 +532,10 @@ function MentorRows({
         {showAddModal && (
           <AddProgramModal
             mentorId={mentor.id}
-            linkedProgramIds={linkedProgramIds}
+            linkedUnitIds={linkedUnitIds}
             selectData={selectData}
             onClose={() => setShowAddModal(false)}
-            onAdded={handleProgramAdded}
+            onAdded={handleProgramsAdded}
           />
         )}
       </>
@@ -791,6 +607,14 @@ function MentorRows({
               onUpload={(file) => handlePptUpload(prog.mop_id, file)}
             />
           </td>
+          {/* 프로필 */}
+          <td className={td}>
+            <FileCell
+              url={profileUrls[prog.mop_id] ?? null}
+              uploading={uploadingProfile[prog.mop_id] ?? false}
+              onUpload={(file) => handleProfileUpload(prog.mop_id, file)}
+            />
+          </td>
           {/* 멘토 단일 정보 */}
           {isFirstInMentor && mentorInfoCells}
         </tr>
@@ -808,10 +632,10 @@ function MentorRows({
       {showAddModal && (
         <AddProgramModal
           mentorId={mentor.id}
-          linkedProgramIds={linkedProgramIds}
+          linkedUnitIds={linkedUnitIds}
           selectData={selectData}
           onClose={() => setShowAddModal(false)}
-          onAdded={handleProgramAdded}
+          onAdded={handleProgramsAdded}
         />
       )}
     </>
