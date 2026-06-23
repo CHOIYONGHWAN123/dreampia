@@ -8,10 +8,10 @@ const menus = [
   { href: '/terms', label: '이용약관' },
   { href: '/announcements', label: '공지사항' },
   { href: '/banners', label: '배너 관리' },
-  { href: '/programs', label: '프로그램 관리' },
+  { href: '/campaigns', label: '행사 관리' },
   { href: '/institutions', label: '학교' },
   { href: '/mentors', label: '강사' },
-  { href: '/occupations', label: '프로그램' },
+  { href: '/programs', label: '프로그램' },
 ]
 
 export function NavMenu() {

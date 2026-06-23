@@ -58,27 +58,6 @@ Table mentors {
 
 
 
-enum school_level{
-  "초등"
-  "중고등"
-  "유치원"
-}
-
-
-Table mentor_occupation_programs {
-  id                    uuid [pk, default: `gen_random_uuid()`]
-  mentor_id             uuid [ref: > mentors.id]
-  occupation_program_id uuid [ref: > occupation_programs.id]
-  lecture_fee_payer_id  uuid [ref: > mentors.id, note: '강사료 입금자']
-  material_fee_payer_id uuid [ref: > mentors.id, note: '재료비 입금자']
-  ppt_file_url varchar [note: 'Supabase Storage URL']
-
-
-  indexes {
-    (mentor_id, occupation_program_id) [unique]
-  }
-}
-
 // ── 기관 ───────────────────────────────────
 
 enum institution_type {
@@ -123,13 +102,61 @@ Table fields {
 }
 
 
-// --- 직종
+// --- 직종(직업군)
 Table occupations{
     id       uuid    [pk, default: `gen_random_uuid()`]
     name     varchar [not null]
     field_id   uuid      [ref: > fields.id, note: '분야']
-
 }
+
+// --- 직종에 따른 프로그램
+Table occupation_programs{
+  id                     uuid    [pk, default: `gen_random_uuid()`]
+  occupation_id          uuid    [ref: > occupations.id]
+  name                   varchar [not null, note: '예: 액체함수']
+}
+
+// --- 프로그램 카테고리
+Table program_categories {
+    id                     uuid    [pk, default: `gen_random_uuid()`]
+    school_level           school_level school_level [note: '교급 예: 초등/중고등/유치원'] 
+    experience_type        experience_type [not null, note: '예: 초등 직업체험, 초등 문화예술체험']
+    sort_order             integer
+}
+
+
+// --- 직종에 따른 프로그램의 유닛
+(ex. 액체함수 프로그램1, 액체함수 프로그램2 이런식으로 존재 가능,내용도 달라짐, program_categories에 의해 구분가능) 
+(ex. 마카롱 만들기에서 초등만선택했다면 occupation_program_unit중 program_category의 school_level에 초등인것만 필터링)
+Table occupation_program_unit{
+  id                     uuid     [pk, default: `gen_random_uuid()`]
+  occupation_programs_id uuid [ref:> occupation_programs.id, note:"직업 프로그램"]
+  material_cost_per_person integer [note: '1인당 재료비']
+  prep_by                prep_by [note: '강사 or 드림피아 or 모두가능']
+  title                   varchar  [not null, note: '프로그램 이름']
+  school_request_note     text     [note: '학교요청사항']
+  final_product_available boolean     [note: '완성품제공가능 여부']
+  description             text     [note: '프로그램 설명']
+  is_delivery_available boolean [not null, default: false, note: '택배 가능 여부']
+  program_category_id      uuid      [ref: > program_categories.id, note: '프로그램 카테고리 연결']
+  created_at            timestamp [not null, default: `now()`]  
+}
+
+
+Table mentor_occupation_programs {
+  id                    uuid [pk, default: `gen_random_uuid()`]
+  mentor_id             uuid [ref: > mentors.id]
+  occupation_program_unit_id uuid [ref: > occupation_program_unit.id]
+  lecture_fee_payer_id  uuid [ref: > mentors.id, note: '강사료 입금자']
+  material_fee_payer_id uuid [ref: > mentors.id, note: '재료비 입금자']
+  ppt_file_url varchar [note: 'Supabase Storage URL']
+
+
+  indexes {
+    (mentor_id, occupation_program_unit_id) [unique]
+  }
+}
+
 
 enum prep_by {
   "강사"
@@ -137,7 +164,21 @@ enum prep_by {
   "모두가능"
 }
 
+enum school_level{
+  "초등"
+  "중고등"
+  "유치원"
+}
 
+
+
+<!-- Table ppt_type {
+    id       uuid    [pk, default: `gen_random_uuid()`]
+    school_level school_level [note: '교급 예: 초등/중고등/유치원']
+    experience_type experience_type [note: "체험 예 : 초등 직업체험]
+} -->
+
+<!-- 
 Table occupation_programs {
   id                     uuid    [pk, default: `gen_random_uuid()`]
   occupation_id          uuid    [ref: > occupations.id]
@@ -152,15 +193,19 @@ Table occupation_programs {
   school_level school_level [note: '교급 예: 초등/중고등/유치원']
   program_category_id      uuid      [ref: > program_categories.id, note: '프로그램 카테고리 연결]
   created_at            timestamp [not null, default: `now()`]  
-}
+} -->
 
 
 //
-Table program_categories {
-    id                     uuid    [pk, default: `gen_random_uuid()`]
-    name                   varchar [not null, note: '예: 초등 직업체험, 초등 문화예술체험']
-    sort_order             integer
+
+enum experience_type{
+  "초등 직업체험"
+  "초등 문화예술체험"
+  "중/고등 직업체험"
+  "중/고등 문화예술체험"
 }
+
+
 
 enum lesson_category{
   "직업체험"
@@ -271,6 +316,7 @@ Table campaign {
 
 Table events {
   id                uuid      [pk, default: `gen_random_uuid()`]
+  campaign_id       uuid      [ref: > campaign.id]
   institution_id    uuid      [ref: > institutions.id]
   occupation_program_id        uuid      [ref: > occupation_programs.id]
   sales_admin_id    uuid      [ref: > admins.id, note: '영업담당자']

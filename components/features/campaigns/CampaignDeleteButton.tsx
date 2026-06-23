@@ -2,9 +2,9 @@
 
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { deleteCampaign } from '@/app/(dashboard)/programs/actions'
+import { deleteCampaign } from '@/app/(dashboard)/campaigns/actions'
 
-export function ProgramDeleteButton({ id }: { id: string }) {
+export function CampaignDeleteButton({ id }: { id: string }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 

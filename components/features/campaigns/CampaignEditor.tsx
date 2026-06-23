@@ -8,7 +8,7 @@ import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { createCampaign, updateCampaign } from '@/app/(dashboard)/programs/actions'
+import { createCampaign, updateCampaign } from '@/app/(dashboard)/campaigns/actions'
 
 type Mode = 'editor' | 'html' | 'preview'
 
@@ -18,7 +18,7 @@ interface Props {
   initialContent?: string
 }
 
-export function ProgramEditor({ id, initialName = '', initialContent = '' }: Props) {
+export function CampaignEditor({ id, initialName = '', initialContent = '' }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [name, setName] = useState(initialName)
@@ -64,7 +64,7 @@ export function ProgramEditor({ id, initialName = '', initialContent = '' }: Pro
       } else {
         await createCampaign(name.trim(), content)
       }
-      router.push('/programs')
+      router.push('/campaigns')
     })
   }
 
@@ -75,7 +75,7 @@ export function ProgramEditor({ id, initialName = '', initialContent = '' }: Pro
     try {
       const supabase = createClient()
       const ext = file.name.split('.').pop()
-      const path = `programs/${Date.now()}.${ext}`
+      const path = `campaigns/${Date.now()}.${ext}`
       const { error } = await supabase.storage.from('images').upload(path, file, { upsert: false })
       if (error) throw error
       const { data: { publicUrl } } = supabase.storage.from('images').getPublicUrl(path)
@@ -99,7 +99,7 @@ export function ProgramEditor({ id, initialName = '', initialContent = '' }: Pro
       <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push('/programs')}
+            onClick={() => router.push('/campaigns')}
             className="text-xl text-gray-500 hover:text-gray-900 transition-colors leading-none"
           >
             ←

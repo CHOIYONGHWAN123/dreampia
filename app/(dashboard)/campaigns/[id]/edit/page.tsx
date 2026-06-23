@@ -1,8 +1,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
-import { ProgramEditor } from '@/components/features/programs/ProgramEditor'
+import { CampaignEditor } from '@/components/features/campaigns/CampaignEditor'
 
-export default async function ProgramEditPage({
+export default async function CampaignEditPage({
   params,
 }: {
   params: Promise<{ id: string }>
@@ -18,7 +18,7 @@ export default async function ProgramEditPage({
   if (!data) notFound()
 
   return (
-    <ProgramEditor
+    <CampaignEditor
       id={data.id}
       initialName={data.name}
       initialContent={data.content ?? ''}
