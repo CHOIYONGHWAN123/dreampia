@@ -51,7 +51,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
     <div className="p-8">
       {/* 헤더 */}
       <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">학교 관리</h1>
+        <h1 className="text-2xl font-bold text-gray-900">기관 관리</h1>
         <button
           type="button"
           className="px-4 py-1.5 bg-gray-900 text-white rounded text-sm hover:bg-gray-700 transition-colors"
@@ -100,7 +100,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
           type="text"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          placeholder="학교명 검색"
+          placeholder="기관명 검색"
           className="border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400 w-56"
         />
       </div>
@@ -120,7 +120,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
               <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-24">지역1</th>
               <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-24">지역2</th>
               <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">기관</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700">학교명</th>
+              <th className="px-4 py-2.5 text-center font-medium text-gray-700">기관명</th>
               <th className="px-4 py-2.5 w-52" />
             </tr>
           </thead>

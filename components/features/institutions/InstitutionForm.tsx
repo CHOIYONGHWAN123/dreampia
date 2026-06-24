@@ -142,9 +142,9 @@ export function InstitutionForm({ id, defaultValues }: Props) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 max-w-lg">
-      {/* 학교명 */}
+      {/* 기관명 */}
       <div>
-        <label className={labelCls}>학교명 <span className="text-red-500">*</span></label>
+        <label className={labelCls}>기관명 <span className="text-red-500">*</span></label>
         <input {...register('name')} type="text" placeholder="예: 해운대초등학교" className={inputCls} />
         {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
       </div>

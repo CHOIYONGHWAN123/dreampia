@@ -115,7 +115,7 @@ export function InstitutionDetailClient({
         <table className="w-full text-sm">
           <tbody>
             <tr className="border-b border-gray-100">
-              <td className="px-4 py-2.5 text-gray-500 bg-gray-50 w-20 font-medium">학교명</td>
+              <td className="px-4 py-2.5 text-gray-500 bg-gray-50 w-20 font-medium">기관명</td>
               <td className="px-4 py-2.5 text-gray-800">{institution.name}</td>
             </tr>
             <tr>

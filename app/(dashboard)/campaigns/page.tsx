@@ -15,7 +15,7 @@ export default async function CampaignsPage() {
     <div className="p-8">
       {/* 헤더 */}
       <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">행사 관리</h1>
+        <h1 className="text-2xl font-bold text-gray-900">행사명 관리</h1>
         <Link
           href="/campaigns/new"
           className="px-4 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors"
