@@ -10,6 +10,18 @@ type ScheduleInput = {
   sort_order: number
 }
 
+type EventRowInput = {
+  occupation_program_unit_id: string
+  start_time?: string | null
+  end_time?: string | null
+  classroom?: string | null
+  instructor_waiting_room?: string | null
+  lecture_fee?: number | null
+  lecture_fee_after_tax?: number | null
+  headcount?: number | null
+  session_headcount?: number | null
+}
+
 export type EventProgramSelectData = {
   fields: { id: string; name: string }[]
   occupations: { id: string; name: string; field_id: string | null }[]
@@ -60,7 +72,7 @@ export async function createEvent(data: {
   estimate_file_url?: string
   comm_admin_id?: string | null
   schedules?: ScheduleInput[]
-  occupationProgramUnitIds?: string[]
+  eventRows?: EventRowInput[]
 }) {
   const supabase = await createServerSupabaseClient()
 
@@ -121,11 +133,19 @@ export async function createEvent(data: {
     }
   }
 
-  if (data.occupationProgramUnitIds && data.occupationProgramUnitIds.length > 0) {
+  if (data.eventRows && data.eventRows.length > 0) {
     const { error: rowsErr } = await supabase.from('event_rows').insert(
-      data.occupationProgramUnitIds.map((unitId) => ({
+      data.eventRows.map((r) => ({
         event_id: event.id,
-        occupation_program_unit_id: unitId,
+        occupation_program_unit_id: r.occupation_program_unit_id,
+        start_time: r.start_time || null,
+        end_time: r.end_time || null,
+        classroom: r.classroom || null,
+        instructor_waiting_room: r.instructor_waiting_room || null,
+        lecture_fee: r.lecture_fee ?? null,
+        lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
+        headcount: r.headcount ?? null,
+        session_headcount: r.session_headcount ?? null,
       }))
     )
     if (rowsErr) throw new Error(rowsErr.message)

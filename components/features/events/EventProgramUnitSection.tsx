@@ -13,10 +13,25 @@ export type SelectedProgramUnit = {
   fieldName: string
   occupationName: string
   programName: string
+  startTime: string
+  endTime: string
+  classroom: string
+  instructorWaitingRoom: string
+  lectureFee: number | null
+  headcount: number | null
+  sessionHeadcount: number | null
+}
+
+// 강사료 3.3% 원천징수 후 세후 강의료
+export function calcLectureFeeAfterTax(lectureFee: number | null): number | null {
+  if (lectureFee === null || Number.isNaN(lectureFee)) return null
+  return Math.round(lectureFee * (1 - 0.033))
 }
 
 const selCls =
   'border border-gray-300 rounded px-2 py-1.5 text-sm bg-white outline-none focus:border-gray-500 disabled:bg-gray-50 disabled:text-gray-400'
+const fieldInputCls =
+  'w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-gray-500'
 
 // 검색 또는 분야 > 직종 > 프로그램 > 프로그램 유닛 드릴다운으로 occupation_program_unit을 찾아 추가하는 섹션.
 export function EventProgramUnitSection({
@@ -76,7 +91,21 @@ export function EventProgramUnitSection({
 
   const addUnit = (unit: UnitOption) => {
     if (value.some((v) => v.unitId === unit.id)) return
-    onChange([...value, { unitId: unit.id, title: unit.title, ...buildPath(unit) }])
+    onChange([
+      ...value,
+      {
+        unitId: unit.id,
+        title: unit.title,
+        ...buildPath(unit),
+        startTime: '',
+        endTime: '',
+        classroom: '',
+        instructorWaitingRoom: '',
+        lectureFee: null,
+        headcount: null,
+        sessionHeadcount: null,
+      },
+    ])
   }
 
   const handleAddFromDropdown = () => {
@@ -88,6 +117,10 @@ export function EventProgramUnitSection({
 
   const removeUnit = (id: string) => {
     onChange(value.filter((v) => v.unitId !== id))
+  }
+
+  const updateUnit = (id: string, patch: Partial<SelectedProgramUnit>) => {
+    onChange(value.map((v) => (v.unitId === id ? { ...v, ...patch } : v)))
   }
 
   return (
@@ -198,30 +231,120 @@ export function EventProgramUnitSection({
       </div>
 
       {/* 추가된 프로그램 목록 */}
-      <div className="space-y-1">
+      <div className="space-y-2">
         {value.length === 0 ? (
           <p className="text-xs text-gray-400">추가된 프로그램이 없습니다.</p>
         ) : (
-          value.map((v) => (
-            <div
-              key={v.unitId}
-              className="flex items-center justify-between px-3 py-2 border border-gray-200 rounded text-sm"
-            >
-              <div>
-                <span className="font-medium text-gray-800">{v.title}</span>
-                <span className="text-xs text-gray-400 ml-2">
-                  {v.fieldName} &gt; {v.occupationName} &gt; {v.programName}
-                </span>
+          value.map((v) => {
+            const lectureFeeAfterTax = calcLectureFeeAfterTax(v.lectureFee)
+            return (
+              <div key={v.unitId} className="border border-gray-200 rounded p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-medium text-gray-800 text-sm">{v.title}</span>
+                    <span className="text-xs text-gray-400 ml-2">
+                      {v.fieldName} &gt; {v.occupationName} &gt; {v.programName}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeUnit(v.unitId)}
+                    className="text-xs text-red-400 hover:text-red-600"
+                  >
+                    삭제
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-4 gap-2">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-0.5 block">시작시간</label>
+                    <input
+                      type="time"
+                      value={v.startTime}
+                      onChange={(e) => updateUnit(v.unitId, { startTime: e.target.value })}
+                      className={fieldInputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-0.5 block">종료시간</label>
+                    <input
+                      type="time"
+                      value={v.endTime}
+                      onChange={(e) => updateUnit(v.unitId, { endTime: e.target.value })}
+                      className={fieldInputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-0.5 block">강의실</label>
+                    <input
+                      type="text"
+                      value={v.classroom}
+                      onChange={(e) => updateUnit(v.unitId, { classroom: e.target.value })}
+                      placeholder="예: 1-1반"
+                      className={fieldInputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-0.5 block">대기실</label>
+                    <input
+                      type="text"
+                      value={v.instructorWaitingRoom}
+                      onChange={(e) => updateUnit(v.unitId, { instructorWaitingRoom: e.target.value })}
+                      className={fieldInputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-0.5 block">강의료</label>
+                    <input
+                      type="number"
+                      value={v.lectureFee ?? ''}
+                      onChange={(e) =>
+                        updateUnit(v.unitId, { lectureFee: e.target.value === '' ? null : Number(e.target.value) })
+                      }
+                      min={0}
+                      className={fieldInputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-0.5 block">강의료(세후)</label>
+                    <input
+                      type="text"
+                      value={lectureFeeAfterTax !== null ? lectureFeeAfterTax.toLocaleString() : ''}
+                      readOnly
+                      placeholder="자동 계산(3.3% 제외)"
+                      className={`${fieldInputCls} bg-gray-50 text-gray-500`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-0.5 block">인원수</label>
+                    <input
+                      type="number"
+                      value={v.headcount ?? ''}
+                      onChange={(e) =>
+                        updateUnit(v.unitId, { headcount: e.target.value === '' ? null : Number(e.target.value) })
+                      }
+                      min={0}
+                      className={fieldInputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-0.5 block">차시별 인원수</label>
+                    <input
+                      type="number"
+                      value={v.sessionHeadcount ?? ''}
+                      onChange={(e) =>
+                        updateUnit(v.unitId, {
+                          sessionHeadcount: e.target.value === '' ? null : Number(e.target.value),
+                        })
+                      }
+                      min={0}
+                      className={fieldInputCls}
+                    />
+                  </div>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => removeUnit(v.unitId)}
-                className="text-xs text-red-400 hover:text-red-600"
-              >
-                삭제
-              </button>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
     </div>

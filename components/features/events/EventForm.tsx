@@ -16,6 +16,7 @@ import {
 import { createEvent } from '@/app/(dashboard)/events/actions'
 import {
   EventProgramUnitSection,
+  calcLectureFeeAfterTax,
   type FieldOption,
   type OccupationOption,
   type ProgramOption,
@@ -217,7 +218,17 @@ export function EventForm({
           estimate_file_url: estimateFileUrl,
           comm_admin_id: data.comm_admin_id,
           schedules,
-          occupationProgramUnitIds: programUnits.map((u) => u.unitId),
+          eventRows: programUnits.map((u) => ({
+            occupation_program_unit_id: u.unitId,
+            start_time: u.startTime || null,
+            end_time: u.endTime || null,
+            classroom: u.classroom || null,
+            instructor_waiting_room: u.instructorWaitingRoom || null,
+            lecture_fee: u.lectureFee,
+            lecture_fee_after_tax: calcLectureFeeAfterTax(u.lectureFee),
+            headcount: u.headcount,
+            session_headcount: u.sessionHeadcount,
+          })),
         })
         router.push('/institutions')
       } catch {
