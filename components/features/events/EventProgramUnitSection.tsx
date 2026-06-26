@@ -257,18 +257,18 @@ export function EventProgramUnitSection({
 
                 <div className="grid grid-cols-4 gap-2">
                   <div>
-                    <label className="text-xs text-gray-500 mb-0.5 block">시작시간</label>
+                    <label className="text-xs text-gray-500 mb-0.5 block">시작 일시</label>
                     <input
-                      type="time"
+                      type="datetime-local"
                       value={v.startTime}
                       onChange={(e) => updateUnit(v.unitId, { startTime: e.target.value })}
                       className={fieldInputCls}
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 mb-0.5 block">종료시간</label>
+                    <label className="text-xs text-gray-500 mb-0.5 block">종료 일시</label>
                     <input
-                      type="time"
+                      type="datetime-local"
                       value={v.endTime}
                       onChange={(e) => updateUnit(v.unitId, { endTime: e.target.value })}
                       className={fieldInputCls}

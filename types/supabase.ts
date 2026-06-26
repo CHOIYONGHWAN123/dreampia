@@ -182,7 +182,6 @@ export type Database = {
           classroom: string | null
           criminal_background_check: string | null
           end_time: string | null
-          event_date: string | null
           event_id: string | null
           headcount: number | null
           id: string
@@ -203,7 +202,6 @@ export type Database = {
           classroom?: string | null
           criminal_background_check?: string | null
           end_time?: string | null
-          event_date?: string | null
           event_id?: string | null
           headcount?: number | null
           id?: string
@@ -224,7 +222,6 @@ export type Database = {
           classroom?: string | null
           criminal_background_check?: string | null
           end_time?: string | null
-          event_date?: string | null
           event_id?: string | null
           headcount?: number | null
           id?: string
