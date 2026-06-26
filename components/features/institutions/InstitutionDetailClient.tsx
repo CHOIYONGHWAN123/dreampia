@@ -34,6 +34,11 @@ function formatDateTime(dt: string | null) {
   return new Date(dt).toLocaleDateString('ko-KR', { year: '2-digit', month: 'numeric', day: 'numeric' })
 }
 
+function getEventStatus(event: Event): '진행중' | '종료' {
+  if (event.event_end_at && new Date(event.event_end_at) < new Date()) return '종료'
+  return '진행중'
+}
+
 export function InstitutionDetailClient({
   institution,
   events,
@@ -100,7 +105,7 @@ export function InstitutionDetailClient({
     <div className="p-8">
       {/* 헤더 */}
       <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">학교 현황 페이지</h1>
+        <h1 className="text-2xl font-bold text-gray-900">학교별 행사 관리 페이지</h1>
         <button
           type="button"
           className="px-4 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors"
@@ -124,6 +129,73 @@ export function InstitutionDetailClient({
             </tr>
           </tbody>
         </table>
+      </div>
+
+      {/* 등록된 행사 (게시판) */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-gray-700">등록된 행사</span>
+            {localEvents.length > 0 && (
+              <span className="text-xs font-bold text-gray-400">{localEvents.length}</span>
+            )}
+          </div>
+          <button
+            type="button"
+            className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
+            onClick={() => router.push(`/events/new?institutionId=${institution.id}`)}
+          >
+            행사 등록
+          </button>
+        </div>
+
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-12">no</th>
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-20">상태</th>
+                <th className="px-4 py-2.5 text-left font-medium text-gray-700">행사명</th>
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">시작일시</th>
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">종료일시</th>
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-36">담당선생님</th>
+              </tr>
+            </thead>
+            <tbody>
+              {localEvents.length > 0 ? (
+                localEvents.map((event, index) => {
+                  const status = getEventStatus(event)
+                  return (
+                    <tr key={event.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
+                      <td className="px-4 py-2.5 text-center text-gray-500">{index + 1}</td>
+                      <td className="px-4 py-2.5 text-center">
+                        <span
+                          className={
+                            status === '진행중'
+                              ? 'inline-block px-2 py-0.5 text-xs font-medium rounded bg-blue-50 text-blue-600'
+                              : 'inline-block px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-500'
+                          }
+                        >
+                          [{status}]
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-gray-800">{event.name}</td>
+                      <td className="px-4 py-2.5 text-center text-gray-600">{formatDateTime(event.event_start_at)}</td>
+                      <td className="px-4 py-2.5 text-center text-gray-600">{formatDateTime(event.event_end_at)}</td>
+                      <td className="px-4 py-2.5 text-center text-gray-600">{event.teacher_name ?? '-'}</td>
+                    </tr>
+                  )
+                })
+              ) : (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center text-gray-400">
+                    등록된 행사가 없습니다.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* 섭외 대기 */}

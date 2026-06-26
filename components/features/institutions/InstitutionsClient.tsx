@@ -138,13 +138,6 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
                       <button
                         type="button"
                         className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
-                        onClick={() => router.push(`/institutions/${institution.id}`)}
-                      >
-                        보기
-                      </button>
-                      <button
-                        type="button"
-                        className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
                         onClick={() => router.push(`/institutions/${institution.id}/edit`)}
                       >
                         수정
@@ -152,9 +145,9 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
                       <button
                         type="button"
                         className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
-                        onClick={() => router.push(`/events/new?institutionId=${institution.id}`)}
+                        onClick={() => router.push(`/institutions/${institution.id}`)}
                       >
-                        행사 등록
+                        행사 관리
                       </button>
                     </div>
                   </td>
