@@ -184,22 +184,19 @@ export type Database = {
           end_time: string
           event_date: string
           event_id: string | null
-          event_schedule_id: string | null
           headcount: number | null
           id: string
           instructor_waiting_room: string | null
           lecture_fee: number | null
           lecture_fee_after_tax: number | null
           lecture_fee_payer_id: string | null
-          material_fee: number | null
           material_fee_payer_id: string | null
           mentor_id: string | null
-          occupation_program_id: string | null
+          occupation_program_unit_id: string | null
           remarks: string | null
           school_request_response: string | null
           session_headcount: number | null
           start_time: string
-          target_grade: string | null
         }
         Insert: {
           attendance?: boolean | null
@@ -208,22 +205,19 @@ export type Database = {
           end_time: string
           event_date: string
           event_id?: string | null
-          event_schedule_id?: string | null
           headcount?: number | null
           id?: string
           instructor_waiting_room?: string | null
           lecture_fee?: number | null
           lecture_fee_after_tax?: number | null
           lecture_fee_payer_id?: string | null
-          material_fee?: number | null
           material_fee_payer_id?: string | null
           mentor_id?: string | null
-          occupation_program_id?: string | null
+          occupation_program_unit_id?: string | null
           remarks?: string | null
           school_request_response?: string | null
           session_headcount?: number | null
           start_time: string
-          target_grade?: string | null
         }
         Update: {
           attendance?: boolean | null
@@ -232,22 +226,19 @@ export type Database = {
           end_time?: string
           event_date?: string
           event_id?: string | null
-          event_schedule_id?: string | null
           headcount?: number | null
           id?: string
           instructor_waiting_room?: string | null
           lecture_fee?: number | null
           lecture_fee_after_tax?: number | null
           lecture_fee_payer_id?: string | null
-          material_fee?: number | null
           material_fee_payer_id?: string | null
           mentor_id?: string | null
-          occupation_program_id?: string | null
+          occupation_program_unit_id?: string | null
           remarks?: string | null
           school_request_response?: string | null
           session_headcount?: number | null
           start_time?: string
-          target_grade?: string | null
         }
         Relationships: [
           {
@@ -255,13 +246,6 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "event_rows_event_schedule_id_fkey"
-            columns: ["event_schedule_id"]
-            isOneToOne: false
-            referencedRelation: "event_schedules"
             referencedColumns: ["id"]
           },
           {
@@ -286,10 +270,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "event_rows_occupation_program_id_fkey"
-            columns: ["occupation_program_id"]
+            foreignKeyName: "event_rows_occupation_program_unit_id_fkey"
+            columns: ["occupation_program_unit_id"]
             isOneToOne: false
-            referencedRelation: "occupation_programs"
+            referencedRelation: "occupation_program_unit"
             referencedColumns: ["id"]
           },
         ]

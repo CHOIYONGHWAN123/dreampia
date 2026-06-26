@@ -371,14 +371,14 @@ Table events {
   
 }
 
-Table event_schedules {
+<!-- Table event_schedules {
   id         uuid    [pk, default: `gen_random_uuid()`]
   event_id   uuid    [ref: > events.id]
   label      varchar [not null, note: '예: 1교시, 점심시간']
   start_time time    [not null]
   end_time   time    [not null]
   sort_order integer [not null, note: '표시 순서']
-}
+} -->
 
 // 행사 담당자
 Table event_admins {
@@ -395,15 +395,13 @@ Table event_admins {
 Table event_rows {
   id                    uuid    [pk, default: `gen_random_uuid()`]
   event_id              uuid    [ref: > events.id]
-  event_schedule_id     uuid    [ref: > event_schedules.id, note: '교시 참조']
   mentor_id         uuid    [ref: > mentors.id]
   start_time            time    [not null]
   end_time              time    [not null]
-  occupation_program_id uuid    [ref: > occupation_programs.id]
+  occupation_program_unit_id uuid    [ref: > occupation_program_unit.id]
   lecture_fee_payer_id  uuid    [ref: > mentors.id, note: '강의료 입금자']
   material_fee_payer_id uuid    [ref: > mentors.id, note: '재료비 입금자']
   event_date            date    [not null]
-  target_grade          varchar
   classroom             varchar [note: '강의실 예: 1-1반']
   instructor_waiting_room varchar [note: '강사대기실 예: 2층 2학년 학년연구실']
   attendance            boolean [default: false]
@@ -411,7 +409,6 @@ Table event_rows {
   lecture_fee_after_tax integer [note: '세후 강의료']
   headcount             integer [note: '인원수']
   session_headcount     integer [note: '차시별 인원수']
-  material_fee          integer [note: '재료비']
   remarks               text
   criminal_background_check varchar [note: '회보서 파일 URL']
   school_request_response text [note: '학교 요청사항 답변']
@@ -422,7 +419,7 @@ Table event_rows {
 
 Table event_photos {
   id         uuid      [pk, default: `gen_random_uuid()`]
-  event_id   uuid      [ref: > events.id]
+  event_rows_id   uuid      [ref: > event_rows.id]
   url        varchar   [not null]
   created_at timestamp [not null, default: `now()`]
 }
