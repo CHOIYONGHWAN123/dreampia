@@ -10,6 +10,29 @@ type ScheduleInput = {
   sort_order: number
 }
 
+export type EventProgramSelectData = {
+  fields: { id: string; name: string }[]
+  occupations: { id: string; name: string; field_id: string | null }[]
+  programs: { id: string; name: string; occupation_id: string | null }[]
+  units: { id: string; title: string; occupation_programs_id: string | null }[]
+}
+
+export async function getEventProgramSelectData(): Promise<EventProgramSelectData> {
+  const supabase = await createServerSupabaseClient()
+  const [fieldsRes, occsRes, progsRes, unitsRes] = await Promise.all([
+    supabase.from('fields').select('id, name').order('name'),
+    supabase.from('occupations').select('id, name, field_id').order('name'),
+    supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
+    supabase.from('occupation_program_unit').select('id, title, occupation_programs_id').order('title'),
+  ])
+  return {
+    fields: fieldsRes.data ?? [],
+    occupations: (occsRes.data ?? []) as { id: string; name: string; field_id: string | null }[],
+    programs: (progsRes.data ?? []) as { id: string; name: string; occupation_id: string | null }[],
+    units: unitsRes.data ?? [],
+  }
+}
+
 export async function createEvent(data: {
   reception_date?: string
   name: string
@@ -37,6 +60,7 @@ export async function createEvent(data: {
   estimate_file_url?: string
   comm_admin_id?: string | null
   schedules?: ScheduleInput[]
+  occupationProgramUnitIds?: string[]
 }) {
   const supabase = await createServerSupabaseClient()
 
@@ -95,6 +119,16 @@ export async function createEvent(data: {
       )
       if (schedErr) throw new Error(schedErr.message)
     }
+  }
+
+  if (data.occupationProgramUnitIds && data.occupationProgramUnitIds.length > 0) {
+    const { error: rowsErr } = await supabase.from('event_rows').insert(
+      data.occupationProgramUnitIds.map((unitId) => ({
+        event_id: event.id,
+        occupation_program_unit_id: unitId,
+      }))
+    )
+    if (rowsErr) throw new Error(rowsErr.message)
   }
 
   revalidatePath('/institutions')

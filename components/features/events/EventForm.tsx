@@ -14,6 +14,14 @@ import {
   INSTITUTION_TYPES,
 } from '@/lib/validations/event'
 import { createEvent } from '@/app/(dashboard)/events/actions'
+import {
+  EventProgramUnitSection,
+  type FieldOption,
+  type OccupationOption,
+  type ProgramOption,
+  type UnitOption,
+  type SelectedProgramUnit,
+} from './EventProgramUnitSection'
 
 type Institution = {
   id: string
@@ -50,6 +58,10 @@ interface Props {
   campaigns: Campaign[]
   salesAdmins: Admin[]
   commAdmins: Admin[]
+  fields: FieldOption[]
+  occupations: OccupationOption[]
+  programs: ProgramOption[]
+  units: UnitOption[]
   defaultInstitutionId?: string
 }
 
@@ -60,11 +72,22 @@ const selectCls =
 const labelCls = 'w-36 shrink-0 text-sm font-medium text-gray-700'
 const rowCls = 'flex items-center gap-3'
 
-export function EventForm({ institutions, campaigns, salesAdmins, commAdmins, defaultInstitutionId }: Props) {
+export function EventForm({
+  institutions,
+  campaigns,
+  salesAdmins,
+  commAdmins,
+  fields,
+  occupations,
+  programs,
+  units,
+  defaultInstitutionId,
+}: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isUploading, setIsUploading] = useState(false)
   const [estimateFile, setEstimateFile] = useState<File | null>(null)
+  const [programUnits, setProgramUnits] = useState<SelectedProgramUnit[]>([])
 
   const [institutionSearch, setInstitutionSearch] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
@@ -194,6 +217,7 @@ export function EventForm({ institutions, campaigns, salesAdmins, commAdmins, de
           estimate_file_url: estimateFileUrl,
           comm_admin_id: data.comm_admin_id,
           schedules,
+          occupationProgramUnitIds: programUnits.map((u) => u.unitId),
         })
         router.push('/institutions')
       } catch {
@@ -567,6 +591,17 @@ export function EventForm({ institutions, campaigns, salesAdmins, commAdmins, de
             </select>
           </div>
         </div>
+      </div>
+
+      <div className="mt-8">
+        <EventProgramUnitSection
+          fields={fields}
+          occupations={occupations}
+          programs={programs}
+          units={units}
+          value={programUnits}
+          onChange={setProgramUnits}
+        />
       </div>
     </div>
   )

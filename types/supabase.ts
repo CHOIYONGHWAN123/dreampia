@@ -181,8 +181,8 @@ export type Database = {
           attendance: boolean | null
           classroom: string | null
           criminal_background_check: string | null
-          end_time: string
-          event_date: string
+          end_time: string | null
+          event_date: string | null
           event_id: string | null
           headcount: number | null
           id: string
@@ -196,14 +196,14 @@ export type Database = {
           remarks: string | null
           school_request_response: string | null
           session_headcount: number | null
-          start_time: string
+          start_time: string | null
         }
         Insert: {
           attendance?: boolean | null
           classroom?: string | null
           criminal_background_check?: string | null
-          end_time: string
-          event_date: string
+          end_time?: string | null
+          event_date?: string | null
           event_id?: string | null
           headcount?: number | null
           id?: string
@@ -217,14 +217,14 @@ export type Database = {
           remarks?: string | null
           school_request_response?: string | null
           session_headcount?: number | null
-          start_time: string
+          start_time?: string | null
         }
         Update: {
           attendance?: boolean | null
           classroom?: string | null
           criminal_background_check?: string | null
-          end_time?: string
-          event_date?: string
+          end_time?: string | null
+          event_date?: string | null
           event_id?: string | null
           headcount?: number | null
           id?: string
@@ -238,7 +238,7 @@ export type Database = {
           remarks?: string | null
           school_request_response?: string | null
           session_headcount?: number | null
-          start_time?: string
+          start_time?: string | null
         }
         Relationships: [
           {
