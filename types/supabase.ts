@@ -335,6 +335,7 @@ export type Database = {
           admin_docs: string | null
           admin_docs_delivered: boolean | null
           budget: number | null
+          campaign_id: string | null
           comm_admin_id: string | null
           comm_content: string | null
           contact_email: string | null
@@ -396,6 +397,7 @@ export type Database = {
           admin_docs?: string | null
           admin_docs_delivered?: boolean | null
           budget?: number | null
+          campaign_id?: string | null
           comm_admin_id?: string | null
           comm_content?: string | null
           contact_email?: string | null
@@ -457,6 +459,7 @@ export type Database = {
           admin_docs?: string | null
           admin_docs_delivered?: boolean | null
           budget?: number | null
+          campaign_id?: string | null
           comm_admin_id?: string | null
           comm_content?: string | null
           contact_email?: string | null
@@ -514,6 +517,13 @@ export type Database = {
           teacher_name?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaign"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "events_comm_admin_id_fkey"
             columns: ["comm_admin_id"]

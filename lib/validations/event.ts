@@ -15,7 +15,7 @@ const nullableEnum = <T extends readonly [string, ...string[]]>(values: T) =>
 export const eventSchema = z.object({
   reception_date: z.string().optional(),
   name: z.string().min(1, '행사명을 입력해주세요'),
-  occupation_program_id: nullableString,
+  campaign_id: nullableString,
   institution_id: nullableString,
   event_start_at_date: z.string().optional(),
   event_start_at_time: z.string().optional(),

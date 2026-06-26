@@ -13,7 +13,7 @@ type ScheduleInput = {
 export async function createEvent(data: {
   reception_date?: string
   name: string
-  occupation_program_id?: string | null
+  campaign_id?: string | null
   institution_id?: string | null
   event_start_at?: string | null
   event_end_at?: string | null
@@ -42,7 +42,7 @@ export async function createEvent(data: {
 
   const payload: Record<string, unknown> = {
     name: data.name,
-    occupation_program_id: data.occupation_program_id || null,
+    campaign_id: data.campaign_id || null,
     institution_id: data.institution_id || null,
     event_start_at: data.event_start_at || null,
     event_end_at: data.event_end_at || null,

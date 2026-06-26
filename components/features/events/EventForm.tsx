@@ -35,9 +35,9 @@ type Institution = {
   parking_note: string | null
 }
 
-type Program = {
+type Campaign = {
   id: string
-  title: string
+  name: string
 }
 
 type Admin = {
@@ -47,7 +47,7 @@ type Admin = {
 
 interface Props {
   institutions: Institution[]
-  programs: Program[]
+  campaigns: Campaign[]
   salesAdmins: Admin[]
   commAdmins: Admin[]
   defaultInstitutionId?: string
@@ -60,7 +60,7 @@ const selectCls =
 const labelCls = 'w-36 shrink-0 text-sm font-medium text-gray-700'
 const rowCls = 'flex items-center gap-3'
 
-export function EventForm({ institutions, programs, salesAdmins, commAdmins, defaultInstitutionId }: Props) {
+export function EventForm({ institutions, campaigns, salesAdmins, commAdmins, defaultInstitutionId }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isUploading, setIsUploading] = useState(false)
@@ -124,7 +124,9 @@ export function EventForm({ institutions, programs, salesAdmins, commAdmins, def
 
   async function uploadEstimateFile(file: File): Promise<string> {
     const supabase = createClient()
-    const path = `estimates/${Date.now()}_${file.name}`
+    // Supabase Storage 키는 한글 등 비-ASCII 문자를 허용하지 않으므로 확장자만 사용
+    const ext = file.name.includes('.') ? file.name.split('.').pop() : ''
+    const path = `estimates/${Date.now()}${ext ? `.${ext}` : ''}`
     const { error } = await supabase.storage.from('events').upload(path, file)
     if (error) throw new Error(error.message)
     // private 버킷이므로 경로만 저장 — 조회 시 signed URL로 변환
@@ -168,7 +170,7 @@ export function EventForm({ institutions, programs, salesAdmins, commAdmins, def
         await createEvent({
           reception_date: data.reception_date,
           name: data.name,
-          occupation_program_id: data.occupation_program_id,
+          campaign_id: data.campaign_id,
           institution_id: data.institution_id,
           event_start_at: eventStartAt,
           event_end_at: eventEndAt,
@@ -255,13 +257,13 @@ export function EventForm({ institutions, programs, salesAdmins, commAdmins, def
           <div className={rowCls}>
             <label className={labelCls}>행사 구분</label>
             <select
-              {...register('occupation_program_id', { setValueAs: (v) => v || null })}
+              {...register('campaign_id', { setValueAs: (v) => v || null })}
               className={selectCls}
             >
               <option value="">선택</option>
-              {programs.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.title}
+              {campaigns.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
                 </option>
               ))}
             </select>

@@ -105,7 +105,9 @@ export function BannerManagement() {
 
   const uploadImage = async (file: File): Promise<string | null> => {
     const supabase = createClient()
-    const filename = `${Date.now()}-${file.name}`
+    // Supabase Storage 키는 한글 등 비-ASCII 문자를 허용하지 않으므로 확장자만 사용
+    const ext = file.name.includes('.') ? file.name.split('.').pop() : ''
+    const filename = `${Date.now()}${ext ? `.${ext}` : ''}`
     const { error } = await supabase.storage.from('banners').upload(filename, file)
     if (error) {
       alert('이미지 업로드에 실패했습니다.')
