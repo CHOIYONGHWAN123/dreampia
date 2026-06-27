@@ -968,11 +968,7 @@ export type Database = {
     Enums: {
       area: "부산" | "김해" | "울산" | "창원"
       crime_check_method: "회보서" | "동의서"
-      experience_type:
-        | "초등 직업체험"
-        | "초등 문화예술체험"
-        | "중/고등 직업체험"
-        | "중/고등 문화예술체험"
+      experience_type: "직업체험" | "문화예술체험"
       grade: "유치원" | "초등학교" | "중학교" | "고등학교"
       inflow_source:
         | "팜플렛"
@@ -1130,12 +1126,7 @@ export const Constants = {
     Enums: {
       area: ["부산", "김해", "울산", "창원"],
       crime_check_method: ["회보서", "동의서"],
-      experience_type: [
-        "초등 직업체험",
-        "초등 문화예술체험",
-        "중/고등 직업체험",
-        "중/고등 문화예술체험",
-      ],
+      experience_type: ["직업체험", "문화예술체험"],
       grade: ["유치원", "초등학교", "중학교", "고등학교"],
       inflow_source: [
         "팜플렛",

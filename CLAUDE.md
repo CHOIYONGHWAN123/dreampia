@@ -199,10 +199,8 @@ Table occupation_programs {
 //
 
 enum experience_type{
-  "초등 직업체험"
-  "초등 문화예술체험"
-  "중/고등 직업체험"
-  "중/고등 문화예술체험"
+  "직업체험"
+  "문화예술체험"
 }
 
 
