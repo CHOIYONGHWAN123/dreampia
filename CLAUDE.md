@@ -131,7 +131,8 @@ Table program_categories {
 Table occupation_program_unit{
   id                     uuid     [pk, default: `gen_random_uuid()`]
   occupation_programs_id uuid [ref:> occupation_programs.id, note:"직업 프로그램"]
-  material_cost_per_person integer [note: '1인당 재료비']
+  mentor_material_cost integer [note: '강사 재료비']
+  dreampia_material_cost integer [note: '드림피아 재료비']
   prep_by                prep_by [note: '강사 or 드림피아 or 모두가능']
   title                   varchar  [not null, note: '프로그램 이름']
   school_request_note     text     [note: '학교요청사항']

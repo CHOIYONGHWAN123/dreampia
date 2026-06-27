@@ -17,7 +17,8 @@ interface Props {
 
 const emptyForm: UnitFormPayload = {
   title: '',
-  materialCostPerPerson: null,
+  mentorMaterialCost: null,
+  dreampiaMaterialCost: null,
   prepBy: null,
   schoolRequestNote: '',
   finalProductAvailable: false,
@@ -32,7 +33,8 @@ function toFormState(initial: OccupationProgramUnitData | null): UnitFormPayload
   if (!initial) return emptyForm
   return {
     title: initial.title,
-    materialCostPerPerson: initial.material_cost_per_person,
+    mentorMaterialCost: initial.mentor_material_cost,
+    dreampiaMaterialCost: initial.dreampia_material_cost,
     prepBy: initial.prep_by,
     schoolRequestNote: initial.school_request_note ?? '',
     finalProductAvailable: initial.final_product_available ?? false,
@@ -79,34 +81,49 @@ export function UnitFormPopup({ initial, programCategories, onClose, onSubmit }:
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">1인당 재료비</label>
+              <label className="text-xs text-gray-500 mb-1 block">강사 재료비</label>
               <input
                 type="number"
-                value={form.materialCostPerPerson ?? ''}
+                value={form.mentorMaterialCost ?? ''}
                 onChange={e =>
                   setForm(f => ({
                     ...f,
-                    materialCostPerPerson: e.target.value === '' ? null : Number(e.target.value),
+                    mentorMaterialCost: e.target.value === '' ? null : Number(e.target.value),
                   }))
                 }
                 className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500"
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">준비 주체</label>
-              <select
-                value={form.prepBy ?? ''}
-                onChange={e => setForm(f => ({ ...f, prepBy: e.target.value || null }))}
+              <label className="text-xs text-gray-500 mb-1 block">드림피아 재료비</label>
+              <input
+                type="number"
+                value={form.dreampiaMaterialCost ?? ''}
+                onChange={e =>
+                  setForm(f => ({
+                    ...f,
+                    dreampiaMaterialCost: e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
                 className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500"
-              >
-                <option value="">선택안함</option>
-                {PREP_BY_OPTIONS.map(option => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">준비 주체</label>
+            <select
+              value={form.prepBy ?? ''}
+              onChange={e => setForm(f => ({ ...f, prepBy: e.target.value || null }))}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500"
+            >
+              <option value="">선택안함</option>
+              {PREP_BY_OPTIONS.map(option => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

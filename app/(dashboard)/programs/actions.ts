@@ -33,7 +33,8 @@ export interface OccupationProgramUnitData {
   id: string
   occupation_programs_id: string
   title: string
-  material_cost_per_person: number | null
+  mentor_material_cost: number | null
+  dreampia_material_cost: number | null
   prep_by: string | null
   school_request_note: string | null
   final_product_available: boolean | null
@@ -45,7 +46,8 @@ export interface OccupationProgramUnitData {
 
 export interface UnitFormPayload {
   title: string
-  materialCostPerPerson: number | null
+  mentorMaterialCost: number | null
+  dreampiaMaterialCost: number | null
   prepBy: string | null
   schoolRequestNote: string | null
   finalProductAvailable: boolean | null
@@ -183,7 +185,7 @@ export async function getUnitsByOccupationProgramId(
   const { data, error } = await supabase
     .from('occupation_program_unit')
     .select(
-      'id, occupation_programs_id, title, material_cost_per_person, prep_by, school_request_note, final_product_available, description, is_delivery_available, program_category_id, created_at'
+      'id, occupation_programs_id, title, mentor_material_cost, dreampia_material_cost, prep_by, school_request_note, final_product_available, description, is_delivery_available, program_category_id, created_at'
     )
     .eq('occupation_programs_id', occupationProgramId)
     .order('created_at')
@@ -199,7 +201,8 @@ export async function createUnit(
   const { error } = await supabase.from('occupation_program_unit').insert({
     occupation_programs_id: occupationProgramId,
     title: payload.title,
-    material_cost_per_person: payload.materialCostPerPerson,
+    mentor_material_cost: payload.mentorMaterialCost,
+    dreampia_material_cost: payload.dreampiaMaterialCost,
     prep_by: payload.prepBy,
     school_request_note: payload.schoolRequestNote,
     final_product_available: payload.finalProductAvailable,
@@ -217,7 +220,8 @@ export async function updateUnit(id: string, payload: UnitFormPayload): Promise<
     .from('occupation_program_unit')
     .update({
       title: payload.title,
-      material_cost_per_person: payload.materialCostPerPerson,
+      mentor_material_cost: payload.mentorMaterialCost,
+      dreampia_material_cost: payload.dreampiaMaterialCost,
       prep_by: payload.prepBy,
       school_request_note: payload.schoolRequestNote,
       final_product_available: payload.finalProductAvailable,

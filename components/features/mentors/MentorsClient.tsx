@@ -589,8 +589,8 @@ function MentorRows({
           </td>
           {/* 재료비 */}
           <td className={td}>
-            {prog.material_cost_per_person != null
-              ? prog.material_cost_per_person.toLocaleString()
+            {prog.mentor_material_cost != null
+              ? prog.mentor_material_cost.toLocaleString()
               : '-'}
           </td>
           {/* 준비물 준비 */}

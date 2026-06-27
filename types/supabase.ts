@@ -807,10 +807,11 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          dreampia_material_cost: number | null
           final_product_available: boolean | null
           id: string
           is_delivery_available: boolean
-          material_cost_per_person: number | null
+          mentor_material_cost: number | null
           occupation_programs_id: string | null
           prep_by: Database["public"]["Enums"]["prep_by"] | null
           program_category_id: string | null
@@ -820,10 +821,11 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          dreampia_material_cost?: number | null
           final_product_available?: boolean | null
           id?: string
           is_delivery_available?: boolean
-          material_cost_per_person?: number | null
+          mentor_material_cost?: number | null
           occupation_programs_id?: string | null
           prep_by?: Database["public"]["Enums"]["prep_by"] | null
           program_category_id?: string | null
@@ -833,10 +835,11 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          dreampia_material_cost?: number | null
           final_product_available?: boolean | null
           id?: string
           is_delivery_available?: boolean
-          material_cost_per_person?: number | null
+          mentor_material_cost?: number | null
           occupation_programs_id?: string | null
           prep_by?: Database["public"]["Enums"]["prep_by"] | null
           program_category_id?: string | null

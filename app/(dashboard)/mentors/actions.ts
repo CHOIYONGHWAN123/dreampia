@@ -14,7 +14,7 @@ export type MentorOccupationProgramRow = {
   material_fee_payer_name: string | null
   program_title: string
   school_level: string | null
-  material_cost_per_person: number | null
+  mentor_material_cost: number | null
   prep_by: string | null
   occupation_id: string
   occupation_name: string
@@ -93,7 +93,7 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
   const [unitsRes, feePayersRes] = await Promise.all([
     supabase
       .from('occupation_program_unit')
-      .select('id, title, occupation_programs_id, program_category_id, material_cost_per_person, prep_by')
+      .select('id, title, occupation_programs_id, program_category_id, mentor_material_cost, prep_by')
       .in('id', unitIds),
     feePayerIds.length
       ? supabase.from('mentors').select('id, name').in('id', feePayerIds)
@@ -168,7 +168,7 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
         material_fee_payer_name: r.material_fee_payer_id ? (feePayerMap.get(r.material_fee_payer_id) ?? null) : null,
         program_title: unit?.title ?? '-',
         school_level: category?.school_level ?? null,
-        material_cost_per_person: unit?.material_cost_per_person ?? null,
+        mentor_material_cost: unit?.mentor_material_cost ?? null,
         prep_by: unit?.prep_by ?? null,
         occupation_id: prog?.occupation_id ?? '',
         occupation_name: occ?.name ?? '-',
@@ -308,7 +308,7 @@ export async function addMentorOccupationProgram(
   const [unitRes, payersRes] = await Promise.all([
     supabase
       .from('occupation_program_unit')
-      .select('id, title, occupation_programs_id, program_category_id, material_cost_per_person, prep_by')
+      .select('id, title, occupation_programs_id, program_category_id, mentor_material_cost, prep_by')
       .eq('id', occupationProgramUnitId)
       .single(),
     payerIds.length
@@ -378,7 +378,7 @@ export async function addMentorOccupationProgram(
       : null,
     program_title: unit?.title ?? '-',
     school_level: category?.school_level ?? null,
-    material_cost_per_person: unit?.material_cost_per_person ?? null,
+    mentor_material_cost: unit?.mentor_material_cost ?? null,
     prep_by: unit?.prep_by ?? null,
     occupation_id: prog?.occupation_id ?? '',
     occupation_name: occData?.name ?? '-',
