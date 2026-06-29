@@ -159,6 +159,7 @@ export function InstitutionDetailClient({
                 <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">시작일시</th>
                 <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">종료일시</th>
                 <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-36">담당선생님</th>
+                <th className="px-4 py-2.5 w-16" />
               </tr>
             </thead>
             <tbody>
@@ -166,7 +167,11 @@ export function InstitutionDetailClient({
                 localEvents.map((event, index) => {
                   const status = getEventStatus(event)
                   return (
-                    <tr key={event.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
+                    <tr
+                      key={event.id}
+                      className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => router.push(`/events/${event.id}`)}
+                    >
                       <td className="px-4 py-2.5 text-center text-gray-500">{index + 1}</td>
                       <td className="px-4 py-2.5 text-center">
                         <span
@@ -183,12 +188,24 @@ export function InstitutionDetailClient({
                       <td className="px-4 py-2.5 text-center text-gray-600">{formatDateTime(event.event_start_at)}</td>
                       <td className="px-4 py-2.5 text-center text-gray-600">{formatDateTime(event.event_end_at)}</td>
                       <td className="px-4 py-2.5 text-center text-gray-600">{event.teacher_name ?? '-'}</td>
+                      <td className="px-4 py-2.5 text-center">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteEvent(event.id)
+                          }}
+                          className="text-xs text-red-400 hover:text-red-600"
+                        >
+                          삭제
+                        </button>
+                      </td>
                     </tr>
                   )
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-10 text-center text-gray-400">
+                  <td colSpan={7} className="py-10 text-center text-gray-400">
                     등록된 행사가 없습니다.
                   </td>
                 </tr>

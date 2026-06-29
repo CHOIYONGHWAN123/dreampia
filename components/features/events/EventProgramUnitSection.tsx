@@ -28,6 +28,27 @@ export function calcLectureFeeAfterTax(lectureFee: number | null): number | null
   return Math.round(lectureFee * (1 - 0.033))
 }
 
+// 유닛 -> 프로그램 -> 직종 -> 분야 경로를 조회 (기존에 저장된 행사 프로그램을 폼에 복원할 때 사용)
+export function buildUnitPath(
+  unit: UnitOption,
+  programs: ProgramOption[],
+  occupations: OccupationOption[],
+  fields: FieldOption[]
+) {
+  const program = unit.occupation_programs_id
+    ? programs.find((p) => p.id === unit.occupation_programs_id)
+    : undefined
+  const occupation = program?.occupation_id
+    ? occupations.find((o) => o.id === program.occupation_id)
+    : undefined
+  const field = occupation?.field_id ? fields.find((f) => f.id === occupation.field_id) : undefined
+  return {
+    fieldName: field?.name ?? '-',
+    occupationName: occupation?.name ?? '-',
+    programName: program?.name ?? '-',
+  }
+}
+
 const selCls =
   'border border-gray-300 rounded px-2 py-1.5 text-sm bg-white outline-none focus:border-gray-500 disabled:bg-gray-50 disabled:text-gray-400'
 const fieldInputCls =

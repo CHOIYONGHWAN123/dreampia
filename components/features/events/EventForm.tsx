@@ -13,10 +13,12 @@ import {
   INFLOW_SOURCES,
   INSTITUTION_TYPES,
 } from '@/lib/validations/event'
-import { createEvent } from '@/app/(dashboard)/events/actions'
+import { createEvent, updateEvent } from '@/app/(dashboard)/events/actions'
+import type { EventDetailData, EventScheduleRow, EventRowDetailData } from '@/app/(dashboard)/events/actions'
 import {
   EventProgramUnitSection,
   calcLectureFeeAfterTax,
+  buildUnitPath,
   type FieldOption,
   type OccupationOption,
   type ProgramOption,
@@ -64,6 +66,99 @@ interface Props {
   programs: ProgramOption[]
   units: UnitOption[]
   defaultInstitutionId?: string
+  eventId?: string
+  initialEvent?: EventDetailData
+  initialSchedules?: EventScheduleRow[]
+  initialEventRows?: EventRowDetailData[]
+  initialEstimateFileUrl?: string | null
+}
+
+function splitDateTime(value: string | null): { date: string; time: string } {
+  if (!value) return { date: '', time: '' }
+  const [date, timePart] = value.split('T')
+  return { date, time: timePart ? timePart.slice(0, 5) : '' }
+}
+
+function toDatetimeLocal(value: string | null): string {
+  return value ? value.slice(0, 16) : ''
+}
+
+function buildInitialProgramUnits(
+  initialEventRows: EventRowDetailData[] | undefined,
+  units: UnitOption[],
+  programs: ProgramOption[],
+  occupations: OccupationOption[],
+  fields: FieldOption[]
+): SelectedProgramUnit[] {
+  if (!initialEventRows || initialEventRows.length === 0) return []
+  return initialEventRows.map((r) => {
+    const unit = units.find((u) => u.id === r.occupation_program_unit_id)
+    const path = unit
+      ? buildUnitPath(unit, programs, occupations, fields)
+      : { fieldName: '-', occupationName: '-', programName: '-' }
+    return {
+      unitId: r.occupation_program_unit_id ?? '',
+      title: unit?.title ?? '-',
+      ...path,
+      startTime: toDatetimeLocal(r.start_time),
+      endTime: toDatetimeLocal(r.end_time),
+      classroom: r.classroom ?? '',
+      instructorWaitingRoom: r.instructor_waiting_room ?? '',
+      lectureFee: r.lecture_fee,
+      headcount: r.headcount,
+      sessionHeadcount: r.session_headcount,
+    }
+  })
+}
+
+function buildDefaultValues(
+  initialEvent: EventDetailData | undefined,
+  initialSchedules: EventScheduleRow[] | undefined,
+  today: string
+): Partial<EventFormData> {
+  if (!initialEvent) return { reception_date: today }
+
+  const start = splitDateTime(initialEvent.event_start_at)
+  const end = splitDateTime(initialEvent.event_end_at)
+  const findSchedule = (label: string) => initialSchedules?.find((s) => s.label === label)
+  const s1 = findSchedule('1교시')
+  const s2 = findSchedule('2교시')
+  const lunch = findSchedule('점심시간')
+
+  return {
+    reception_date: initialEvent.created_at.split('T')[0],
+    name: initialEvent.name,
+    campaign_id: initialEvent.campaign_id,
+    institution_id: initialEvent.institution_id,
+    event_start_at_date: start.date,
+    event_start_at_time: start.time,
+    event_end_at_date: end.date,
+    event_end_at_time: end.time,
+    target_grade: initialEvent.target_grade,
+    laptop_wifi_note: initialEvent.laptop_wifi_note,
+    crime_check_method: initialEvent.crime_check_method as EventFormData['crime_check_method'],
+    crime_check_info: initialEvent.crime_check_info,
+    indoor_shoes_note: initialEvent.indoor_shoes_note,
+    parking_note: initialEvent.parking_note,
+    student_rotation: initialEvent.student_rotation as EventFormData['student_rotation'],
+    notice: initialEvent.notice,
+    prep_note: initialEvent.prep_note,
+    memo: initialEvent.memo,
+    schedule_1_start: s1?.start_time ?? '',
+    schedule_1_end: s1?.end_time ?? '',
+    schedule_2_start: s2?.start_time ?? '',
+    schedule_2_end: s2?.end_time ?? '',
+    schedule_lunch_start: lunch?.start_time ?? '',
+    schedule_lunch_end: lunch?.end_time ?? '',
+    contact_name: initialEvent.contact_name,
+    contact_email: initialEvent.contact_email,
+    contact_phone: initialEvent.contact_phone,
+    inflow_source: initialEvent.inflow_source as EventFormData['inflow_source'],
+    institution_type: initialEvent.institution_type as EventFormData['institution_type'],
+    sales_admin_id: initialEvent.sales_admin_id,
+    budget: initialEvent.budget,
+    comm_admin_id: initialEvent.comm_admin_id,
+  }
 }
 
 const inputCls =
@@ -83,16 +178,24 @@ export function EventForm({
   programs,
   units,
   defaultInstitutionId,
+  eventId,
+  initialEvent,
+  initialSchedules,
+  initialEventRows,
+  initialEstimateFileUrl,
 }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isUploading, setIsUploading] = useState(false)
   const [estimateFile, setEstimateFile] = useState<File | null>(null)
-  const [programUnits, setProgramUnits] = useState<SelectedProgramUnit[]>([])
+  const [programUnits, setProgramUnits] = useState<SelectedProgramUnit[]>(() =>
+    buildInitialProgramUnits(initialEventRows, units, programs, occupations, fields)
+  )
 
-  const [institutionSearch, setInstitutionSearch] = useState('')
+  const initialInstitution = institutions.find((i) => i.id === initialEvent?.institution_id) ?? null
+  const [institutionSearch, setInstitutionSearch] = useState(initialInstitution?.name ?? '')
   const [showDropdown, setShowDropdown] = useState(false)
-  const [selectedInstitution, setSelectedInstitution] = useState<Institution | null>(null)
+  const [selectedInstitution, setSelectedInstitution] = useState<Institution | null>(initialInstitution)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const today = new Date().toISOString().split('T')[0]
@@ -104,7 +207,7 @@ export function EventForm({
     formState: { errors },
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
-    defaultValues: { reception_date: today },
+    defaultValues: buildDefaultValues(initialEvent, initialSchedules, today),
   })
 
   useEffect(() => {
@@ -159,7 +262,10 @@ export function EventForm({
 
   const onSubmit = (data: EventFormData) => {
     startTransition(async () => {
-      let estimateFileUrl: string | undefined
+      // 새 파일을 업로드하지 않으면 기존 견적서 경로를 그대로 유지한다.
+      let estimateFileUrl: string | undefined = eventId
+        ? initialEvent?.estimate_file_url ?? undefined
+        : undefined
       if (estimateFile) {
         setIsUploading(true)
         try {
@@ -190,47 +296,54 @@ export function EventForm({
         schedules.push({ label: '점심시간', start_time: data.schedule_lunch_start ?? '', end_time: data.schedule_lunch_end ?? '', sort_order: 3 })
       }
 
+      const payload = {
+        reception_date: data.reception_date,
+        name: data.name,
+        campaign_id: data.campaign_id,
+        institution_id: data.institution_id,
+        event_start_at: eventStartAt,
+        event_end_at: eventEndAt,
+        target_grade: data.target_grade,
+        laptop_wifi_note: data.laptop_wifi_note,
+        crime_check_method: data.crime_check_method,
+        crime_check_info: data.crime_check_info,
+        indoor_shoes_note: data.indoor_shoes_note,
+        parking_note: data.parking_note,
+        student_rotation: data.student_rotation,
+        notice: data.notice,
+        prep_note: data.prep_note,
+        memo: data.memo,
+        contact_name: data.contact_name,
+        contact_email: data.contact_email,
+        contact_phone: data.contact_phone,
+        inflow_source: data.inflow_source,
+        institution_type: data.institution_type,
+        sales_admin_id: data.sales_admin_id,
+        budget: data.budget,
+        estimate_file_url: estimateFileUrl,
+        comm_admin_id: data.comm_admin_id,
+        schedules,
+        eventRows: programUnits.map((u) => ({
+          occupation_program_unit_id: u.unitId,
+          start_time: u.startTime || null,
+          end_time: u.endTime || null,
+          classroom: u.classroom || null,
+          instructor_waiting_room: u.instructorWaitingRoom || null,
+          lecture_fee: u.lectureFee,
+          lecture_fee_after_tax: calcLectureFeeAfterTax(u.lectureFee),
+          headcount: u.headcount,
+          session_headcount: u.sessionHeadcount,
+        })),
+      }
+
       try {
-        await createEvent({
-          reception_date: data.reception_date,
-          name: data.name,
-          campaign_id: data.campaign_id,
-          institution_id: data.institution_id,
-          event_start_at: eventStartAt,
-          event_end_at: eventEndAt,
-          target_grade: data.target_grade,
-          laptop_wifi_note: data.laptop_wifi_note,
-          crime_check_method: data.crime_check_method,
-          crime_check_info: data.crime_check_info,
-          indoor_shoes_note: data.indoor_shoes_note,
-          parking_note: data.parking_note,
-          student_rotation: data.student_rotation,
-          notice: data.notice,
-          prep_note: data.prep_note,
-          memo: data.memo,
-          contact_name: data.contact_name,
-          contact_email: data.contact_email,
-          contact_phone: data.contact_phone,
-          inflow_source: data.inflow_source,
-          institution_type: data.institution_type,
-          sales_admin_id: data.sales_admin_id,
-          budget: data.budget,
-          estimate_file_url: estimateFileUrl,
-          comm_admin_id: data.comm_admin_id,
-          schedules,
-          eventRows: programUnits.map((u) => ({
-            occupation_program_unit_id: u.unitId,
-            start_time: u.startTime || null,
-            end_time: u.endTime || null,
-            classroom: u.classroom || null,
-            instructor_waiting_room: u.instructorWaitingRoom || null,
-            lecture_fee: u.lectureFee,
-            lecture_fee_after_tax: calcLectureFeeAfterTax(u.lectureFee),
-            headcount: u.headcount,
-            session_headcount: u.sessionHeadcount,
-          })),
-        })
-        router.push('/institutions')
+        if (eventId) {
+          await updateEvent(eventId, payload)
+          router.push(data.institution_id ? `/institutions/${data.institution_id}` : '/institutions')
+        } else {
+          await createEvent(payload)
+          router.push('/institutions')
+        }
       } catch {
         alert('저장에 실패했습니다.')
       }
@@ -243,7 +356,7 @@ export function EventForm({
     <div className="p-8 max-w-7xl">
       {/* 헤더 */}
       <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">행사 등록</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{eventId ? '행사 수정' : '행사 등록'}</h1>
         <div className="flex gap-2">
           <button
             type="button"
@@ -571,8 +684,19 @@ export function EventForm({
                 onChange={(e) => setEstimateFile(e.target.files?.[0] ?? null)}
                 className="w-full text-sm text-gray-600 file:mr-3 file:py-1 file:px-3 file:rounded file:border file:border-gray-300 file:text-xs file:bg-white file:text-gray-700 hover:file:bg-gray-50 cursor-pointer"
               />
-              {estimateFile && (
+              {estimateFile ? (
                 <p className="mt-1 text-xs text-gray-500">{estimateFile.name}</p>
+              ) : (
+                initialEstimateFileUrl && (
+                  <a
+                    href={initialEstimateFileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-block text-xs text-blue-500 hover:underline"
+                  >
+                    현재 견적서 보기
+                  </a>
+                )
               )}
             </div>
           </div>
