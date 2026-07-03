@@ -3,6 +3,45 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { revalidatePath } from 'next/cache'
 
+// ── 재고 차감 헬퍼 ─────────────────────────────────────────────────
+
+type Supabase = Awaited<ReturnType<typeof createServerSupabaseClient>>
+
+/** is_consumable=true인 준비물을 unitId 기준 Map으로 반환 */
+async function fetchConsumableSupplyMap(
+  supabase: Supabase,
+  unitIds: string[]
+): Promise<Map<string, { id: string; qty_per_person: number }>> {
+  if (unitIds.length === 0) return new Map()
+  const { data } = await supabase
+    .from('supplies')
+    .select('id, occupation_program_unit_id, qty_per_person')
+    .in('occupation_program_unit_id', unitIds)
+    .eq('is_consumable', true)
+  return new Map(
+    (data ?? []).map((s) => [
+      s.occupation_program_unit_id,
+      { id: s.id, qty_per_person: s.qty_per_person },
+    ])
+  )
+}
+
+type SupplyLogEntry = {
+  supply_id: string
+  stock_type: 'total'
+  delta: number
+  reason: string
+  event_id: string
+}
+
+async function insertSupplyLogs(supabase: Supabase, logs: SupplyLogEntry[]) {
+  if (logs.length === 0) return
+  const { error } = await supabase.from('supply_logs').insert(logs)
+  if (error) throw new Error(error.message)
+}
+
+// ──────────────────────────────────────────────────────────────────
+
 type ScheduleInput = {
   label: string
   start_time: string
@@ -249,6 +288,24 @@ export async function createEvent(data: {
       }))
     )
     if (rowsErr) throw new Error(rowsErr.message)
+
+    // is_consumable 준비물 재고 차감 (headcount × qty_per_person)
+    const unitIds = data.eventRows.map((r) => r.occupation_program_unit_id)
+    const supplyMap = await fetchConsumableSupplyMap(supabase, unitIds)
+    const supplyLogs: SupplyLogEntry[] = []
+    for (const r of data.eventRows) {
+      if (!r.headcount || r.headcount <= 0) continue
+      const supply = supplyMap.get(r.occupation_program_unit_id)
+      if (!supply) continue
+      supplyLogs.push({
+        supply_id: supply.id,
+        stock_type: 'total',
+        delta: -(r.headcount * supply.qty_per_person),
+        reason: '행사 재고 차감',
+        event_id: event.id,
+      })
+    }
+    await insertSupplyLogs(supabase, supplyLogs)
   }
 
   revalidatePath('/institutions')
@@ -345,22 +402,29 @@ export async function updateEvent(
   // occupation_program_unit_id 기준으로 매칭해 갱신하고, 폼에서 제거된 유닛만 삭제한다.
   const { data: existingRows, error: existingErr } = await supabase
     .from('event_rows')
-    .select('id, occupation_program_unit_id')
+    .select('id, occupation_program_unit_id, headcount')
     .eq('event_id', id)
   if (existingErr) throw new Error(existingErr.message)
 
   const existingByUnit = new Map(
-    (existingRows ?? []).map((r) => [r.occupation_program_unit_id, r.id])
+    (existingRows ?? []).map((r) => [r.occupation_program_unit_id, { id: r.id, headcount: r.headcount }])
   )
   const incomingUnitIds = new Set((data.eventRows ?? []).map((r) => r.occupation_program_unit_id))
 
-  const idsToDelete = (existingRows ?? [])
-    .filter((r) => !incomingUnitIds.has(r.occupation_program_unit_id))
-    .map((r) => r.id)
+  const rowsToDelete = (existingRows ?? []).filter((r) => !incomingUnitIds.has(r.occupation_program_unit_id))
+  const idsToDelete = rowsToDelete.map((r) => r.id)
   if (idsToDelete.length > 0) {
     const { error: delErr } = await supabase.from('event_rows').delete().in('id', idsToDelete)
     if (delErr) throw new Error(delErr.message)
   }
+
+  // 재고 조정에 필요한 전체 unitId 목록으로 is_consumable 준비물 조회
+  const allUnitIds = [
+    ...(data.eventRows ?? []).map((r) => r.occupation_program_unit_id),
+    ...rowsToDelete.map((r) => r.occupation_program_unit_id),
+  ]
+  const supplyMap = await fetchConsumableSupplyMap(supabase, [...new Set(allUnitIds)])
+  const supplyLogs: SupplyLogEntry[] = []
 
   for (const r of data.eventRows ?? []) {
     const fields = {
@@ -374,17 +438,60 @@ export async function updateEvent(
       session_headcount: r.session_headcount ?? null,
       mentor_id: r.mentor_id || null,
     }
-    const existingId = existingByUnit.get(r.occupation_program_unit_id)
-    if (existingId) {
-      const { error: updErr } = await supabase.from('event_rows').update(fields).eq('id', existingId)
+    const existing = existingByUnit.get(r.occupation_program_unit_id)
+    if (existing) {
+      const { error: updErr } = await supabase.from('event_rows').update(fields).eq('id', existing.id)
       if (updErr) throw new Error(updErr.message)
+
+      // headcount 변화분만큼 조정
+      const supply = supplyMap.get(r.occupation_program_unit_id)
+      if (supply) {
+        const diff = (r.headcount ?? 0) - (existing.headcount ?? 0)
+        if (diff !== 0) {
+          supplyLogs.push({
+            supply_id: supply.id,
+            stock_type: 'total',
+            delta: -(diff * supply.qty_per_person),
+            reason: diff > 0 ? '행사 인원 증가 재고 차감' : '행사 인원 감소 재고 복원',
+            event_id: id,
+          })
+        }
+      }
     } else {
       const { error: insErr } = await supabase
         .from('event_rows')
         .insert({ event_id: id, occupation_program_unit_id: r.occupation_program_unit_id, ...fields })
       if (insErr) throw new Error(insErr.message)
+
+      // 신규 추가 유닛 전량 차감
+      const supply = supplyMap.get(r.occupation_program_unit_id)
+      if (supply && (r.headcount ?? 0) > 0) {
+        supplyLogs.push({
+          supply_id: supply.id,
+          stock_type: 'total',
+          delta: -(r.headcount! * supply.qty_per_person),
+          reason: '행사 재고 차감',
+          event_id: id,
+        })
+      }
     }
   }
+
+  // 제거된 유닛 재고 복원
+  for (const removed of rowsToDelete) {
+    const supply = supplyMap.get(removed.occupation_program_unit_id)
+    if (supply && (removed.headcount ?? 0) > 0) {
+      supplyLogs.push({
+        supply_id: supply.id,
+        stock_type: 'total',
+        delta: +(removed.headcount! * supply.qty_per_person),
+        reason: '행사 프로그램 제거 재고 복원',
+        event_id: id,
+      })
+    }
+  }
+
+  await insertSupplyLogs(supabase, supplyLogs)
 
   revalidatePath('/institutions')
   revalidatePath(`/events/${id}`)
