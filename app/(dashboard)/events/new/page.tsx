@@ -34,6 +34,7 @@ export default async function NewEventPage({
       occupations={programSelectData.occupations}
       programs={programSelectData.programs}
       units={programSelectData.units}
+      mentorsByUnit={programSelectData.mentorsByUnit}
       defaultInstitutionId={institutionId}
     />
   )

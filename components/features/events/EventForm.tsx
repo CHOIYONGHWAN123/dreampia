@@ -23,6 +23,7 @@ import {
   type OccupationOption,
   type ProgramOption,
   type UnitOption,
+  type MentorOption,
   type SelectedProgramUnit,
 } from './EventProgramUnitSection'
 
@@ -65,6 +66,7 @@ interface Props {
   occupations: OccupationOption[]
   programs: ProgramOption[]
   units: UnitOption[]
+  mentorsByUnit: Record<string, MentorOption[]>
   defaultInstitutionId?: string
   eventId?: string
   initialEvent?: EventDetailData
@@ -107,6 +109,7 @@ function buildInitialProgramUnits(
       lectureFee: r.lecture_fee,
       headcount: r.headcount,
       sessionHeadcount: r.session_headcount,
+      mentorId: r.mentor_id,
     }
   })
 }
@@ -177,6 +180,7 @@ export function EventForm({
   occupations,
   programs,
   units,
+  mentorsByUnit,
   defaultInstitutionId,
   eventId,
   initialEvent,
@@ -333,6 +337,7 @@ export function EventForm({
           lecture_fee_after_tax: calcLectureFeeAfterTax(u.lectureFee),
           headcount: u.headcount,
           session_headcount: u.sessionHeadcount,
+          mentor_id: u.mentorId || null,
         })),
       }
 
@@ -734,6 +739,7 @@ export function EventForm({
           occupations={occupations}
           programs={programs}
           units={units}
+          mentorsByUnit={mentorsByUnit}
           value={programUnits}
           onChange={setProgramUnits}
         />

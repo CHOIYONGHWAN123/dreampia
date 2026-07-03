@@ -6,6 +6,7 @@ export type FieldOption = { id: string; name: string }
 export type OccupationOption = { id: string; name: string; field_id: string | null }
 export type ProgramOption = { id: string; name: string; occupation_id: string | null }
 export type UnitOption = { id: string; title: string; occupation_programs_id: string | null }
+export type MentorOption = { id: string; name: string; score: number | null; belongsToName: string | null }
 
 export type SelectedProgramUnit = {
   unitId: string
@@ -20,6 +21,7 @@ export type SelectedProgramUnit = {
   lectureFee: number | null
   headcount: number | null
   sessionHeadcount: number | null
+  mentorId: string | null
 }
 
 // 강사료 3.3% 원천징수 후 세후 강의료
@@ -60,6 +62,7 @@ export function EventProgramUnitSection({
   occupations,
   programs,
   units,
+  mentorsByUnit,
   value,
   onChange,
 }: {
@@ -67,6 +70,7 @@ export function EventProgramUnitSection({
   occupations: OccupationOption[]
   programs: ProgramOption[]
   units: UnitOption[]
+  mentorsByUnit: Record<string, MentorOption[]>
   value: SelectedProgramUnit[]
   onChange: (next: SelectedProgramUnit[]) => void
 }) {
@@ -125,6 +129,7 @@ export function EventProgramUnitSection({
         lectureFee: null,
         headcount: null,
         sessionHeadcount: null,
+        mentorId: null,
       },
     ])
   }
@@ -258,6 +263,7 @@ export function EventProgramUnitSection({
         ) : (
           value.map((v) => {
             const lectureFeeAfterTax = calcLectureFeeAfterTax(v.lectureFee)
+            const candidateMentors = mentorsByUnit[v.unitId] ?? []
             return (
               <div key={v.unitId} className="border border-gray-200 rounded p-3 space-y-2">
                 <div className="flex items-center justify-between">
@@ -274,6 +280,25 @@ export function EventProgramUnitSection({
                   >
                     삭제
                   </button>
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-500 mb-0.5 block">강사 선택</label>
+                  <select
+                    value={v.mentorId ?? ''}
+                    onChange={(e) => updateUnit(v.unitId, { mentorId: e.target.value || null })}
+                    className={fieldInputCls}
+                  >
+                    <option value="">선택안함</option>
+                    {candidateMentors.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} (점수: {m.score ?? '-'} / 소속: {m.belongsToName ?? '개인'})
+                      </option>
+                    ))}
+                  </select>
+                  {candidateMentors.length === 0 && (
+                    <p className="mt-0.5 text-xs text-gray-400">이 프로그램에 배정 가능한 강사가 없습니다.</p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-4 gap-2">

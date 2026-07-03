@@ -20,6 +20,14 @@ type EventRowInput = {
   lecture_fee_after_tax?: number | null
   headcount?: number | null
   session_headcount?: number | null
+  mentor_id?: string | null
+}
+
+export type MentorOptionForUnit = {
+  id: string
+  name: string
+  score: number | null
+  belongsToName: string | null
 }
 
 export type EventProgramSelectData = {
@@ -27,6 +35,7 @@ export type EventProgramSelectData = {
   occupations: { id: string; name: string; field_id: string | null }[]
   programs: { id: string; name: string; occupation_id: string | null }[]
   units: { id: string; title: string; occupation_programs_id: string | null }[]
+  mentorsByUnit: Record<string, MentorOptionForUnit[]>
 }
 
 const EVENT_DETAIL_COLUMNS =
@@ -76,6 +85,7 @@ export type EventRowDetailData = {
   lecture_fee: number | null
   headcount: number | null
   session_headcount: number | null
+  mentor_id: string | null
 }
 
 export async function getEventDetail(id: string): Promise<{
@@ -90,7 +100,7 @@ export async function getEventDetail(id: string): Promise<{
     supabase
       .from('event_rows')
       .select(
-        'occupation_program_unit_id, start_time, end_time, classroom, instructor_waiting_room, lecture_fee, headcount, session_headcount'
+        'occupation_program_unit_id, start_time, end_time, classroom, instructor_waiting_room, lecture_fee, headcount, session_headcount, mentor_id'
       )
       .eq('event_id', id),
   ])
@@ -100,17 +110,37 @@ export async function getEventDetail(id: string): Promise<{
 
 export async function getEventProgramSelectData(): Promise<EventProgramSelectData> {
   const supabase = await createServerSupabaseClient()
-  const [fieldsRes, occsRes, progsRes, unitsRes] = await Promise.all([
+  const [fieldsRes, occsRes, progsRes, unitsRes, mopRes, mentorsRes] = await Promise.all([
     supabase.from('fields').select('id, name').order('name'),
     supabase.from('occupations').select('id, name, field_id').order('name'),
     supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
     supabase.from('occupation_program_unit').select('id, title, occupation_programs_id').order('title'),
+    supabase.from('mentor_occupation_programs').select('mentor_id, occupation_program_unit_id'),
+    supabase.from('mentors').select('id, name, score, belongs_to'),
   ])
+
+  const mentorMap = new Map((mentorsRes.data ?? []).map((m) => [m.id, m]))
+  const mentorsByUnit: Record<string, MentorOptionForUnit[]> = {}
+  for (const row of mopRes.data ?? []) {
+    if (!row.occupation_program_unit_id || !row.mentor_id) continue
+    const mentor = mentorMap.get(row.mentor_id)
+    if (!mentor) continue
+    const list = mentorsByUnit[row.occupation_program_unit_id] ?? []
+    list.push({
+      id: mentor.id,
+      name: mentor.name,
+      score: mentor.score,
+      belongsToName: mentor.belongs_to ? mentorMap.get(mentor.belongs_to)?.name ?? null : null,
+    })
+    mentorsByUnit[row.occupation_program_unit_id] = list
+  }
+
   return {
     fields: fieldsRes.data ?? [],
     occupations: (occsRes.data ?? []) as { id: string; name: string; field_id: string | null }[],
     programs: (progsRes.data ?? []) as { id: string; name: string; occupation_id: string | null }[],
     units: unitsRes.data ?? [],
+    mentorsByUnit,
   }
 }
 
@@ -215,6 +245,7 @@ export async function createEvent(data: {
         lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
         headcount: r.headcount ?? null,
         session_headcount: r.session_headcount ?? null,
+        mentor_id: r.mentor_id || null,
       }))
     )
     if (rowsErr) throw new Error(rowsErr.message)
@@ -310,7 +341,7 @@ export async function updateEvent(
     if (schedErr) throw new Error(schedErr.message)
   }
 
-  // event_rows는 mentor_id/attendance 등 폼 외부에서 채워지는 값이 있으므로
+  // event_rows는 attendance 등 폼 외부에서 채워지는 값이 있으므로 통째로 갈아엎지 않고
   // occupation_program_unit_id 기준으로 매칭해 갱신하고, 폼에서 제거된 유닛만 삭제한다.
   const { data: existingRows, error: existingErr } = await supabase
     .from('event_rows')
@@ -341,6 +372,7 @@ export async function updateEvent(
       lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
       headcount: r.headcount ?? null,
       session_headcount: r.session_headcount ?? null,
+      mentor_id: r.mentor_id || null,
     }
     const existingId = existingByUnit.get(r.occupation_program_unit_id)
     if (existingId) {

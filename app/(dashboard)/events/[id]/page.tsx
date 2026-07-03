@@ -43,6 +43,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       occupations={programSelectData.occupations}
       programs={programSelectData.programs}
       units={programSelectData.units}
+      mentorsByUnit={programSelectData.mentorsByUnit}
       eventId={id}
       initialEvent={detail.event}
       initialSchedules={detail.schedules}
