@@ -936,6 +936,102 @@ export type Database = {
         }
         Relationships: []
       }
+      supplies: {
+        Row: {
+          id: string
+          is_consumable: boolean
+          kit_threshold: number | null
+          max_daily_stock: number | null
+          memo: string | null
+          occupation_program_unit_id: string | null
+          qty_per_person: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          is_consumable?: boolean
+          kit_threshold?: number | null
+          max_daily_stock?: number | null
+          memo?: string | null
+          occupation_program_unit_id?: string | null
+          qty_per_person?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          is_consumable?: boolean
+          kit_threshold?: number | null
+          max_daily_stock?: number | null
+          memo?: string | null
+          occupation_program_unit_id?: string | null
+          qty_per_person?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplies_occupation_program_unit_id_fkey"
+            columns: ["occupation_program_unit_id"]
+            isOneToOne: false
+            referencedRelation: "occupation_program_unit"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supply_logs: {
+        Row: {
+          admin_id: string | null
+          created_at: string
+          delta: number
+          event_id: string | null
+          id: string
+          reason: string | null
+          stock_type: Database["public"]["Enums"]["stock_type"]
+          supply_id: string | null
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string
+          delta: number
+          event_id?: string | null
+          id?: string
+          reason?: string | null
+          stock_type: Database["public"]["Enums"]["stock_type"]
+          supply_id?: string | null
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string
+          delta?: number
+          event_id?: string | null
+          id?: string
+          reason?: string | null
+          stock_type?: Database["public"]["Enums"]["stock_type"]
+          supply_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supply_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supply_logs_supply_id_fkey"
+            columns: ["supply_id"]
+            isOneToOne: false
+            referencedRelation: "supplies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       terms: {
         Row: {
           effective_at: string
@@ -997,6 +1093,7 @@ export type Database = {
       prep_by: "강사" | "드림피아" | "모두가능"
       recruit_status: "섭외대기" | "섭외진행중" | "섭외완료"
       school_level: "초등" | "중고등" | "유치원"
+      stock_type: "total" | "kit"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1157,6 +1254,7 @@ export const Constants = {
       prep_by: ["강사", "드림피아", "모두가능"],
       recruit_status: ["섭외대기", "섭외진행중", "섭외완료"],
       school_level: ["초등", "중고등", "유치원"],
+      stock_type: ["total", "kit"],
     },
   },
 } as const

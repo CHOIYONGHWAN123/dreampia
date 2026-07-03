@@ -239,8 +239,7 @@ Table lesson_plans{
 
 Table supplies {
   id                    uuid      [pk, default: `gen_random_uuid()`]
-  occupation_program_id uuid      [ref: > occupation_programs.id]
-  field                 varchar   [note: '분야 예: 마술사']
+  occupation_program_unit_id uuid    [ref: > occupation_program_unit.id]
   qty_per_person        integer   [not null, default: 1, note: '1인당 수량']
   kit_threshold         integer   [note: '키트재고 경고 기준값']
   max_daily_stock       integer   [note: '일 최대 수용 재고']
@@ -262,7 +261,7 @@ Table supply_logs {
   event_id   uuid      [ref: > events.id, note: '행사로 인한 변동이면 연결']
   stock_type stock_type [not null]
   delta      integer   [not null, note: '양수=입고, 음수=출고']
-  reason     text      [note: '변동 사유 예: 행사출고, 신규입고, 파손폐기']
+  reason     text      [note: '변동 사유 예: 행사출고, 신규입고, 파손폐기', '직접 수정']
   created_at timestamp [not null, default: `now()`]
 }
 

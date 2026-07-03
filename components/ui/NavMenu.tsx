@@ -13,6 +13,7 @@ const menus = [
   { href: '/institutions', label: '기관' },
   { href: '/mentors', label: '강사' },
   { href: '/programs', label: '프로그램' },
+  { href: '/supplies', label: '준비물 관리' },
 ]
 
 export function NavMenu() {
