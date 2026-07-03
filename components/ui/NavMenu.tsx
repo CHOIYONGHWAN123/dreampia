@@ -4,12 +4,13 @@ import { usePathname } from 'next/navigation'
 
 const menus = [
   { href: '/dashboard', label: '대시보드' },
+  { href: '/counter', label: '카운터 관리' },
   { href: '/company-info', label: '회사소개' },
   { href: '/terms', label: '이용약관' },
   { href: '/announcements', label: '공지사항' },
-  { href: '/banners', label: '배너 관리' },
-  { href: '/campaigns', label: '행사명 관리' },
-  { href: '/institutions', label: '기관 관리' },
+  { href: '/banners', label: '배너' },
+  { href: '/campaigns', label: '행사명' },
+  { href: '/institutions', label: '기관' },
   { href: '/mentors', label: '강사' },
   { href: '/programs', label: '프로그램' },
 ]
