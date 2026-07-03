@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { deleteEvent } from '@/app/(dashboard)/events/actions'
 
 type Institution = {
   id: string
@@ -82,8 +83,12 @@ export function InstitutionDetailClient({
 
   const handleDeleteEvent = async (eventId: string) => {
     if (!confirm('이 행사를 삭제하시겠습니까?')) return
-    const { error } = await supabase.from('events').delete().eq('id', eventId)
-    if (!error) setLocalEvents((prev) => prev.filter((e) => e.id !== eventId))
+    try {
+      await deleteEvent(eventId)
+      setLocalEvents((prev) => prev.filter((e) => e.id !== eventId))
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+    }
   }
 
   const handleEstimateUpload = async (eventId: string, file: File) => {

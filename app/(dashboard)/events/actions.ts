@@ -496,3 +496,38 @@ export async function updateEvent(
   revalidatePath('/institutions')
   revalidatePath(`/events/${id}`)
 }
+
+export async function deleteEvent(id: string) {
+  const supabase = await createServerSupabaseClient()
+
+  // 삭제 전 event_rows 조회 → 차감됐던 재고 복원
+  const { data: rows } = await supabase
+    .from('event_rows')
+    .select('occupation_program_unit_id, headcount')
+    .eq('event_id', id)
+
+  if (rows && rows.length > 0) {
+    const unitIds = rows.map((r) => r.occupation_program_unit_id).filter(Boolean) as string[]
+    const supplyMap = await fetchConsumableSupplyMap(supabase, unitIds)
+    const supplyLogs: SupplyLogEntry[] = []
+
+    for (const r of rows) {
+      if (!r.occupation_program_unit_id || (r.headcount ?? 0) <= 0) continue
+      const supply = supplyMap.get(r.occupation_program_unit_id)
+      if (!supply) continue
+      supplyLogs.push({
+        supply_id: supply.id,
+        stock_type: 'total',
+        delta: +(r.headcount! * supply.qty_per_person),
+        reason: '행사 삭제 재고 복원',
+        event_id: id,
+      })
+    }
+    await insertSupplyLogs(supabase, supplyLogs)
+  }
+
+  const { error } = await supabase.from('events').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/institutions')
+}
