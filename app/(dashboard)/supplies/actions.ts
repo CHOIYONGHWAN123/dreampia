@@ -69,3 +69,20 @@ export async function updateSupply(
   if (error) throw new Error(error.message)
   revalidatePath('/supplies')
 }
+
+export async function adjustStock(payload: {
+  supplyId: string
+  stockType: 'total' | 'kit'
+  delta: number
+  reason: string | null
+}) {
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase.from('supply_logs').insert({
+    supply_id: payload.supplyId,
+    stock_type: payload.stockType,
+    delta: payload.delta,
+    reason: payload.reason || null,
+  })
+  if (error) throw new Error(error.message)
+  revalidatePath('/supplies')
+}

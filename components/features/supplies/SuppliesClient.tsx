@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { SupplyFormPopup } from './SupplyFormPopup'
+import { StockAdjustPopup } from './StockAdjustPopup'
 
 export type UnitWithSupply = {
   id: string
@@ -47,12 +49,18 @@ function StockStatus({ current, threshold, dangerWhenBelow }: { current: number;
 }
 
 export function SuppliesClient({ units, fields }: Props) {
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [filterFieldId, setFilterFieldId] = useState('')
   const [filterOccupationId, setFilterOccupationId] = useState('')
   const [filterProgramId, setFilterProgramId] = useState('')
   const [popup, setPopup] = useState<{ unitId: string; unitTitle: string; supply: UnitWithSupply['supply'] } | null>(null)
-  const [reloadKey, setReloadKey] = useState(0)
+  const [adjustPopup, setAdjustPopup] = useState<{
+    supplyId: string
+    unitTitle: string
+    totalStock: number
+    kitStock: number
+  } | null>(null)
 
   const occupations = useMemo(() => {
     const seen = new Map<string, NavOption>()
@@ -158,13 +166,14 @@ export function SuppliesClient({ units, fields }: Props) {
               <th className={thCls} style={{ width: 90 }}>키트 재고 상태</th>
               <th className={thCls} style={{ width: 96 }}>일 최대 수용</th>
               <th className={thCls} style={{ width: 96 }}>일 최대 수용 상태</th>
+              <th className={thCls} style={{ width: 80 }}>재고 조정</th>
               <th className={thCls} style={{ width: 80 }}>수정하기</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={12} className="py-16 text-center text-gray-400">
+                <td colSpan={13} className="py-16 text-center text-gray-400">
                   {search || filterFieldId ? '검색 결과가 없습니다.' : '등록된 프로그램 유닛이 없습니다.'}
                 </td>
               </tr>
@@ -173,7 +182,7 @@ export function SuppliesClient({ units, fields }: Props) {
                 const freeStock = u.totalStock - u.kitStock
                 const hasSup = !!u.supply
                 return (
-                  <tr key={`${u.id}-${reloadKey}`} className="hover:bg-gray-50">
+                  <tr key={u.id} className="hover:bg-gray-50">
                     <td className={td}>{i + 1}</td>
                     <td className={td}>{u.fieldName}</td>
                     <td className={td}>{u.occupationName}</td>
@@ -196,8 +205,27 @@ export function SuppliesClient({ units, fields }: Props) {
                         </td>
                       </>
                     ) : (
-                      <td colSpan={6} className={td}>
+                      <td colSpan={7} className={td}>
                         <span className="text-gray-400 text-xs">재고 미등록</span>
+                      </td>
+                    )}
+
+                    {hasSup && (
+                      <td className={td}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAdjustPopup({
+                              supplyId: u.supply!.id,
+                              unitTitle: u.title,
+                              totalStock: u.totalStock,
+                              kitStock: u.kitStock,
+                            })
+                          }
+                          className="px-2 py-0.5 text-xs border border-blue-300 text-blue-600 rounded hover:bg-blue-50 transition-colors whitespace-nowrap"
+                        >
+                          재고 조정
+                        </button>
                       </td>
                     )}
 
@@ -224,7 +252,18 @@ export function SuppliesClient({ units, fields }: Props) {
           unitTitle={popup.unitTitle}
           initial={popup.supply}
           onClose={() => setPopup(null)}
-          onSaved={() => setReloadKey((k) => k + 1)}
+          onSaved={() => router.refresh()}
+        />
+      )}
+
+      {adjustPopup && (
+        <StockAdjustPopup
+          supplyId={adjustPopup.supplyId}
+          unitTitle={adjustPopup.unitTitle}
+          totalStock={adjustPopup.totalStock}
+          kitStock={adjustPopup.kitStock}
+          onClose={() => setAdjustPopup(null)}
+          onSaved={() => router.refresh()}
         />
       )}
     </div>
