@@ -323,19 +323,23 @@ export type Database = {
           contact_name: string | null
           contact_phone: string | null
           contract_status: string | null
-          contract_type: string | null
+          contract_type: Database["public"]["Enums"]["contract_type"] | null
           created_at: string
           crime_check_info: string | null
           crime_check_method:
             | Database["public"]["Enums"]["crime_check_method"]
             | null
           crime_check_notified: boolean | null
-          crime_check_status: string | null
+          crime_check_status:
+            | Database["public"]["Enums"]["crime_check_status"]
+            | null
           estimate_file_url: string | null
           event_check_status: number
           event_end_at: string | null
           event_start_at: string | null
+          field_admin_id: string | null
           floor_map_url: string | null
+          group_chat_link: string | null
           group_chat_status: string | null
           has_elevator: boolean | null
           id: string
@@ -369,7 +373,7 @@ export type Database = {
           school_request_delivered: boolean | null
           start_recruit_at: string | null
           student_rotation: string | null
-          supplies_status: string | null
+          supplies_status: Database["public"]["Enums"]["supplies_status"] | null
           target_grade: string | null
           teacher_name: string | null
         }
@@ -385,19 +389,23 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           contract_status?: string | null
-          contract_type?: string | null
+          contract_type?: Database["public"]["Enums"]["contract_type"] | null
           created_at?: string
           crime_check_info?: string | null
           crime_check_method?:
             | Database["public"]["Enums"]["crime_check_method"]
             | null
           crime_check_notified?: boolean | null
-          crime_check_status?: string | null
+          crime_check_status?:
+            | Database["public"]["Enums"]["crime_check_status"]
+            | null
           estimate_file_url?: string | null
           event_check_status?: number
           event_end_at?: string | null
           event_start_at?: string | null
+          field_admin_id?: string | null
           floor_map_url?: string | null
+          group_chat_link?: string | null
           group_chat_status?: string | null
           has_elevator?: boolean | null
           id?: string
@@ -431,7 +439,9 @@ export type Database = {
           school_request_delivered?: boolean | null
           start_recruit_at?: string | null
           student_rotation?: string | null
-          supplies_status?: string | null
+          supplies_status?:
+            | Database["public"]["Enums"]["supplies_status"]
+            | null
           target_grade?: string | null
           teacher_name?: string | null
         }
@@ -447,19 +457,23 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           contract_status?: string | null
-          contract_type?: string | null
+          contract_type?: Database["public"]["Enums"]["contract_type"] | null
           created_at?: string
           crime_check_info?: string | null
           crime_check_method?:
             | Database["public"]["Enums"]["crime_check_method"]
             | null
           crime_check_notified?: boolean | null
-          crime_check_status?: string | null
+          crime_check_status?:
+            | Database["public"]["Enums"]["crime_check_status"]
+            | null
           estimate_file_url?: string | null
           event_check_status?: number
           event_end_at?: string | null
           event_start_at?: string | null
+          field_admin_id?: string | null
           floor_map_url?: string | null
+          group_chat_link?: string | null
           group_chat_status?: string | null
           has_elevator?: boolean | null
           id?: string
@@ -493,7 +507,9 @@ export type Database = {
           school_request_delivered?: boolean | null
           start_recruit_at?: string | null
           student_rotation?: string | null
-          supplies_status?: string | null
+          supplies_status?:
+            | Database["public"]["Enums"]["supplies_status"]
+            | null
           target_grade?: string | null
           teacher_name?: string | null
         }
@@ -508,6 +524,13 @@ export type Database = {
           {
             foreignKeyName: "events_comm_admin_id_fkey"
             columns: ["comm_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_field_admin_id_fkey"
+            columns: ["field_admin_id"]
             isOneToOne: false
             referencedRelation: "admins"
             referencedColumns: ["id"]
@@ -1066,7 +1089,9 @@ export type Database = {
     }
     Enums: {
       area: "부산" | "김해" | "울산" | "창원"
+      contract_type: "학교장터" | "수의계약" | "MyDesk" | "페이백" | "나라장터"
       crime_check_method: "회보서" | "동의서"
+      crime_check_status: "불필요" | "진행전" | "취합중" | "완료"
       experience_type: "직업체험" | "문화예술체험"
       grade: "유치원" | "초등학교" | "중학교" | "고등학교"
       inflow_source:
@@ -1094,6 +1119,15 @@ export type Database = {
       recruit_status: "섭외대기" | "섭외진행중" | "섭외완료"
       school_level: "초등" | "중고등" | "유치원"
       stock_type: "total" | "kit"
+      supplies_status:
+        | "준비 완료"
+        | "체크 전"
+        | "재고 이상무"
+        | "재고 파악"
+        | "주문 필요"
+        | "택배 예정"
+        | "택배 발송"
+        | "회수 필요"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1225,7 +1259,9 @@ export const Constants = {
   public: {
     Enums: {
       area: ["부산", "김해", "울산", "창원"],
+      contract_type: ["학교장터", "수의계약", "MyDesk", "페이백", "나라장터"],
       crime_check_method: ["회보서", "동의서"],
+      crime_check_status: ["불필요", "진행전", "취합중", "완료"],
       experience_type: ["직업체험", "문화예술체험"],
       grade: ["유치원", "초등학교", "중학교", "고등학교"],
       inflow_source: [
@@ -1255,6 +1291,16 @@ export const Constants = {
       recruit_status: ["섭외대기", "섭외진행중", "섭외완료"],
       school_level: ["초등", "중고등", "유치원"],
       stock_type: ["total", "kit"],
+      supplies_status: [
+        "준비 완료",
+        "체크 전",
+        "재고 이상무",
+        "재고 파악",
+        "주문 필요",
+        "택배 예정",
+        "택배 발송",
+        "회수 필요",
+      ],
     },
   },
 } as const

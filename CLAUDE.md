@@ -233,7 +233,7 @@ Table supply_logs {
   id         uuid      [pk, default: `gen_random_uuid()`]
   supply_id  uuid      [ref: > supplies.id]
   admin_id   uuid      [ref: > admins.id, note: '처리한 관리자']
-  event_id   uuid      [ref: > events.id, note: '행사로 인한 변동이면 연결']
+  event_row_id   uuid      [ref: > event_rows.id, note: '행사로 인한 변동이면 연결']
   stock_type stock_type [not null]
   delta      integer   [not null, note: '양수=입고, 음수=출고']
   reason     text      [note: '변동 사유 예: 행사출고, 신규입고, 파손폐기', '직접 수정']
@@ -286,6 +286,35 @@ Table campaign {
   content  text    
 }
 
+enum contract_type{
+  "학교장터"
+  "수의계약"
+  "MyDesk"
+  "페이백"
+  "나라장터"
+}
+
+
+enum supplies_status{
+  "준비 완료"
+  "체크 전"
+  "재고 이상무"
+  "재고 파악"
+  "주문 필요"
+  "택배 예정"
+  "택배 발송"
+  "회수 필요"
+}
+
+enum crime_check_status {
+  "불필요"
+  "진행전"
+  "취합중"
+  "완료"
+}
+
+
+
 
 Table events {
   id                uuid      [pk, default: `gen_random_uuid()`]
@@ -294,6 +323,9 @@ Table events {
   occupation_program_id        uuid      [ref: > occupation_programs.id]
   sales_admin_id    uuid      [ref: > admins.id, note: '영업담당자']
   comm_admin_id     uuid      [ref: > admins.id, note: '소통담당자']
+  field_admin_id.   uuid       [ref: > admins.id, note: '현장담당자']
+  budget            integer [note : '예산']
+  contract_type     contract_type
   name              varchar   [not null]
   requested_dates   date[]    [note: '행사 요청일 배열']
   event_start_at          timestamp [note: '행사 시작 일시']
@@ -302,8 +334,8 @@ Table events {
   laptop_wifi_note    text    [note: 노트북/와이파이]
   crime_check_method  crime_check_method [note: '회보서 or 동의서']
   crime_check_info    text    [note: '기관아이디/검증번호']
-  crime_check_notified boolean [default: false]
-  crime_check_status  varchar
+  crime_check_notified boolean [default: false, note: '회보서 등록 알림']
+  crime_check_status  crime_check_status
   indoor_shoes_note   text
   parking_note        text
   student_rotation    varchar [note: '1교시마다/2교시마다 변경']
@@ -314,20 +346,19 @@ Table events {
   contact_email       varchar [note: '담당자 이메일']
   contact_phone       varchar [note: '담당자 연락처']
   inflow_source       inflow_source [note: '유입경로']
-  budget              integer [note: '예산']
+  event_notice_1_week_prior boolean
   estimate_file_url   varchar [note: '견적서 파일 URL']
   recruit_start_date  date
   comm_content        text    [note: '소통 내용']
-  contract_type       varchar
   contract_status     varchar
-  supplies_status     varchar [note: '체크전/재고이상무/준비완료 등']
+  supplies_status     supplies_status [note: '체크전/재고이상무/준비완료 등']
   recruit_status      recruit_status [note: '섭외대기/섭외진행중/섭외완료']
   institution_request_status      recruit_status [note: '예정/전달/회신']
   start_recruit_at    timestamp [note: '강사 섭외 시작일']   
   recruit_delivered   boolean [default: false, note: '강사섭외 전달 여부']
   school_request_delivered boolean [default: false]
   admin_docs          text    [note: '행정서류']
-  admin_docs_delivered boolean [default: false]
+  admin_docs_delivered boolean [default: false, note: '행정서류 전달여부']
   remarks             text    [note: '비고']
   group_chat_status   varchar [note: '개설전/완료']
   payment_confirmed   boolean [default: false]
@@ -340,6 +371,7 @@ Table events {
   instructor_waiting_room varchar [note: '강사대기실 예: 2층 2학년 학년연구실']
   has_elevator        boolean [note: '엘리베이터 유무']
   floor_map_url       varchar [note: '학교 배치도 파일 URL']
+  group_chat_link varchar
   created_at          timestamp [not null, default: `now()`]
   
 }
