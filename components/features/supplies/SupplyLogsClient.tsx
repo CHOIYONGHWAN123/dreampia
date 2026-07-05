@@ -77,6 +77,40 @@ export function SupplyLogsClient({ logs, supplyOptions, defaultSupplyId }: Props
   const totalAdded = filtered.filter((l) => l.delta > 0).reduce((s, l) => s + l.delta, 0)
   const totalSubtracted = filtered.filter((l) => l.delta < 0).reduce((s, l) => s + l.delta, 0)
 
+  const exportCSV = () => {
+    const headers = [
+      'NO', '일시', '프로그램 유닛', '재고 유형', '변동량', '사유',
+      '지역1', '지역2', '기관명', '행사구분', '강사명', '시작시간', '종료시간', '수량',
+    ]
+    const rows = filtered.map((log, i) => [
+      i + 1,
+      formatDateTime(log.createdAt),
+      log.unitTitle,
+      STOCK_TYPE_LABEL[log.stockType],
+      log.delta,
+      log.reason ?? '',
+      log.region1 ?? '',
+      log.region2 ?? '',
+      log.institutionName ?? '',
+      log.campaignName ?? '',
+      log.mentorName ?? '',
+      formatDateTime(log.startTime),
+      formatDateTime(log.endTime),
+      log.headcount ?? '',
+    ])
+    const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const csv = [headers, ...rows].map((row) => row.map(escape).join(',')).join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `재고변동이력_${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   const thCls = 'px-2 py-2.5 text-xs font-medium text-gray-600 text-center bg-amber-50 border-b border-r border-gray-200 whitespace-nowrap'
   const td = 'px-2 py-2.5 text-xs text-gray-700 text-center border-b border-r border-gray-100 align-middle'
   const tdDash = <span className="text-gray-300">-</span>
@@ -232,6 +266,22 @@ export function SupplyLogsClient({ logs, supplyOptions, defaultSupplyId }: Props
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* 엑셀 내보내기 */}
+      <div className="flex justify-end mt-4">
+        <button
+          type="button"
+          onClick={exportCSV}
+          disabled={filtered.length === 0}
+          className="flex items-center gap-2 px-4 py-2 text-sm border border-green-400 text-green-700 rounded hover:bg-green-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          엑셀 다운로드 ({filtered.length}건)
+        </button>
       </div>
     </div>
   )
