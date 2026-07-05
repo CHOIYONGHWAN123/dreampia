@@ -31,7 +31,7 @@ type SupplyLogEntry = {
   stock_type: 'total'
   delta: number
   reason: string
-  event_id: string
+  event_row_id: string
 }
 
 async function insertSupplyLogs(supabase: Supabase, logs: SupplyLogEntry[]) {
@@ -272,22 +272,31 @@ export async function createEvent(data: {
   }
 
   if (data.eventRows && data.eventRows.length > 0) {
-    const { error: rowsErr } = await supabase.from('event_rows').insert(
-      data.eventRows.map((r) => ({
-        event_id: event.id,
-        occupation_program_unit_id: r.occupation_program_unit_id,
-        start_time: r.start_time || null,
-        end_time: r.end_time || null,
-        classroom: r.classroom || null,
-        instructor_waiting_room: r.instructor_waiting_room || null,
-        lecture_fee: r.lecture_fee ?? null,
-        lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
-        headcount: r.headcount ?? null,
-        session_headcount: r.session_headcount ?? null,
-        mentor_id: r.mentor_id || null,
-      }))
-    )
+    // event_rows 삽입 후 ID를 받아 supply_logs에 event_row_id로 기록
+    const { data: insertedRows, error: rowsErr } = await supabase
+      .from('event_rows')
+      .insert(
+        data.eventRows.map((r) => ({
+          event_id: event.id,
+          occupation_program_unit_id: r.occupation_program_unit_id,
+          start_time: r.start_time || null,
+          end_time: r.end_time || null,
+          classroom: r.classroom || null,
+          instructor_waiting_room: r.instructor_waiting_room || null,
+          lecture_fee: r.lecture_fee ?? null,
+          lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
+          headcount: r.headcount ?? null,
+          session_headcount: r.session_headcount ?? null,
+          mentor_id: r.mentor_id || null,
+        }))
+      )
+      .select('id, occupation_program_unit_id')
     if (rowsErr) throw new Error(rowsErr.message)
+
+    // unitId → event_row_id 맵
+    const eventRowIdByUnit = new Map(
+      (insertedRows ?? []).map((r) => [r.occupation_program_unit_id, r.id])
+    )
 
     // is_consumable 준비물 재고 차감 (headcount × qty_per_person)
     const unitIds = data.eventRows.map((r) => r.occupation_program_unit_id)
@@ -297,12 +306,14 @@ export async function createEvent(data: {
       if (!r.headcount || r.headcount <= 0) continue
       const supply = supplyMap.get(r.occupation_program_unit_id)
       if (!supply) continue
+      const eventRowId = eventRowIdByUnit.get(r.occupation_program_unit_id)
+      if (!eventRowId) continue
       supplyLogs.push({
         supply_id: supply.id,
         stock_type: 'total',
         delta: -(r.headcount * supply.qty_per_person),
         reason: '행사 재고 차감',
-        event_id: event.id,
+        event_row_id: eventRowId,
       })
     }
     await insertSupplyLogs(supabase, supplyLogs)
@@ -453,31 +464,33 @@ export async function updateEvent(
             stock_type: 'total',
             delta: -(diff * supply.qty_per_person),
             reason: diff > 0 ? '행사 인원 증가 재고 차감' : '행사 인원 감소 재고 복원',
-            event_id: id,
+            event_row_id: existing.id,
           })
         }
       }
     } else {
-      const { error: insErr } = await supabase
+      const { data: newRow, error: insErr } = await supabase
         .from('event_rows')
         .insert({ event_id: id, occupation_program_unit_id: r.occupation_program_unit_id, ...fields })
+        .select('id')
+        .single()
       if (insErr) throw new Error(insErr.message)
 
       // 신규 추가 유닛 전량 차감
       const supply = supplyMap.get(r.occupation_program_unit_id)
-      if (supply && (r.headcount ?? 0) > 0) {
+      if (supply && (r.headcount ?? 0) > 0 && newRow) {
         supplyLogs.push({
           supply_id: supply.id,
           stock_type: 'total',
           delta: -(r.headcount! * supply.qty_per_person),
           reason: '행사 재고 차감',
-          event_id: id,
+          event_row_id: newRow.id,
         })
       }
     }
   }
 
-  // 제거된 유닛 재고 복원
+  // 제거된 유닛 재고 복원 (event_row가 삭제되면 event_row_id FK는 on delete set null)
   for (const removed of rowsToDelete) {
     const supply = supplyMap.get(removed.occupation_program_unit_id)
     if (supply && (removed.headcount ?? 0) > 0) {
@@ -486,7 +499,7 @@ export async function updateEvent(
         stock_type: 'total',
         delta: +(removed.headcount! * supply.qty_per_person),
         reason: '행사 프로그램 제거 재고 복원',
-        event_id: id,
+        event_row_id: removed.id,
       })
     }
   }
@@ -503,7 +516,7 @@ export async function deleteEvent(id: string) {
   // 삭제 전 event_rows 조회 → 차감됐던 재고 복원
   const { data: rows } = await supabase
     .from('event_rows')
-    .select('occupation_program_unit_id, headcount')
+    .select('id, occupation_program_unit_id, headcount')
     .eq('event_id', id)
 
   if (rows && rows.length > 0) {
@@ -520,7 +533,7 @@ export async function deleteEvent(id: string) {
         stock_type: 'total',
         delta: +(r.headcount! * supply.qty_per_person),
         reason: '행사 삭제 재고 복원',
-        event_id: id,
+        event_row_id: r.id,
       })
     }
     await insertSupplyLogs(supabase, supplyLogs)

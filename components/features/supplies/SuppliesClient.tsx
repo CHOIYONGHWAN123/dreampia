@@ -104,6 +104,12 @@ export function SuppliesClient({ units, fields }: Props) {
       {/* 헤더 */}
       <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
         <h1 className="text-2xl font-bold text-gray-900">준비물 관리</h1>
+        <a
+          href="/supplies/logs"
+          className="px-4 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+        >
+          전체 재고 변동 이력
+        </a>
       </div>
 
       {/* 검색 + 필터 */}
@@ -166,6 +172,7 @@ export function SuppliesClient({ units, fields }: Props) {
               <th className={thCls} style={{ width: 90 }}>키트 재고 상태</th>
               <th className={thCls} style={{ width: 96 }}>일 최대 수용</th>
               <th className={thCls} style={{ width: 96 }}>일 최대 수용 상태</th>
+              <th className={thCls} style={{ width: 96 }}>변동 이력</th>
               <th className={thCls} style={{ width: 80 }}>재고 조정</th>
               <th className={thCls} style={{ width: 80 }}>수정하기</th>
             </tr>
@@ -173,7 +180,7 @@ export function SuppliesClient({ units, fields }: Props) {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={13} className="py-16 text-center text-gray-400">
+                <td colSpan={14} className="py-16 text-center text-gray-400">
                   {search || filterFieldId ? '검색 결과가 없습니다.' : '등록된 프로그램 유닛이 없습니다.'}
                 </td>
               </tr>
@@ -205,8 +212,19 @@ export function SuppliesClient({ units, fields }: Props) {
                         </td>
                       </>
                     ) : (
-                      <td colSpan={7} className={td}>
+                      <td colSpan={8} className={td}>
                         <span className="text-gray-400 text-xs">재고 미등록</span>
+                      </td>
+                    )}
+
+                    {hasSup && (
+                      <td className={td}>
+                        <a
+                          href={`/supplies/logs?supplyId=${u.supply!.id}`}
+                          className="px-2 py-0.5 text-xs border border-gray-300 rounded hover:bg-gray-100 transition-colors whitespace-nowrap"
+                        >
+                          현황 보기
+                        </a>
                       </td>
                     )}
 

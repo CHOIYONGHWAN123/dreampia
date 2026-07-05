@@ -971,7 +971,7 @@ export type Database = {
           {
             foreignKeyName: "supplies_occupation_program_unit_id_fkey"
             columns: ["occupation_program_unit_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "occupation_program_unit"
             referencedColumns: ["id"]
           },
@@ -982,7 +982,7 @@ export type Database = {
           admin_id: string | null
           created_at: string
           delta: number
-          event_id: string | null
+          event_row_id: string | null
           id: string
           reason: string | null
           stock_type: Database["public"]["Enums"]["stock_type"]
@@ -992,7 +992,7 @@ export type Database = {
           admin_id?: string | null
           created_at?: string
           delta: number
-          event_id?: string | null
+          event_row_id?: string | null
           id?: string
           reason?: string | null
           stock_type: Database["public"]["Enums"]["stock_type"]
@@ -1002,7 +1002,7 @@ export type Database = {
           admin_id?: string | null
           created_at?: string
           delta?: number
-          event_id?: string | null
+          event_row_id?: string | null
           id?: string
           reason?: string | null
           stock_type?: Database["public"]["Enums"]["stock_type"]
@@ -1017,10 +1017,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "supply_logs_event_id_fkey"
-            columns: ["event_id"]
+            foreignKeyName: "supply_logs_event_row_id_fkey"
+            columns: ["event_row_id"]
             isOneToOne: false
-            referencedRelation: "events"
+            referencedRelation: "event_rows"
             referencedColumns: ["id"]
           },
           {
