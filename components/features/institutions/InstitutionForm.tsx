@@ -5,7 +5,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { useTransition, useEffect, useRef, useState } from 'react'
 import { institutionSchema, type InstitutionFormData } from '@/lib/validations/institution'
-import { createInstitution, updateInstitution, deleteInstitution } from '@/app/(dashboard)/institutions/actions'
+import {
+  createInstitution,
+  updateInstitution,
+  deleteInstitution,
+  deleteInstitutionWithEvents,
+  getInstitutionEventCount,
+} from '@/app/(dashboard)/institutions/actions'
 import { createClient } from '@/lib/supabase'
 
 const CATEGORIES = ['유치원', '초등', '중등', '고등', '기관', '특수학교', '문화센터']
@@ -91,10 +97,22 @@ export function InstitutionForm({ id, defaultValues }: Props) {
   }
 
   const handleDelete = () => {
-    if (!confirm('학교를 삭제하시겠습니까?')) return
     startDeleting(async () => {
-      await deleteInstitution(id!)
-      router.push('/institutions')
+      try {
+        const eventCount = await getInstitutionEventCount(id!)
+
+        if (eventCount > 0) {
+          if (!confirm(`이 기관에 등록된 행사가 ${eventCount}건 있습니다.\n행사를 모두 삭제하고 기관을 삭제하시겠습니까?`)) return
+          await deleteInstitutionWithEvents(id!)
+        } else {
+          if (!confirm('기관을 삭제하시겠습니까?')) return
+          await deleteInstitution(id!)
+        }
+
+        router.push('/institutions')
+      } catch (e) {
+        alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+      }
     })
   }
 

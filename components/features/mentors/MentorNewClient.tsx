@@ -184,7 +184,16 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
         </div>
 
         <div>
-          <label className={labelCls}>동의서</label>
+          <div className="flex items-center gap-3 mb-1">
+            <label className={labelCls}>동의서</label>
+            <a
+              href="/templates/agreement-form.hwpx"
+              download="드림피아_동의서_양식.hwpx"
+              className="text-xs text-blue-600 hover:text-blue-800 underline whitespace-nowrap"
+            >
+              양식 다운로드
+            </a>
+          </div>
           <input type="file" onChange={(e) => setAgreementFile(e.target.files?.[0] ?? null)} className="text-sm" />
         </div>
 

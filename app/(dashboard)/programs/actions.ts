@@ -79,13 +79,37 @@ export async function updateField(id: string, name: string): Promise<void> {
   revalidatePath('/programs')
 }
 
-export async function deleteField(id: string): Promise<void> {
+export async function getFieldChildCount(id: string): Promise<number> {
   const supabase = await createServerSupabaseClient()
   const { count } = await supabase
     .from('occupations')
     .select('id', { count: 'exact', head: true })
     .eq('field_id', id)
-  if (count) throw new Error('하위 직종이 있어 삭제할 수 없습니다.')
+  return count ?? 0
+}
+
+export async function deleteField(id: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase.from('fields').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/programs')
+}
+
+export async function deleteFieldCascade(id: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+
+  const { data: occupations } = await supabase.from('occupations').select('id').eq('field_id', id)
+  if (occupations?.length) {
+    const occIds = occupations.map((o) => o.id)
+    const { data: programs } = await supabase.from('occupation_programs').select('id').in('occupation_id', occIds)
+    if (programs?.length) {
+      const progIds = programs.map((p) => p.id)
+      const { data: units } = await supabase.from('occupation_program_unit').select('id').in('occupation_programs_id', progIds)
+      if (units?.length) await cascadeDeleteUnits(supabase, units.map((u) => u.id))
+      await supabase.from('occupation_programs').delete().in('id', progIds)
+    }
+    await supabase.from('occupations').delete().in('id', occIds)
+  }
 
   const { error } = await supabase.from('fields').delete().eq('id', id)
   if (error) throw new Error(error.message)
@@ -119,13 +143,32 @@ export async function updateOccupation(id: string, name: string): Promise<void> 
   revalidatePath('/programs')
 }
 
-export async function deleteOccupation(id: string): Promise<void> {
+export async function getOccupationChildCount(id: string): Promise<number> {
   const supabase = await createServerSupabaseClient()
   const { count } = await supabase
     .from('occupation_programs')
     .select('id', { count: 'exact', head: true })
     .eq('occupation_id', id)
-  if (count) throw new Error('하위 프로그램이 있어 삭제할 수 없습니다.')
+  return count ?? 0
+}
+
+export async function deleteOccupation(id: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase.from('occupations').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/programs')
+}
+
+export async function deleteOccupationCascade(id: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+
+  const { data: programs } = await supabase.from('occupation_programs').select('id').eq('occupation_id', id)
+  if (programs?.length) {
+    const progIds = programs.map((p) => p.id)
+    const { data: units } = await supabase.from('occupation_program_unit').select('id').in('occupation_programs_id', progIds)
+    if (units?.length) await cascadeDeleteUnits(supabase, units.map((u) => u.id))
+    await supabase.from('occupation_programs').delete().in('id', progIds)
+  }
 
   const { error } = await supabase.from('occupations').delete().eq('id', id)
   if (error) throw new Error(error.message)
@@ -163,13 +206,27 @@ export async function updateOccupationProgram(id: string, name: string): Promise
   revalidatePath('/programs')
 }
 
-export async function deleteOccupationProgram(id: string): Promise<void> {
+export async function getOccupationProgramChildCount(id: string): Promise<number> {
   const supabase = await createServerSupabaseClient()
   const { count } = await supabase
     .from('occupation_program_unit')
     .select('id', { count: 'exact', head: true })
     .eq('occupation_programs_id', id)
-  if (count) throw new Error('하위 프로그램 유닛이 있어 삭제할 수 없습니다.')
+  return count ?? 0
+}
+
+export async function deleteOccupationProgram(id: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase.from('occupation_programs').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/programs')
+}
+
+export async function deleteOccupationProgramCascade(id: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+
+  const { data: units } = await supabase.from('occupation_program_unit').select('id').eq('occupation_programs_id', id)
+  if (units?.length) await cascadeDeleteUnits(supabase, units.map((u) => u.id))
 
   const { error } = await supabase.from('occupation_programs').delete().eq('id', id)
   if (error) throw new Error(error.message)
@@ -234,10 +291,35 @@ export async function updateUnit(id: string, payload: UnitFormPayload): Promise<
   revalidatePath('/programs')
 }
 
+// 유닛 ID 배열을 받아 관련 데이터 포함 삭제 (내부 헬퍼)
+async function cascadeDeleteUnits(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  unitIds: string[]
+): Promise<void> {
+  if (!unitIds.length) return
+
+  const { count: eventRowCount } = await supabase
+    .from('event_rows')
+    .select('id', { count: 'exact', head: true })
+    .in('occupation_program_unit_id', unitIds)
+  if ((eventRowCount ?? 0) > 0) {
+    throw new Error('일부 유닛이 행사 데이터에서 사용 중이어서 삭제할 수 없습니다.')
+  }
+
+  await supabase.from('mentor_occupation_programs').delete().in('occupation_program_unit_id', unitIds)
+
+  const { data: supplies } = await supabase.from('supplies').select('id').in('occupation_program_unit_id', unitIds)
+  if (supplies?.length) {
+    await supabase.from('supply_logs').delete().in('supply_id', supplies.map((s) => s.id))
+    await supabase.from('supplies').delete().in('id', supplies.map((s) => s.id))
+  }
+
+  await supabase.from('occupation_program_unit').delete().in('id', unitIds)
+}
+
 export async function deleteUnit(id: string): Promise<void> {
   const supabase = await createServerSupabaseClient()
-  const { error } = await supabase.from('occupation_program_unit').delete().eq('id', id)
-  if (error) throw new Error(error.message)
+  await cascadeDeleteUnits(supabase, [id])
   revalidatePath('/programs')
 }
 

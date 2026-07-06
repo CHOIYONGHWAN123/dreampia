@@ -9,12 +9,18 @@ import {
   createField,
   updateField,
   deleteField,
+  deleteFieldCascade,
+  getFieldChildCount,
   createOccupation,
   updateOccupation,
   deleteOccupation,
+  deleteOccupationCascade,
+  getOccupationChildCount,
   createOccupationProgram,
   updateOccupationProgram,
   deleteOccupationProgram,
+  deleteOccupationProgramCascade,
+  getOccupationProgramChildCount,
   createUnit,
   updateUnit,
   deleteUnit,
@@ -86,12 +92,24 @@ export function ProgramsClient({ initialFields, programCategories }: Props) {
     setFields(await getFields())
   }
   const handleDeleteField = async (id: string) => {
-    await deleteField(id)
-    setFields(await getFields())
-    if (selectedFieldId === id) {
-      setSelectedFieldId(null)
-      setOccupations([])
-      clearOccupationLevel()
+    const fieldName = fields.find((f) => f.id === id)?.name ?? ''
+    try {
+      const childCount = await getFieldChildCount(id)
+      if (childCount > 0) {
+        if (!confirm(`"${fieldName}" 분야를 삭제하면 하위 직종 ${childCount}개와 관련 프로그램, 유닛이 모두 삭제됩니다.\n계속하시겠습니까?`)) return
+        await deleteFieldCascade(id)
+      } else {
+        if (!confirm(`"${fieldName}" 분야를 삭제하시겠습니까?`)) return
+        await deleteField(id)
+      }
+      setFields(await getFields())
+      if (selectedFieldId === id) {
+        setSelectedFieldId(null)
+        setOccupations([])
+        clearOccupationLevel()
+      }
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
     }
   }
 
@@ -106,9 +124,21 @@ export function ProgramsClient({ initialFields, programCategories }: Props) {
     if (selectedFieldId) setOccupations(await getOccupationsByFieldId(selectedFieldId))
   }
   const handleDeleteOccupation = async (id: string) => {
-    await deleteOccupation(id)
-    if (selectedFieldId) setOccupations(await getOccupationsByFieldId(selectedFieldId))
-    if (selectedOccupationId === id) clearOccupationLevel()
+    const occName = occupations.find((o) => o.id === id)?.name ?? ''
+    try {
+      const childCount = await getOccupationChildCount(id)
+      if (childCount > 0) {
+        if (!confirm(`"${occName}" 직종을 삭제하면 하위 프로그램 ${childCount}개와 관련 유닛이 모두 삭제됩니다.\n계속하시겠습니까?`)) return
+        await deleteOccupationCascade(id)
+      } else {
+        if (!confirm(`"${occName}" 직종을 삭제하시겠습니까?`)) return
+        await deleteOccupation(id)
+      }
+      if (selectedFieldId) setOccupations(await getOccupationsByFieldId(selectedFieldId))
+      if (selectedOccupationId === id) clearOccupationLevel()
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+    }
   }
 
   // ── 직업 프로그램 ──
@@ -122,9 +152,21 @@ export function ProgramsClient({ initialFields, programCategories }: Props) {
     if (selectedOccupationId) setPrograms(await getOccupationProgramsByOccupationId(selectedOccupationId))
   }
   const handleDeleteProgram = async (id: string) => {
-    await deleteOccupationProgram(id)
-    if (selectedOccupationId) setPrograms(await getOccupationProgramsByOccupationId(selectedOccupationId))
-    if (selectedProgramId === id) clearProgramLevel()
+    const progName = programs.find((p) => p.id === id)?.name ?? ''
+    try {
+      const childCount = await getOccupationProgramChildCount(id)
+      if (childCount > 0) {
+        if (!confirm(`"${progName}" 프로그램을 삭제하면 하위 유닛 ${childCount}개가 모두 삭제됩니다.\n계속하시겠습니까?`)) return
+        await deleteOccupationProgramCascade(id)
+      } else {
+        if (!confirm(`"${progName}" 프로그램을 삭제하시겠습니까?`)) return
+        await deleteOccupationProgram(id)
+      }
+      if (selectedOccupationId) setPrograms(await getOccupationProgramsByOccupationId(selectedOccupationId))
+      if (selectedProgramId === id) clearProgramLevel()
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+    }
   }
 
   // ── 프로그램 유닛 ──
@@ -138,7 +180,8 @@ export function ProgramsClient({ initialFields, programCategories }: Props) {
     setUnits(await getUnitsByOccupationProgramId(selectedProgramId))
   }
   const handleDeleteUnit = async (id: string) => {
-    if (!confirm('정말로 삭제하시겠습니까?')) return
+    const unitTitle = units.find((u) => u.id === id)?.title ?? ''
+    if (!confirm(`"${unitTitle}" 유닛을 삭제하시겠습니까?`)) return
     try {
       await deleteUnit(id)
       if (selectedProgramId) setUnits(await getUnitsByOccupationProgramId(selectedProgramId))

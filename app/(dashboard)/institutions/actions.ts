@@ -3,9 +3,54 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { revalidatePath } from 'next/cache'
 
+export async function getInstitutionEventCount(id: string): Promise<number> {
+  const supabase = await createServerSupabaseClient()
+  const { count } = await supabase
+    .from('events')
+    .select('id', { count: 'exact', head: true })
+    .eq('institution_id', id)
+  return count ?? 0
+}
+
 export async function deleteInstitution(id: string) {
   const supabase = await createServerSupabaseClient()
   const { error } = await supabase.from('institutions').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/institutions')
+}
+
+export async function deleteInstitutionWithEvents(institutionId: string) {
+  const supabase = await createServerSupabaseClient()
+
+  // 행사 ID 목록 조회
+  const { data: events } = await supabase
+    .from('events')
+    .select('id')
+    .eq('institution_id', institutionId)
+
+  if (events && events.length > 0) {
+    const eventIds = events.map((e) => e.id)
+
+    // event_rows 조회 후 하위 데이터 순서대로 삭제
+    const { data: rows } = await supabase
+      .from('event_rows')
+      .select('id')
+      .in('event_id', eventIds)
+
+    if (rows && rows.length > 0) {
+      const rowIds = rows.map((r) => r.id)
+      await supabase.from('event_photos').delete().in('event_rows_id', rowIds)
+      await supabase.from('supply_logs').delete().in('event_row_id', rowIds)
+      await supabase.from('event_rows').delete().in('event_id', eventIds)
+    }
+
+    await supabase.from('event_sessions').delete().in('event_id', eventIds)
+    await supabase.from('event_admins').delete().in('event_id', eventIds)
+    await supabase.from('tasks').delete().in('event_id', eventIds)
+    await supabase.from('events').delete().in('id', eventIds)
+  }
+
+  const { error } = await supabase.from('institutions').delete().eq('id', institutionId)
   if (error) throw new Error(error.message)
   revalidatePath('/institutions')
 }

@@ -444,6 +444,43 @@ export interface CreateMentorInput {
   programs: CreateMentorProgramInput[]
 }
 
+export async function getMentorEventCount(mentorId: string): Promise<number> {
+  const supabase = await createServerSupabaseClient()
+  const { count } = await supabase
+    .from('event_rows')
+    .select('id', { count: 'exact', head: true })
+    .eq('mentor_id', mentorId)
+  return count ?? 0
+}
+
+export async function deleteMentor(mentorId: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+
+  // event_rows의 mentor 참조 null 처리 (행사 이력은 유지)
+  await supabase.from('event_rows').update({ mentor_id: null }).eq('mentor_id', mentorId)
+  await supabase.from('event_rows').update({ lecture_fee_payer_id: null }).eq('lecture_fee_payer_id', mentorId)
+  await supabase.from('event_rows').update({ material_fee_payer_id: null }).eq('material_fee_payer_id', mentorId)
+
+  // mentor_occupation_programs의 입금자 참조 null 처리
+  await supabase.from('mentor_occupation_programs').update({ lecture_fee_payer_id: null }).eq('lecture_fee_payer_id', mentorId)
+  await supabase.from('mentor_occupation_programs').update({ material_fee_payer_id: null }).eq('material_fee_payer_id', mentorId)
+
+  // 소속 강사들의 belongs_to null 처리
+  await supabase.from('mentors').update({ belongs_to: null }).eq('belongs_to', mentorId)
+
+  // mentor_occupation_programs 삭제
+  await supabase.from('mentor_occupation_programs').delete().eq('mentor_id', mentorId)
+
+  // mentor_requests 삭제
+  await supabase.from('mentor_requests').delete().eq('instructor_id', mentorId)
+
+  // 강사 삭제
+  const { error } = await supabase.from('mentors').delete().eq('id', mentorId)
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/mentors')
+}
+
 export async function createMentor(input: CreateMentorInput): Promise<void> {
   const supabase = await createServerSupabaseClient()
 

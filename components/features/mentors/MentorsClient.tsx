@@ -17,6 +17,8 @@ import {
   updateMopProfileUrl,
   deleteMopById,
   addMentorOccupationProgram,
+  getMentorEventCount,
+  deleteMentor,
 } from '@/app/(dashboard)/mentors/actions'
 import { AreaSelector, MentorSearchSelect, FileCell, uploadFile } from './shared'
 import { ProgramUnitPicker, type ProgramSelectionValue } from './ProgramUnitPicker'
@@ -261,11 +263,13 @@ function MentorRows({
   index,
   selectData,
   onAuthChange,
+  onDelete,
 }: {
   mentor: MentorWithPrograms
   index: number
   selectData: AddProgramSelectData
   onAuthChange: (id: string, val: boolean) => void
+  onDelete: (id: string) => void
 }) {
   const [authPending, startAuthTransition] = useTransition()
   const [availablePending, startAvailableTransition] = useTransition()
@@ -492,6 +496,15 @@ function MentorRows({
           {savePending ? '저장중…' : '수정하기'}
         </button>
       </td>
+      <td className={td} rowSpan={totalRows}>
+        <button
+          type="button"
+          onClick={() => onDelete(mentor.id)}
+          className="px-2 py-0.5 text-xs border border-red-300 text-red-500 rounded hover:bg-red-50 whitespace-nowrap"
+        >
+          삭제
+        </button>
+      </td>
     </>
   )
 
@@ -670,6 +683,7 @@ const THEAD = [
   { label: '강의가능', w: 60 },
   { label: '멘토등록', w: 60 },
   { label: '수정', w: 64 },
+  { label: '삭제', w: 56 },
 ]
 
 // ── MentorsClient ─────────────────────────────────────────────────────
@@ -700,6 +714,21 @@ export function MentorsClient({
 
   const handleAuthChange = (id: string, val: boolean) => {
     setMentors((prev) => prev.map((m) => (m.id === id ? { ...m, is_authenticated: val } : m)))
+  }
+
+  const handleDeleteMentor = async (id: string) => {
+    const mentorName = mentors.find((m) => m.id === id)?.name ?? ''
+    try {
+      const eventCount = await getMentorEventCount(id)
+      const message = eventCount > 0
+        ? `"${mentorName}" 강사를 삭제하시겠습니까?\n\n이 강사가 참여한 행사 ${eventCount}건의 강사 정보는 삭제되지만 행사 데이터는 유지됩니다.`
+        : `"${mentorName}" 강사를 삭제하시겠습니까?`
+      if (!confirm(message)) return
+      await deleteMentor(id)
+      setMentors((prev) => prev.filter((m) => m.id !== id))
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+    }
   }
 
   const thCls =
@@ -776,6 +805,7 @@ export function MentorsClient({
                   index={i}
                   selectData={selectData}
                   onAuthChange={handleAuthChange}
+                  onDelete={handleDeleteMentor}
                 />
               ))
             ) : (

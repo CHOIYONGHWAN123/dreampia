@@ -34,6 +34,7 @@ export function NameColumn({
 }: Props) {
   const [popup, setPopup] = useState<{ open: boolean; id: string | null }>({ open: false, id: null })
   const [name, setName] = useState('')
+  const [pending, setPending] = useState(false)
 
   const openAdd = () => {
     setName('')
@@ -45,27 +46,40 @@ export function NameColumn({
     setPopup({ open: true, id: item.id })
   }
 
-  const closePopup = () => setPopup({ open: false, id: null })
+  const closePopup = () => {
+    setPopup({ open: false, id: null })
+    setPending(false)
+  }
 
   const handleSave = async () => {
     if (!name.trim()) {
       alert('이름을 입력해주세요.')
       return
     }
+    const trimmed = name.trim()
+    const isDuplicate = items.some(
+      (item) => item.name === trimmed && item.id !== popup.id
+    )
+    if (isDuplicate) {
+      alert(`"${trimmed}"은(는) 이미 존재합니다.`)
+      return
+    }
+    if (pending) return
+    setPending(true)
     try {
       if (popup.id) {
-        await onEdit(popup.id, name.trim())
+        await onEdit(popup.id, trimmed)
       } else {
-        await onAdd(name.trim())
+        await onAdd(trimmed)
       }
       closePopup()
     } catch (e) {
       alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
+      setPending(false)
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('정말로 삭제하시겠습니까?')) return
     try {
       await onDelete(id)
     } catch (e) {
@@ -151,13 +165,15 @@ export function NameColumn({
             <div className="flex justify-center gap-2 mt-6">
               <button
                 onClick={handleSave}
-                className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm"
+                disabled={pending}
+                className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                확인
+                {pending ? '저장 중…' : '확인'}
               </button>
               <button
                 onClick={closePopup}
-                className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm"
+                disabled={pending}
+                className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 취소
               </button>
