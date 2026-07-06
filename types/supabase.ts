@@ -7,8 +7,9 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically in{"_tag":"Error","error":{"code":"LegacyPlatformAuthRequiredError","message":"Access token not provided. Supply an access token by running `supabase login` or setting the SUPABASE_ACCESS_TOKEN environment variable."}}
-_ in never]: never
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never

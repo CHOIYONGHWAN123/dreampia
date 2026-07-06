@@ -40,6 +40,10 @@ export default async function EventOperationsPage({
     .lte('event_end_at', endOfMonth)
     .order('event_end_at', { ascending: true })
 
+  // 전체 관리자 목록
+  const { data: allAdmins } = await supabase.from('admins').select('id, name').order('name')
+  const admins = (allAdmins ?? []).map((a) => ({ id: a.id, name: a.name }))
+
   if (!events || events.length === 0) {
     return (
       <EventOperationsClient
@@ -47,6 +51,7 @@ export default async function EventOperationsPage({
         availableMonths={availableMonths}
         currentYear={year}
         currentMonth={month}
+        admins={admins}
       />
     )
   }
@@ -57,7 +62,6 @@ export default async function EventOperationsPage({
   const [
     institutionsRes,
     campaignsRes,
-    adminsRes,
     sessionsRes,
     eventRowsRes,
   ] = await Promise.all([
@@ -65,7 +69,6 @@ export default async function EventOperationsPage({
       .in('id', events.map((e) => e.institution_id).filter(Boolean) as string[]),
     supabase.from('campaign').select('id, name')
       .in('id', events.map((e) => e.campaign_id).filter(Boolean) as string[]),
-    supabase.from('admins').select('id, name'),
     supabase.from('event_sessions').select('id, event_id, start_at, end_at, sort_order')
       .in('event_id', eventIds).order('sort_order'),
     supabase.from('event_rows').select('id, event_id').in('event_id', eventIds),
@@ -80,7 +83,7 @@ export default async function EventOperationsPage({
   // 맵 구성
   const institutionMap = new Map((institutionsRes.data ?? []).map((i) => [i.id, i]))
   const campaignMap = new Map((campaignsRes.data ?? []).map((c) => [c.id, c.name]))
-  const adminMap = new Map((adminsRes.data ?? []).map((a) => [a.id, a.name]))
+  const adminMap = new Map(admins.map((a) => [a.id, a.name]))
 
   const sessionsByEvent = new Map<string, typeof sessionsRes.data>()
   for (const s of sessionsRes.data ?? []) {
@@ -107,19 +110,21 @@ export default async function EventOperationsPage({
       .map((id: string) => adminMap.get(id) ?? '')
       .filter(Boolean)
     const sessions = sessionsByEvent.get(e.id) ?? []
-    const eventRowIds = rowsByEvent.get(e.id) ?? []
+    const eventRowIdList = rowsByEvent.get(e.id) ?? []
     const allPhotosOk =
-      eventRowIds.length > 0 &&
-      eventRowIds.every((rowId) => (photoCountByRow.get(rowId) ?? 0) >= 3)
+      eventRowIdList.length > 0 &&
+      eventRowIdList.every((rowId) => (photoCountByRow.get(rowId) ?? 0) >= 3)
 
     return {
       no: i + 1,
       id: e.id,
+      institutionId: e.institution_id,
       region1: inst?.region1 ?? null,
       region2: inst?.region2 ?? null,
       category: inst?.category ?? null,
       institutionName: inst?.name ?? null,
       campaignName: e.campaign_id ? (campaignMap.get(e.campaign_id) ?? null) : null,
+      fieldAdminIds: e.field_admin_ids ?? [],
       fieldAdminNames,
       eventStartAt: e.event_start_at,
       eventEndAt: e.event_end_at,
@@ -131,6 +136,7 @@ export default async function EventOperationsPage({
       eventCheckStatus: e.event_check_status,
       suppliesStatus: e.supplies_status,
       preNoticeSent: e.pre_notice_sent,
+      commAdminId: e.comm_admin_id,
       commAdminName: e.comm_admin_id ? (adminMap.get(e.comm_admin_id) ?? null) : null,
       recruitStatus: e.recruit_status,
       recruitDelivered: e.recruit_delivered,
@@ -139,6 +145,7 @@ export default async function EventOperationsPage({
       crimeCheckNotified: e.crime_check_notified,
       crimeCheckStatus: e.crime_check_status,
       adminDocsDelivered: e.admin_docs_delivered,
+      salesAdminId: e.sales_admin_id,
       salesAdminName: e.sales_admin_id ? (adminMap.get(e.sales_admin_id) ?? null) : null,
       estimateFileUrl: e.estimate_file_url,
       teacherName: e.teacher_name,
@@ -146,7 +153,7 @@ export default async function EventOperationsPage({
       groupChatLink: e.group_chat_link,
       inflowSource: e.inflow_source,
       paymentConfirmed: e.payment_confirmed,
-      photoStatus: eventRowIds.length === 0 ? null : allPhotosOk,
+      photoStatus: eventRowIdList.length === 0 ? null : allPhotosOk,
       photoSent: e.photo_sent,
       reportSent: e.report_sent,
       startRecruitAt: e.start_recruit_at,
@@ -159,6 +166,7 @@ export default async function EventOperationsPage({
       availableMonths={availableMonths}
       currentYear={year}
       currentMonth={month}
+      admins={admins}
     />
   )
 }
