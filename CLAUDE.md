@@ -313,6 +313,15 @@ enum crime_check_status {
   "완료"
 }
 
+enum contract_status{
+  "계약 시작 전"
+  "진행중(단일계약)"
+  "진행중(공동계약)"
+  "최종일 계약"
+  "계약 완료"
+  "계약 없음"
+}
+
 
 
 
@@ -346,17 +355,16 @@ Table events {
   contact_email       varchar [note: '담당자 이메일']
   contact_phone       varchar [note: '담당자 연락처']
   inflow_source       inflow_source [note: '유입경로']
-  event_notice_1_week_prior boolean
   estimate_file_url   varchar [note: '견적서 파일 URL']
   recruit_start_date  date
   comm_content        text    [note: '소통 내용']
-  contract_status     varchar
+  contract_status     contract_status
   supplies_status     supplies_status [note: '체크전/재고이상무/준비완료 등']
   recruit_status      recruit_status [note: '섭외대기/섭외진행중/섭외완료']
   institution_request_status      recruit_status [note: '예정/전달/회신']
   start_recruit_at    timestamp [note: '강사 섭외 시작일']   
   recruit_delivered   boolean [default: false, note: '강사섭외 전달 여부']
-  school_request_delivered boolean [default: false]
+  school_request_delivered boolean [default: false, note:'학교요청사항 전달 여부']
   admin_docs          text    [note: '행정서류']
   admin_docs_delivered boolean [default: false, note: '행정서류 전달여부']
   remarks             text    [note: '비고']

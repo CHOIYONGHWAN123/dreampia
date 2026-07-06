@@ -14,6 +14,7 @@ const menus = [
   { href: '/mentors', label: '강사' },
   { href: '/programs', label: '프로그램' },
   { href: '/supplies', label: '준비물 관리' },
+  { href: '/event-operations', label: '행사운영확인표' },
 ]
 
 export function NavMenu() {

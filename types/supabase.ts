@@ -7,14 +7,8 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
+  // Allows to automatically in{"_tag":"Error","error":{"code":"LegacyPlatformAuthRequiredError","message":"Access token not provided. Supply an access token by running `supabase login` or setting the SUPABASE_ACCESS_TOKEN environment variable."}}
+_ in never]: never
     }
     Views: {
       [_ in never]: never
@@ -310,6 +304,38 @@ export type Database = {
           },
         ]
       }
+      event_sessions: {
+        Row: {
+          end_at: string | null
+          event_id: string
+          id: string
+          sort_order: number
+          start_at: string
+        }
+        Insert: {
+          end_at?: string | null
+          event_id: string
+          id?: string
+          sort_order?: number
+          start_at: string
+        }
+        Update: {
+          end_at?: string | null
+          event_id?: string
+          id?: string
+          sort_order?: number
+          start_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_sessions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           admin_contact: string | null
@@ -322,7 +348,7 @@ export type Database = {
           contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
-          contract_status: string | null
+          contract_status: Database["public"]["Enums"]["contract_status"] | null
           contract_type: Database["public"]["Enums"]["contract_type"] | null
           created_at: string
           crime_check_info: string | null
@@ -337,7 +363,7 @@ export type Database = {
           event_check_status: number
           event_end_at: string | null
           event_start_at: string | null
-          field_admin_id: string | null
+          field_admin_ids: string[] | null
           floor_map_url: string | null
           group_chat_link: string | null
           group_chat_status: string | null
@@ -388,7 +414,9 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
-          contract_status?: string | null
+          contract_status?:
+            | Database["public"]["Enums"]["contract_status"]
+            | null
           contract_type?: Database["public"]["Enums"]["contract_type"] | null
           created_at?: string
           crime_check_info?: string | null
@@ -403,7 +431,7 @@ export type Database = {
           event_check_status?: number
           event_end_at?: string | null
           event_start_at?: string | null
-          field_admin_id?: string | null
+          field_admin_ids?: string[] | null
           floor_map_url?: string | null
           group_chat_link?: string | null
           group_chat_status?: string | null
@@ -456,7 +484,9 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
-          contract_status?: string | null
+          contract_status?:
+            | Database["public"]["Enums"]["contract_status"]
+            | null
           contract_type?: Database["public"]["Enums"]["contract_type"] | null
           created_at?: string
           crime_check_info?: string | null
@@ -471,7 +501,7 @@ export type Database = {
           event_check_status?: number
           event_end_at?: string | null
           event_start_at?: string | null
-          field_admin_id?: string | null
+          field_admin_ids?: string[] | null
           floor_map_url?: string | null
           group_chat_link?: string | null
           group_chat_status?: string | null
@@ -524,13 +554,6 @@ export type Database = {
           {
             foreignKeyName: "events_comm_admin_id_fkey"
             columns: ["comm_admin_id"]
-            isOneToOne: false
-            referencedRelation: "admins"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "events_field_admin_id_fkey"
-            columns: ["field_admin_id"]
             isOneToOne: false
             referencedRelation: "admins"
             referencedColumns: ["id"]
@@ -1089,6 +1112,13 @@ export type Database = {
     }
     Enums: {
       area: "부산" | "김해" | "울산" | "창원"
+      contract_status:
+        | "계약 시작 전"
+        | "진행중(단일계약)"
+        | "진행중(공동계약)"
+        | "최종일 계약"
+        | "계약 완료"
+        | "계약 없음"
       contract_type: "학교장터" | "수의계약" | "MyDesk" | "페이백" | "나라장터"
       crime_check_method: "회보서" | "동의서"
       crime_check_status: "불필요" | "진행전" | "취합중" | "완료"
@@ -1259,6 +1289,14 @@ export const Constants = {
   public: {
     Enums: {
       area: ["부산", "김해", "울산", "창원"],
+      contract_status: [
+        "계약 시작 전",
+        "진행중(단일계약)",
+        "진행중(공동계약)",
+        "최종일 계약",
+        "계약 완료",
+        "계약 없음",
+      ],
       contract_type: ["학교장터", "수의계약", "MyDesk", "페이백", "나라장터"],
       crime_check_method: ["회보서", "동의서"],
       crime_check_status: ["불필요", "진행전", "취합중", "완료"],
