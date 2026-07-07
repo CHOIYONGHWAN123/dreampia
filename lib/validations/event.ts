@@ -40,6 +40,7 @@ export const eventSchema = z.object({
   contact_name: nullableString,
   contact_email: nullableString,
   contact_phone: nullableString,
+  teacher_name: nullableString,
   inflow_source: nullableEnum(INFLOW_SOURCES),
   institution_type: nullableEnum(INSTITUTION_TYPES),
   sales_admin_id: nullableString,

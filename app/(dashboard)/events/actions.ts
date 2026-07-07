@@ -54,7 +54,6 @@ type EventRowInput = {
   start_time?: string | null
   end_time?: string | null
   classroom?: string | null
-  instructor_waiting_room?: string | null
   lecture_fee?: number | null
   lecture_fee_after_tax?: number | null
   headcount?: number | null
@@ -78,7 +77,7 @@ export type EventProgramSelectData = {
 }
 
 const EVENT_DETAIL_COLUMNS =
-  'id, name, campaign_id, institution_id, created_at, event_start_at, event_end_at, target_grade, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, student_rotation, notice, prep_note, memo, contact_name, contact_email, contact_phone, inflow_source, institution_type, sales_admin_id, budget, estimate_file_url, comm_admin_id'
+  'id, name, campaign_id, institution_id, created_at, event_start_at, event_end_at, target_grade, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, student_rotation, notice, prep_note, memo, contact_name, contact_email, contact_phone, teacher_name, inflow_source, institution_type, sales_admin_id, budget, estimate_file_url, comm_admin_id'
 
 export type EventDetailData = {
   id: string
@@ -101,6 +100,7 @@ export type EventDetailData = {
   contact_name: string | null
   contact_email: string | null
   contact_phone: string | null
+  teacher_name: string | null
   inflow_source: string | null
   institution_type: string | null
   sales_admin_id: string | null
@@ -120,7 +120,6 @@ export type EventRowDetailData = {
   start_time: string | null
   end_time: string | null
   classroom: string | null
-  instructor_waiting_room: string | null
   lecture_fee: number | null
   headcount: number | null
   session_headcount: number | null
@@ -139,7 +138,7 @@ export async function getEventDetail(id: string): Promise<{
     supabase
       .from('event_rows')
       .select(
-        'occupation_program_unit_id, start_time, end_time, classroom, instructor_waiting_room, lecture_fee, headcount, session_headcount, mentor_id'
+        'occupation_program_unit_id, start_time, end_time, classroom, lecture_fee, headcount, session_headcount, mentor_id'
       )
       .eq('event_id', id),
   ])
@@ -203,6 +202,7 @@ export async function createEvent(data: {
   contact_name?: string | null
   contact_email?: string | null
   contact_phone?: string | null
+  teacher_name?: string | null
   inflow_source?: string | null
   institution_type?: string | null
   sales_admin_id?: string | null
@@ -233,6 +233,7 @@ export async function createEvent(data: {
     contact_name: data.contact_name || null,
     contact_email: data.contact_email || null,
     contact_phone: data.contact_phone || null,
+    teacher_name: data.teacher_name || null,
     inflow_source: data.inflow_source || null,
     institution_type: data.institution_type || null,
     sales_admin_id: data.sales_admin_id || null,
@@ -282,7 +283,6 @@ export async function createEvent(data: {
           start_time: r.start_time || null,
           end_time: r.end_time || null,
           classroom: r.classroom || null,
-          instructor_waiting_room: r.instructor_waiting_room || null,
           lecture_fee: r.lecture_fee ?? null,
           lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
           headcount: r.headcount ?? null,
@@ -345,6 +345,7 @@ export async function updateEvent(
     contact_name?: string | null
     contact_email?: string | null
     contact_phone?: string | null
+    teacher_name?: string | null
     inflow_source?: string | null
     institution_type?: string | null
     sales_admin_id?: string | null
@@ -376,6 +377,7 @@ export async function updateEvent(
     contact_name: data.contact_name || null,
     contact_email: data.contact_email || null,
     contact_phone: data.contact_phone || null,
+    teacher_name: data.teacher_name || null,
     inflow_source: data.inflow_source || null,
     institution_type: data.institution_type || null,
     sales_admin_id: data.sales_admin_id || null,
@@ -442,7 +444,6 @@ export async function updateEvent(
       start_time: r.start_time || null,
       end_time: r.end_time || null,
       classroom: r.classroom || null,
-      instructor_waiting_room: r.instructor_waiting_room || null,
       lecture_fee: r.lecture_fee ?? null,
       lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
       headcount: r.headcount ?? null,

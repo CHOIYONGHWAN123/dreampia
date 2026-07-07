@@ -26,6 +26,16 @@ type EventUpdateData = {
   estimate_file_url?: string | null
   comm_admin_id?: string | null
   sales_admin_id?: string | null
+  campaign_id?: string | null
+  target_grade?: string | null
+  budget?: number | null
+  supplies_status?: string | null
+  pre_notice_sent?: boolean | null
+  recruit_status?: string | null
+  recruit_delivered?: boolean | null
+  teacher_name?: string | null
+  remarks?: string | null
+  inflow_source?: string | null
 }
 
 export async function updateEventField(eventId: string, data: EventUpdateData) {

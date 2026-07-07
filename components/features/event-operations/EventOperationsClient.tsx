@@ -20,6 +20,7 @@ export type EventOperationRow = {
   region2: string | null
   category: string | null
   institutionName: string | null
+  campaignId: string | null
   campaignName: string | null
   fieldAdminIds: string[]
   fieldAdminNames: string[]
@@ -57,6 +58,7 @@ export type EventOperationRow = {
 }
 
 type AdminOption = { id: string; name: string }
+type CampaignOption = { id: string; name: string }
 
 interface Props {
   rows: EventOperationRow[]
@@ -64,6 +66,7 @@ interface Props {
   currentYear: number
   currentMonth: number
   admins: AdminOption[]
+  campaigns: CampaignOption[]
 }
 
 // ── 상수 ─────────────────────────────────────────────────────────────
@@ -73,6 +76,13 @@ const CONTRACT_STATUS_OPTIONS = [
   '계약 시작 전', '진행중(단일계약)', '진행중(공동계약)', '최종일 계약', '계약 완료', '계약 없음',
 ]
 const EVENT_CHECK_OPTIONS = ['1', '2', '3', '4']
+const SUPPLIES_STATUS_OPTIONS = [
+  '준비 완료', '체크 전', '재고 이상무', '재고 파악', '주문 필요', '택배 예정', '택배 발송', '회수 필요',
+]
+const RECRUIT_STATUS_OPTIONS = ['섭외대기', '섭외진행중', '섭외완료']
+const INFLOW_SOURCE_OPTIONS = [
+  '팜플렛', '기존진행', '홈페이지', '블로그', '전화영업', '꿈길', '카카오톡채널', 'MOU', '입찰', '소개',
+]
 
 // ── 포맷 헬퍼 ────────────────────────────────────────────────────────
 
@@ -523,6 +533,115 @@ function InlineTextCell({
   )
 }
 
+// ── ID/이름 쌍 셀렉트 (캠페인 등) ────────────────────────────────────
+
+function InlineIdSelect({
+  value,
+  options,
+  onSave,
+}: {
+  value: string | null
+  options: CampaignOption[]
+  onSave: (id: string | null) => Promise<void>
+}) {
+  const [val, setVal] = useState(value ?? '')
+  const [saving, setSaving] = useState(false)
+
+  const handleChange = async (newVal: string) => {
+    const prev = val
+    setVal(newVal)
+    setSaving(true)
+    try {
+      await onSave(newVal || null)
+    } catch {
+      setVal(prev)
+      alert('저장에 실패했습니다.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <select
+      value={val}
+      onChange={(e) => handleChange(e.target.value)}
+      disabled={saving}
+      className={selectCls}
+    >
+      <option value="">-</option>
+      {options.map((o) => (
+        <option key={o.id} value={o.id}>{o.name}</option>
+      ))}
+    </select>
+  )
+}
+
+// ── 예산 인라인 편집 셀 ───────────────────────────────────────────────
+
+function InlineBudgetCell({
+  value,
+  onSave,
+}: {
+  value: number | null
+  onSave: (v: number | null) => Promise<void>
+}) {
+  const [editing, setEditing] = useState(false)
+  const [text, setText] = useState(value != null ? String(value) : '')
+  const [saving, setSaving] = useState(false)
+
+  const save = async () => {
+    const raw = text.trim().replace(/,/g, '')
+    const num = raw === '' ? null : parseInt(raw, 10)
+    if (raw !== '' && isNaN(num!)) {
+      alert('숫자를 입력해주세요.')
+      return
+    }
+    setSaving(true)
+    try {
+      await onSave(num)
+      setEditing(false)
+    } catch {
+      alert('저장에 실패했습니다.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1">
+        <input
+          autoFocus
+          type="number"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') save()
+            if (e.key === 'Escape') { setText(value != null ? String(value) : ''); setEditing(false) }
+          }}
+          className="text-[11px] border border-gray-300 rounded px-1 py-0.5 w-20 focus:outline-none focus:border-blue-400"
+          placeholder="금액"
+        />
+        <button onClick={save} disabled={saving} className="text-[10px] px-1.5 py-0.5 text-white bg-blue-500 rounded whitespace-nowrap disabled:opacity-50">저장</button>
+        <button onClick={() => { setText(value != null ? String(value) : ''); setEditing(false) }} className="text-[10px] px-1.5 py-0.5 border border-gray-300 rounded whitespace-nowrap">취소</button>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      onClick={() => setEditing(true)}
+      className="cursor-pointer rounded px-1 min-h-5 flex items-center justify-center hover:bg-gray-50"
+    >
+      {value != null ? (
+        <span className="text-[11px] text-blue-600 underline">₩{value.toLocaleString()}</span>
+      ) : (
+        <span className="text-[10px] text-gray-300">클릭하여 입력</span>
+      )}
+    </div>
+  )
+}
+
 // ── 견적서 파일 업로드 셀 ────────────────────────────────────────────
 
 const ESTIMATE_ACCEPT = '.pdf,.hwp,.docx,.xlsx,.doc,.xls'
@@ -609,6 +728,7 @@ export function EventOperationsClient({
   currentYear,
   currentMonth,
   admins,
+  campaigns,
 }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -745,11 +865,11 @@ export function EventOperationsClient({
                     </td>
 
                     <td className={td}>
-                      {row.campaignName ? (
-                        <Badge text={row.campaignName} color="blue" />
-                      ) : (
-                        <span className="text-gray-300">-</span>
-                      )}
+                      <InlineIdSelect
+                        value={row.campaignId}
+                        options={campaigns}
+                        onSave={(id) => updateEventField(row.id, { campaign_id: id })}
+                      />
                     </td>
 
                     {/* 현장담당 — 다중 선택 */}
@@ -762,9 +882,18 @@ export function EventOperationsClient({
                     </td>
 
                     <td className={`${td} whitespace-pre-line`}>{dateDisplay}</td>
-                    <td className={td}>{row.targetGrade ?? '-'}</td>
                     <td className={td}>
-                      {row.budget != null ? `₩${row.budget.toLocaleString()}` : '-'}
+                      <InlineTextCell
+                        value={row.targetGrade}
+                        placeholder="학년 입력"
+                        onSave={(v) => updateEventField(row.id, { target_grade: v })}
+                      />
+                    </td>
+                    <td className={td}>
+                      <InlineBudgetCell
+                        value={row.budget}
+                        onSave={(v) => updateEventField(row.id, { budget: v })}
+                      />
                     </td>
 
                     {/* 계약종류 */}
@@ -797,22 +926,20 @@ export function EventOperationsClient({
                     </td>
 
                     <td className={td}>
-                      {row.suppliesStatus ? (
-                        <Badge
-                          text={row.suppliesStatus}
-                          color={row.suppliesStatus === '준비 완료' ? 'green' : 'orange'}
-                        />
-                      ) : (
-                        <span className="text-gray-300">-</span>
-                      )}
+                      <InlineSelect
+                        value={row.suppliesStatus}
+                        options={SUPPLIES_STATUS_OPTIONS}
+                        onSave={(v) => updateEventField(row.id, { supplies_status: v })}
+                      />
                     </td>
 
                     <td className={td}>
-                      {row.preNoticeSent ? (
-                        <Badge text="발송" color="green" />
-                      ) : (
-                        <Badge text="예정" color="gray" />
-                      )}
+                      <BoolSelect
+                        value={row.preNoticeSent}
+                        trueLabel="발송"
+                        falseLabel="예정"
+                        onSave={(v) => updateEventField(row.id, { pre_notice_sent: v })}
+                      />
                     </td>
 
                     {/* 소통담당 */}
@@ -825,28 +952,20 @@ export function EventOperationsClient({
                     </td>
 
                     <td className={td}>
-                      {row.recruitStatus ? (
-                        <Badge
-                          text={row.recruitStatus}
-                          color={
-                            row.recruitStatus === '섭외완료'
-                              ? 'green'
-                              : row.recruitStatus === '섭외진행중'
-                              ? 'blue'
-                              : 'gray'
-                          }
-                        />
-                      ) : (
-                        <span className="text-gray-300">-</span>
-                      )}
+                      <InlineSelect
+                        value={row.recruitStatus}
+                        options={RECRUIT_STATUS_OPTIONS}
+                        onSave={(v) => updateEventField(row.id, { recruit_status: v })}
+                      />
                     </td>
 
                     <td className={td}>
-                      {row.recruitDelivered ? (
-                        <Badge text="완료" color="green" />
-                      ) : (
-                        <Badge text="예정" color="gray" />
-                      )}
+                      <BoolSelect
+                        value={row.recruitDelivered}
+                        trueLabel="완료"
+                        falseLabel="예정"
+                        onSave={(v) => updateEventField(row.id, { recruit_delivered: v })}
+                      />
                     </td>
 
                     <td className={td}>
@@ -933,17 +1052,30 @@ export function EventOperationsClient({
                     </td>
 
                     <td className={td}>
-                      {danger ? (
-                        <Badge text="위험" color="red" />
-                      ) : (
-                        <span className="text-gray-300">-</span>
-                      )}
+                      <div className="flex flex-col items-center gap-0.5">
+                        {danger && <Badge text="위험" color="red" />}
+                        <InlineSelect
+                          value={row.recruitStatus}
+                          options={RECRUIT_STATUS_OPTIONS}
+                          onSave={(v) => updateEventField(row.id, { recruit_status: v })}
+                        />
+                      </div>
                     </td>
 
-                    <td className={td}>{row.teacherName ?? '-'}</td>
+                    <td className={td}>
+                      <InlineTextCell
+                        value={row.teacherName}
+                        placeholder="담당T 입력"
+                        onSave={(v) => updateEventField(row.id, { teacher_name: v })}
+                      />
+                    </td>
 
-                    <td className={`${tdL} max-w-[120px] overflow-hidden text-ellipsis`}>
-                      {row.remarks ?? '-'}
+                    <td className={tdL}>
+                      <InlineTextCell
+                        value={row.remarks}
+                        placeholder="비고 입력"
+                        onSave={(v) => updateEventField(row.id, { remarks: v })}
+                      />
                     </td>
 
                     {/* 행사단톡 */}
@@ -955,7 +1087,13 @@ export function EventOperationsClient({
                       />
                     </td>
 
-                    <td className={td}>{row.inflowSource ?? '-'}</td>
+                    <td className={td}>
+                      <InlineSelect
+                        value={row.inflowSource}
+                        options={INFLOW_SOURCE_OPTIONS}
+                        onSave={(v) => updateEventField(row.id, { inflow_source: v })}
+                      />
+                    </td>
 
                     {/* 입금확인 */}
                     <td className={td}>

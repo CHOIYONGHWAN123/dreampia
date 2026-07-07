@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 
-const CATEGORIES = ['유치원', '초등', '중등', '고등', '기관', '특수학교', '문화센터']
+const INSTITUTION_TYPES = ['유치원', '초등', '중등', '고등', '기관', '특수학교', '문화센터']
 
 type Institution = {
   id: string
@@ -11,7 +11,7 @@ type Institution = {
   region2: string | null
   name: string
   address: string | null
-  category: string | null
+  institution_type: string | null
   created_at: string
 }
 
@@ -36,7 +36,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
     return institutions.filter((i) => {
       if (filterRegion1 && i.region1 !== filterRegion1) return false
       if (filterRegion2 && i.region2 !== filterRegion2) return false
-      if (filterCategory && i.category !== filterCategory) return false
+      if (filterCategory && i.institution_type !== filterCategory) return false
       if (searchText && !i.name.includes(searchText)) return false
       return true
     })
@@ -57,7 +57,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
           className="px-4 py-1.5 bg-gray-900 text-white rounded text-sm hover:bg-gray-700 transition-colors"
           onClick={() => router.push('/institutions/new')}
         >
-          학교추가
+          기관 추가
         </button>
       </div>
 
@@ -91,8 +91,8 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
           className="border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
         >
           <option value="">기관 전체</option>
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>{c}</option>
+          {INSTITUTION_TYPES.map((t) => (
+            <option key={t} value={t}>{t}</option>
           ))}
         </select>
 
@@ -131,7 +131,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
                   <td className="px-4 py-2.5 text-center text-gray-600">{index + 1}</td>
                   <td className="px-4 py-2.5 text-center text-gray-800">{institution.region1}</td>
                   <td className="px-4 py-2.5 text-center text-gray-800">{institution.region2 ?? '-'}</td>
-                  <td className="px-4 py-2.5 text-center text-gray-800">{institution.category ?? '-'}</td>
+                  <td className="px-4 py-2.5 text-center text-gray-800">{institution.institution_type ?? '-'}</td>
                   <td className="px-4 py-2.5 text-gray-800">{institution.name}</td>
                   <td className="px-4 py-2.5 text-center" colSpan={3}>
                     <div className="flex items-center justify-center gap-1">

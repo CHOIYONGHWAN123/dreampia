@@ -3,6 +3,87 @@
 import { useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 
+// ── 파일 드롭존 ──────────────────────────────────────────────────────
+
+export function FileDropZone({
+  file,
+  onChange,
+  accept,
+}: {
+  file: File | null
+  onChange: (file: File | null) => void
+  accept?: string
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [dragging, setDragging] = useState(false)
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragging(false)
+    const dropped = e.dataTransfer.files[0]
+    if (dropped) onChange(dropped)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragging(true)
+  }
+
+  return (
+    <div
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={() => setDragging(false)}
+      onClick={() => inputRef.current?.click()}
+      className={`relative flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed px-3 py-4 cursor-pointer transition-colors select-none ${
+        dragging
+          ? 'border-blue-400 bg-blue-50'
+          : file
+          ? 'border-green-400 bg-green-50'
+          : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+      }`}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0] ?? null
+          onChange(f)
+          e.target.value = ''
+        }}
+      />
+
+      {file ? (
+        <>
+          <span className="text-lg">📄</span>
+          <span className="text-xs text-green-700 font-medium text-center break-all max-w-full px-1">
+            {file.name}
+          </span>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onChange(null) }}
+            className="text-[11px] text-red-400 hover:text-red-600"
+          >
+            제거
+          </button>
+        </>
+      ) : (
+        <>
+          <span className="text-lg text-gray-400">📂</span>
+          <span className="text-xs text-gray-500 text-center">
+            클릭하거나 파일을 끌어다 놓으세요
+          </span>
+          <span className="text-[11px] text-gray-400 px-2 py-0.5 rounded bg-white border border-gray-200">
+            파일 선택
+          </span>
+        </>
+      )}
+    </div>
+  )
+}
+
 // ── 출강 가능 지역 ───────────────────────────────────────────────────
 
 export const AREA_OPTIONS = ['부산', '김해', '울산', '창원'] as const
@@ -44,11 +125,13 @@ export function MentorSearchSelect({
   value,
   onChange,
   placeholder = '멘토 검색',
+  disabled = false,
 }: {
   mentors: { id: string; name: string }[]
   value: string
   onChange: (id: string) => void
   placeholder?: string
+  disabled?: boolean
 }) {
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
@@ -76,6 +159,14 @@ export function MentorSearchSelect({
     if (!containerRef.current?.contains(e.relatedTarget as Node)) {
       setOpen(false)
     }
+  }
+
+  if (disabled) {
+    return (
+      <div className="border border-gray-200 rounded px-2 py-1.5 bg-gray-50 text-sm text-gray-400 select-none">
+        본인
+      </div>
+    )
   }
 
   return (

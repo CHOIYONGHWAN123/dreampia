@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useRef, useEffect, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
@@ -31,11 +31,6 @@ type Institution = {
   id: string
   name: string
   address: string | null
-  region1: string
-  region2: string | null
-  category: string | null
-  teacher_name: string | null
-  admin_contact: string | null
   institution_type: string | null
   contact_name: string | null
   contact_email: string | null
@@ -45,6 +40,7 @@ type Institution = {
   crime_check_info: string | null
   indoor_shoes_note: string | null
   parking_note: string | null
+  teacher_name: string | null
 }
 
 type Campaign = {
@@ -58,7 +54,7 @@ type Admin = {
 }
 
 interface Props {
-  institutions: Institution[]
+  institution: Institution | null
   campaigns: Campaign[]
   salesAdmins: Admin[]
   commAdmins: Admin[]
@@ -67,7 +63,6 @@ interface Props {
   programs: ProgramOption[]
   units: UnitOption[]
   mentorsByUnit: Record<string, MentorOption[]>
-  defaultInstitutionId?: string
   eventId?: string
   initialEvent?: EventDetailData
   initialSchedules?: EventScheduleRow[]
@@ -105,7 +100,6 @@ function buildInitialProgramUnits(
       startTime: toDatetimeLocal(r.start_time),
       endTime: toDatetimeLocal(r.end_time),
       classroom: r.classroom ?? '',
-      instructorWaitingRoom: r.instructor_waiting_room ?? '',
       lectureFee: r.lecture_fee,
       headcount: r.headcount,
       sessionHeadcount: r.session_headcount,
@@ -119,7 +113,7 @@ function buildDefaultValues(
   initialSchedules: EventScheduleRow[] | undefined,
   today: string
 ): Partial<EventFormData> {
-  if (!initialEvent) return { reception_date: today }
+  if (!initialEvent) return { reception_date: today, institution_id: null }
 
   const start = splitDateTime(initialEvent.event_start_at)
   const end = splitDateTime(initialEvent.event_end_at)
@@ -156,6 +150,7 @@ function buildDefaultValues(
     contact_name: initialEvent.contact_name,
     contact_email: initialEvent.contact_email,
     contact_phone: initialEvent.contact_phone,
+    teacher_name: initialEvent.teacher_name,
     inflow_source: initialEvent.inflow_source as EventFormData['inflow_source'],
     institution_type: initialEvent.institution_type as EventFormData['institution_type'],
     sales_admin_id: initialEvent.sales_admin_id,
@@ -172,7 +167,7 @@ const labelCls = 'w-36 shrink-0 text-sm font-medium text-gray-700'
 const rowCls = 'flex items-center gap-3'
 
 export function EventForm({
-  institutions,
+  institution,
   campaigns,
   salesAdmins,
   commAdmins,
@@ -181,7 +176,6 @@ export function EventForm({
   programs,
   units,
   mentorsByUnit,
-  defaultInstitutionId,
   eventId,
   initialEvent,
   initialSchedules,
@@ -196,62 +190,35 @@ export function EventForm({
     buildInitialProgramUnits(initialEventRows, units, programs, occupations, fields)
   )
 
-  const initialInstitution = institutions.find((i) => i.id === initialEvent?.institution_id) ?? null
-  const [institutionSearch, setInstitutionSearch] = useState(initialInstitution?.name ?? '')
-  const [showDropdown, setShowDropdown] = useState(false)
-  const [selectedInstitution, setSelectedInstitution] = useState<Institution | null>(initialInstitution)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
   const today = new Date().toISOString().split('T')[0]
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: buildDefaultValues(initialEvent, initialSchedules, today),
   })
 
+  // 신규 등록 시 기관 정보를 폼에 자동 입력
   useEffect(() => {
-    if (!defaultInstitutionId) return
-    const inst = institutions.find((i) => i.id === defaultInstitutionId)
-    if (inst) selectInstitution(inst)
+    if (!institution || initialEvent) return
+    setValue('institution_id', institution.id)
+    setValue('contact_name', institution.contact_name || '')
+    setValue('contact_email', institution.contact_email || '')
+    setValue('contact_phone', institution.contact_phone || '')
+    if (institution.institution_type) setValue('institution_type', institution.institution_type as EventFormData['institution_type'])
+    if (institution.laptop_wifi_note) setValue('laptop_wifi_note', institution.laptop_wifi_note)
+    if (institution.crime_check_method) setValue('crime_check_method', institution.crime_check_method as EventFormData['crime_check_method'])
+    if (institution.crime_check_info) setValue('crime_check_info', institution.crime_check_info)
+    if (institution.indoor_shoes_note) setValue('indoor_shoes_note', institution.indoor_shoes_note)
+    if (institution.parking_note) setValue('parking_note', institution.parking_note)
+    if (institution.teacher_name) setValue('teacher_name', institution.teacher_name)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  useEffect(() => {
-    const onMouseDown = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowDropdown(false)
-      }
-    }
-    document.addEventListener('mousedown', onMouseDown)
-    return () => document.removeEventListener('mousedown', onMouseDown)
-  }, [])
-
-  const filteredInstitutions = useMemo(() => {
-    if (!institutionSearch) return institutions.slice(0, 8)
-    return institutions.filter((i) => i.name.includes(institutionSearch)).slice(0, 8)
-  }, [institutions, institutionSearch])
-
-  function selectInstitution(inst: Institution) {
-    setSelectedInstitution(inst)
-    setInstitutionSearch(inst.name)
-    setValue('institution_id', inst.id)
-    // contact_name/email/phone 우선, 없으면 기존 teacher_name/admin_contact로 폴백
-    setValue('contact_name', inst.contact_name || inst.teacher_name || '')
-    setValue('contact_email', inst.contact_email || '')
-    setValue('contact_phone', inst.contact_phone || inst.admin_contact || '')
-    if (inst.institution_type) setValue('institution_type', inst.institution_type as EventFormData['institution_type'])
-    if (inst.laptop_wifi_note) setValue('laptop_wifi_note', inst.laptop_wifi_note)
-    if (inst.crime_check_method) setValue('crime_check_method', inst.crime_check_method as EventFormData['crime_check_method'])
-    if (inst.crime_check_info) setValue('crime_check_info', inst.crime_check_info)
-    if (inst.indoor_shoes_note) setValue('indoor_shoes_note', inst.indoor_shoes_note)
-    if (inst.parking_note) setValue('parking_note', inst.parking_note)
-    setShowDropdown(false)
-  }
 
   async function uploadEstimateFile(file: File): Promise<string> {
     const supabase = createClient()
@@ -332,7 +299,6 @@ export function EventForm({
           start_time: u.startTime || null,
           end_time: u.endTime || null,
           classroom: u.classroom || null,
-          instructor_waiting_room: u.instructorWaitingRoom || null,
           lecture_fee: u.lectureFee,
           lecture_fee_after_tax: calcLectureFeeAfterTax(u.lectureFee),
           headcount: u.headcount,
@@ -425,38 +391,13 @@ export function EventForm({
           {/* 학교/기관명 */}
           <div className={rowCls}>
             <label className={labelCls}>학교/기관명</label>
-            <div className="flex-1 relative" ref={dropdownRef}>
-              <input
-                type="text"
-                value={institutionSearch}
-                onChange={(e) => {
-                  setInstitutionSearch(e.target.value)
-                  setShowDropdown(true)
-                  if (!e.target.value) {
-                    setSelectedInstitution(null)
-                    setValue('institution_id', null)
-                  }
-                }}
-                onFocus={() => setShowDropdown(true)}
-                placeholder="기관명 검색..."
-                className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:border-gray-500 transition-colors"
-              />
-              {showDropdown && filteredInstitutions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-52 overflow-y-auto">
-                  {filteredInstitutions.map((inst) => (
-                    <button
-                      key={inst.id}
-                      type="button"
-                      onMouseDown={() => selectInstitution(inst)}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                    >
-                      <div className="font-medium text-gray-800">{inst.name}</div>
-                      {inst.address && <div className="text-xs text-gray-500 mt-0.5">{inst.address}</div>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <input type="hidden" {...register('institution_id')} />
+            <input
+              type="text"
+              value={institution?.name ?? ''}
+              readOnly
+              className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-sm bg-gray-50 text-gray-500 cursor-default outline-none"
+            />
           </div>
 
           {/* 주소 */}
@@ -464,9 +405,8 @@ export function EventForm({
             <label className={labelCls}>주소</label>
             <input
               type="text"
-              value={selectedInstitution?.address ?? ''}
+              value={institution?.address ?? ''}
               readOnly
-              placeholder="학교/기관 선택 시 자동 입력"
               className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-sm bg-gray-50 text-gray-500 cursor-default outline-none"
             />
           </div>
@@ -742,6 +682,14 @@ export function EventForm({
           mentorsByUnit={mentorsByUnit}
           value={programUnits}
           onChange={setProgramUnits}
+          defaultStartTime={(() => {
+            const d = watch('event_start_at_date'), t = watch('event_start_at_time')
+            return d && t ? `${d}T${t}` : d ? `${d}T00:00` : ''
+          })()}
+          defaultEndTime={(() => {
+            const d = watch('event_end_at_date'), t = watch('event_end_at_time')
+            return d && t ? `${d}T${t}` : d ? `${d}T00:00` : ''
+          })()}
         />
       </div>
     </div>

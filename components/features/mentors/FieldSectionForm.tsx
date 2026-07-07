@@ -19,6 +19,7 @@ export function FieldSectionForm({
   programCategories,
   mentors,
   globalExcludedUnitIds,
+  selfId,
   onChange,
   onRemove,
 }: {
@@ -30,6 +31,7 @@ export function FieldSectionForm({
   programCategories: ProgramCategoryOption[]
   mentors: { id: string; name: string }[]
   globalExcludedUnitIds: Set<string>
+  selfId: string
   onChange: (next: FieldSectionState) => void
   onRemove?: () => void
 }) {
@@ -108,6 +110,7 @@ export function FieldSectionForm({
               programCategories={programCategories}
               mentors={mentors}
               excludedUnitIds={globalExcludedUnitIds}
+              selfId={selfId}
               onChange={(next) =>
                 onChange({
                   ...section,

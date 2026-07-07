@@ -17,7 +17,6 @@ export type SelectedProgramUnit = {
   startTime: string
   endTime: string
   classroom: string
-  instructorWaitingRoom: string
   lectureFee: number | null
   headcount: number | null
   sessionHeadcount: number | null
@@ -65,6 +64,8 @@ export function EventProgramUnitSection({
   mentorsByUnit,
   value,
   onChange,
+  defaultStartTime,
+  defaultEndTime,
 }: {
   fields: FieldOption[]
   occupations: OccupationOption[]
@@ -73,6 +74,8 @@ export function EventProgramUnitSection({
   mentorsByUnit: Record<string, MentorOption[]>
   value: SelectedProgramUnit[]
   onChange: (next: SelectedProgramUnit[]) => void
+  defaultStartTime?: string
+  defaultEndTime?: string
 }) {
   const [search, setSearch] = useState('')
   const [fieldId, setFieldId] = useState('')
@@ -122,10 +125,9 @@ export function EventProgramUnitSection({
         unitId: unit.id,
         title: unit.title,
         ...buildPath(unit),
-        startTime: '',
-        endTime: '',
+        startTime: defaultStartTime ?? '',
+        endTime: defaultEndTime ?? '',
         classroom: '',
-        instructorWaitingRoom: '',
         lectureFee: null,
         headcount: null,
         sessionHeadcount: null,
@@ -327,15 +329,6 @@ export function EventProgramUnitSection({
                       value={v.classroom}
                       onChange={(e) => updateUnit(v.unitId, { classroom: e.target.value })}
                       placeholder="예: 1-1반"
-                      className={fieldInputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 mb-0.5 block">대기실</label>
-                    <input
-                      type="text"
-                      value={v.instructorWaitingRoom}
-                      onChange={(e) => updateUnit(v.unitId, { instructorWaitingRoom: e.target.value })}
                       className={fieldInputCls}
                     />
                   </div>

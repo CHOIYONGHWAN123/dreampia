@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createMentor, type AddProgramSelectData, type CreateMentorProgramInput } from '@/app/(dashboard)/mentors/actions'
-import { AreaSelector, MentorSearchSelect, uploadFile } from './shared'
+import { AreaSelector, MentorSearchSelect, FileDropZone, uploadFile } from './shared'
 import { DaumAddressButton } from './DaumAddressButton'
 import { FieldSectionForm } from './FieldSectionForm'
 import { createFieldSection, type FieldSectionState } from './new-mentor-types'
@@ -17,6 +17,10 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
   const router = useRouter()
   const [mentorId] = useState(() => crypto.randomUUID())
 
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [userId, setUserId] = useState('')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -46,6 +50,18 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
   const handleSubmit = async () => {
     if (!name.trim()) {
       alert('이름을 입력해주세요.')
+      return
+    }
+    if (email.trim() && !password) {
+      alert('이메일을 입력한 경우 비밀번호도 입력해주세요.')
+      return
+    }
+    if (password && password.length < 6) {
+      alert('비밀번호는 6자 이상이어야 합니다.')
+      return
+    }
+    if (password && password !== passwordConfirm) {
+      alert('비밀번호가 일치하지 않습니다.')
       return
     }
 
@@ -83,6 +99,8 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
       await createMentor({
         id: mentorId,
         userId: userId.trim() || null,
+        email: email.trim() || null,
+        password: password || null,
         name: name.trim(),
         phone: phone.trim() || null,
         address: address.trim() || null,
@@ -118,11 +136,61 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
       </div>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelCls}>ID</label>
-            <input className={inputCls} value={userId} onChange={(e) => setUserId(e.target.value)} />
+        {/* 로그인 계정 */}
+        <div className="border border-blue-100 rounded-lg p-4 bg-blue-50/40 space-y-3">
+          <p className="text-xs font-medium text-blue-700">강사 앱 로그인 계정 <span className="font-normal text-blue-500">(선택 — 입력 시 자동으로 계정이 생성됩니다)</span></p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className={labelCls}>이메일</label>
+              <input
+                type="email"
+                className={inputCls}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="mentor@example.com"
+                autoComplete="off"
+              />
+            </div>
+            <div>
+              <label className={labelCls}>비밀번호</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className={inputCls}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="6자 이상"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? '숨기기' : '보기'}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className={labelCls}>비밀번호 확인</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className={`${inputCls} ${passwordConfirm && password !== passwordConfirm ? 'border-red-400 focus:ring-red-300' : ''}`}
+                  value={passwordConfirm}
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
+                  placeholder="비밀번호 재입력"
+                  autoComplete="new-password"
+                />
+                {passwordConfirm && password !== passwordConfirm && (
+                  <span className="absolute -bottom-4 left-0 text-[11px] text-red-500">비밀번호가 일치하지 않습니다</span>
+                )}
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={labelCls}>이름</label>
             <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} />
@@ -194,7 +262,11 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
               양식 다운로드
             </a>
           </div>
-          <input type="file" onChange={(e) => setAgreementFile(e.target.files?.[0] ?? null)} className="text-sm" />
+          <FileDropZone
+            file={agreementFile}
+            onChange={setAgreementFile}
+            accept=".hwp,.hwpx,.pdf,.doc,.docx"
+          />
         </div>
 
         <div>
@@ -216,6 +288,7 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
             programCategories={selectData.programCategories}
             mentors={selectData.mentors}
             globalExcludedUnitIds={globalExcludedUnitIds}
+            selfId={mentorId}
             onChange={updateSection}
             onRemove={
               fieldSections.length > 1

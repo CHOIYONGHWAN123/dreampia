@@ -7,35 +7,32 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
   const { id } = await params
   const supabase = await createServerSupabaseClient()
 
+  const detail = await getEventDetail(id)
+  if (!detail) notFound()
+
   const [
-    detail,
-    { data: institutions },
+    { data: institution },
     { data: campaigns },
     { data: salesAdmins },
     { data: commAdmins },
     programSelectData,
+    signedResult,
   ] = await Promise.all([
-    getEventDetail(id),
-    supabase.from('institutions').select('id, name, address, region1, region2, category, teacher_name, admin_contact, institution_type, contact_name, contact_email, contact_phone, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note').order('name'),
+    detail.event.institution_id
+      ? supabase.from('institutions').select('id, name, address, institution_type, contact_name, contact_email, contact_phone, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, teacher_name').eq('id', detail.event.institution_id).single()
+      : Promise.resolve({ data: null }),
     supabase.from('campaign').select('id, name').order('name'),
     supabase.from('admins').select('id, name').eq('is_sales', true).order('name'),
     supabase.from('admins').select('id, name').eq('is_comm', true).order('name'),
     getEventProgramSelectData(),
+    detail.event.estimate_file_url
+      ? supabase.storage.from('events').createSignedUrl(detail.event.estimate_file_url, 60 * 60)
+      : Promise.resolve({ data: null }),
   ])
-
-  if (!detail) notFound()
-
-  let estimateFileUrl: string | null = null
-  if (detail.event.estimate_file_url) {
-    const { data: signed } = await supabase.storage
-      .from('events')
-      .createSignedUrl(detail.event.estimate_file_url, 60 * 60)
-    estimateFileUrl = signed?.signedUrl ?? null
-  }
 
   return (
     <EventForm
-      institutions={institutions || []}
+      institution={institution ?? null}
       campaigns={campaigns || []}
       salesAdmins={salesAdmins || []}
       commAdmins={commAdmins || []}
@@ -48,7 +45,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       initialEvent={detail.event}
       initialSchedules={detail.schedules}
       initialEventRows={detail.eventRows}
-      initialEstimateFileUrl={estimateFileUrl}
+      initialEstimateFileUrl={signedResult.data?.signedUrl ?? null}
     />
   )
 }

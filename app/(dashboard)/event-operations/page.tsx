@@ -52,6 +52,7 @@ export default async function EventOperationsPage({
         currentYear={year}
         currentMonth={month}
         admins={admins}
+        campaigns={[]}
       />
     )
   }
@@ -65,10 +66,9 @@ export default async function EventOperationsPage({
     sessionsRes,
     eventRowsRes,
   ] = await Promise.all([
-    supabase.from('institutions').select('id, region1, region2, category, name')
+    supabase.from('institutions').select('id, region1, region2, institution_type, name')
       .in('id', events.map((e) => e.institution_id).filter(Boolean) as string[]),
-    supabase.from('campaign').select('id, name')
-      .in('id', events.map((e) => e.campaign_id).filter(Boolean) as string[]),
+    supabase.from('campaign').select('id, name').order('name'),
     supabase.from('event_sessions').select('id, event_id, start_at, end_at, sort_order')
       .in('event_id', eventIds).order('sort_order'),
     supabase.from('event_rows').select('id, event_id').in('event_id', eventIds),
@@ -82,7 +82,8 @@ export default async function EventOperationsPage({
 
   // 맵 구성
   const institutionMap = new Map((institutionsRes.data ?? []).map((i) => [i.id, i]))
-  const campaignMap = new Map((campaignsRes.data ?? []).map((c) => [c.id, c.name]))
+  const campaignList = (campaignsRes.data ?? []).map((c) => ({ id: c.id, name: c.name }))
+  const campaignMap = new Map(campaignList.map((c) => [c.id, c.name]))
   const adminMap = new Map(admins.map((a) => [a.id, a.name]))
 
   const sessionsByEvent = new Map<string, typeof sessionsRes.data>()
@@ -121,8 +122,9 @@ export default async function EventOperationsPage({
       institutionId: e.institution_id,
       region1: inst?.region1 ?? null,
       region2: inst?.region2 ?? null,
-      category: inst?.category ?? null,
+      category: inst?.institution_type ?? null,
       institutionName: inst?.name ?? null,
+      campaignId: e.campaign_id,
       campaignName: e.campaign_id ? (campaignMap.get(e.campaign_id) ?? null) : null,
       fieldAdminIds: e.field_admin_ids ?? [],
       fieldAdminNames,
@@ -167,6 +169,7 @@ export default async function EventOperationsPage({
       currentYear={year}
       currentMonth={month}
       admins={admins}
+      campaigns={campaignList}
     />
   )
 }

@@ -11,13 +11,15 @@ export default async function NewEventPage({
   const supabase = await createServerSupabaseClient()
 
   const [
-    { data: institutions },
+    { data: institution },
     { data: campaigns },
     { data: salesAdmins },
     { data: commAdmins },
     programSelectData,
   ] = await Promise.all([
-    supabase.from('institutions').select('id, name, address, region1, region2, category, teacher_name, admin_contact, institution_type, contact_name, contact_email, contact_phone, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note').order('name'),
+    institutionId
+      ? supabase.from('institutions').select('id, name, address, institution_type, contact_name, contact_email, contact_phone, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, teacher_name').eq('id', institutionId).single()
+      : Promise.resolve({ data: null }),
     supabase.from('campaign').select('id, name').order('name'),
     supabase.from('admins').select('id, name').eq('is_sales', true).order('name'),
     supabase.from('admins').select('id, name').eq('is_comm', true).order('name'),
@@ -26,7 +28,7 @@ export default async function NewEventPage({
 
   return (
     <EventForm
-      institutions={institutions || []}
+      institution={institution ?? null}
       campaigns={campaigns || []}
       salesAdmins={salesAdmins || []}
       commAdmins={commAdmins || []}
@@ -35,7 +37,6 @@ export default async function NewEventPage({
       programs={programSelectData.programs}
       units={programSelectData.units}
       mentorsByUnit={programSelectData.mentorsByUnit}
-      defaultInstitutionId={institutionId}
     />
   )
 }

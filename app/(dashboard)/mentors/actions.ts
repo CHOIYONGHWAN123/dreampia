@@ -432,6 +432,8 @@ export interface CreateMentorProgramInput {
 export interface CreateMentorInput {
   id: string
   userId: string | null
+  email: string | null
+  password: string | null
   name: string
   phone: string | null
   address: string | null
@@ -484,9 +486,23 @@ export async function deleteMentor(mentorId: string): Promise<void> {
 export async function createMentor(input: CreateMentorInput): Promise<void> {
   const supabase = await createServerSupabaseClient()
 
+  // 이메일/비밀번호가 있으면 Supabase Auth 계정 먼저 생성
+  let authUserId: string | null = input.userId
+  if (input.email && input.password) {
+    const { createAdminSupabaseClient } = await import('@/lib/supabase-admin')
+    const admin = createAdminSupabaseClient()
+    const { data, error: authError } = await admin.auth.admin.createUser({
+      email: input.email,
+      password: input.password,
+      email_confirm: true,
+    })
+    if (authError) throw new Error(`계정 생성 실패: ${authError.message}`)
+    authUserId = data.user.id
+  }
+
   const { error } = await supabase.from('mentors').insert({
     id: input.id,
-    user_id: input.userId,
+    user_id: authUserId,
     name: input.name,
     phone: input.phone,
     address: input.address,

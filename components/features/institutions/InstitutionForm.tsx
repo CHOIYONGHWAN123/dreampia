@@ -14,8 +14,7 @@ import {
 } from '@/app/(dashboard)/institutions/actions'
 import { createClient } from '@/lib/supabase'
 
-const CATEGORIES = ['유치원', '초등', '중등', '고등', '기관', '특수학교', '문화센터']
-const INSTITUTION_TYPES = ['유치원', '초등', '중등', '고등', '기관'] as const
+const INSTITUTION_TYPES = ['유치원', '초등', '중등', '고등', '기관', '특수학교', '문화센터'] as const
 const CRIME_CHECK_METHODS = ['회보서', '동의서'] as const
 
 interface DaumPostcodeResult {
@@ -60,8 +59,8 @@ export function InstitutionForm({ id, defaultValues }: Props) {
   } = useForm<InstitutionFormData>({
     resolver: zodResolver(institutionSchema),
     defaultValues: defaultValues ?? {
-      region1: '', region2: '', name: '', address: '', category: '',
-      institution_type: '', teacher_name: '', admin_contact: '',
+      region1: '', region2: '', name: '', address: '',
+      institution_type: '', admin_contact: '',
       instructor_waiting_room: '', has_elevator: false, floor_map_url: '',
       contact_name: '', contact_email: '', contact_phone: '',
       laptop_wifi_note: '', crime_check_method: '', crime_check_info: '',
@@ -170,17 +169,6 @@ export function InstitutionForm({ id, defaultValues }: Props) {
       {/* 기관 구분 */}
       <div>
         <label className={labelCls}>기관 구분</label>
-        <select {...register('category')} className={selectCls}>
-          <option value="">선택 안 함</option>
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* 기관 타입 */}
-      <div>
-        <label className={labelCls}>기관 타입</label>
         <select {...register('institution_type')} className={selectCls}>
           <option value="">선택 안 함</option>
           {INSTITUTION_TYPES.map((t) => (
@@ -228,17 +216,6 @@ export function InstitutionForm({ id, defaultValues }: Props) {
           주소 검색으로 자동 입력되었습니다. 필요 시 직접 수정할 수 있습니다.
         </p>
       )}
-
-      {/* 담당 선생님 */}
-      <div>
-        <label className={labelCls}>담당 선생님</label>
-        <input
-          {...register('teacher_name')}
-          type="text"
-          placeholder="예: 3학년 부장 홍길동"
-          className={inputCls}
-        />
-      </div>
 
       {/* 계약담당 행정실 연락처 */}
       <div>

@@ -22,12 +22,10 @@ export default async function InstitutionEditPage({ params }: { params: Promise<
         id={data.id}
         defaultValues={{
           name: data.name,
-          category: data.category ?? '',
           address: data.address ?? '',
           region1: data.region1,
           region2: data.region2 ?? '',
           institution_type: data.institution_type ?? '',
-          teacher_name: data.teacher_name ?? '',
           admin_contact: data.admin_contact ?? '',
           instructor_waiting_room: data.instructor_waiting_room ?? '',
           has_elevator: data.has_elevator ?? false,

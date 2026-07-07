@@ -13,6 +13,7 @@ export function ProgramEntryForm({
   programCategories,
   mentors,
   excludedUnitIds,
+  selfId,
   onChange,
   onRemove,
 }: {
@@ -22,6 +23,7 @@ export function ProgramEntryForm({
   programCategories: ProgramCategoryOption[]
   mentors: { id: string; name: string }[]
   excludedUnitIds: Set<string>
+  selfId: string
   onChange: (next: ProgramEntryState) => void
   onRemove?: () => void
 }) {
@@ -51,6 +53,8 @@ export function ProgramEntryForm({
 
       <LevelFileInputs
         levels={entry.selection.levels}
+        pptFiles={entry.pptFiles}
+        profileFiles={entry.profileFiles}
         onPptChange={(level, file) => onChange({ ...entry, pptFiles: { ...entry.pptFiles, [level]: file } })}
         onProfileChange={(level, file) =>
           onChange({ ...entry, profileFiles: { ...entry.profileFiles, [level]: file } })
@@ -59,21 +63,59 @@ export function ProgramEntryForm({
 
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">강사료 입금자</label>
+          <div className="flex items-center gap-2 mb-1">
+            <label className="text-xs text-gray-500">강사료 입금자</label>
+            <button
+              type="button"
+              onClick={() =>
+                onChange({
+                  ...entry,
+                  lectureFeePayerId: entry.lectureFeePayerId === selfId ? '' : selfId,
+                })
+              }
+              className={`px-1.5 py-0.5 text-[11px] rounded border transition-colors ${
+                entry.lectureFeePayerId === selfId
+                  ? 'bg-gray-800 text-white border-gray-800'
+                  : 'border-gray-300 text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              본인
+            </button>
+          </div>
           <MentorSearchSelect
             mentors={mentors}
-            value={entry.lectureFeePayerId}
+            value={entry.lectureFeePayerId === selfId ? '' : entry.lectureFeePayerId}
             onChange={(v) => onChange({ ...entry, lectureFeePayerId: v })}
             placeholder="강사료 입금자 검색"
+            disabled={entry.lectureFeePayerId === selfId}
           />
         </div>
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">재료비 입금자</label>
+          <div className="flex items-center gap-2 mb-1">
+            <label className="text-xs text-gray-500">재료비 입금자</label>
+            <button
+              type="button"
+              onClick={() =>
+                onChange({
+                  ...entry,
+                  materialFeePayerId: entry.materialFeePayerId === selfId ? '' : selfId,
+                })
+              }
+              className={`px-1.5 py-0.5 text-[11px] rounded border transition-colors ${
+                entry.materialFeePayerId === selfId
+                  ? 'bg-gray-800 text-white border-gray-800'
+                  : 'border-gray-300 text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              본인
+            </button>
+          </div>
           <MentorSearchSelect
             mentors={mentors}
-            value={entry.materialFeePayerId}
+            value={entry.materialFeePayerId === selfId ? '' : entry.materialFeePayerId}
             onChange={(v) => onChange({ ...entry, materialFeePayerId: v })}
             placeholder="재료비 입금자 검색"
+            disabled={entry.materialFeePayerId === selfId}
           />
         </div>
       </div>

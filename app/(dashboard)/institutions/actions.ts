@@ -60,9 +60,7 @@ type InstitutionData = {
   region2?: string
   name: string
   address?: string
-  category?: string
   institution_type?: string
-  teacher_name?: string
   admin_contact?: string
   instructor_waiting_room?: string
   has_elevator?: boolean
@@ -83,9 +81,7 @@ function toPayload(data: InstitutionData) {
     region2: data.region2 || null,
     name: data.name,
     address: data.address || null,
-    category: data.category || null,
     institution_type: data.institution_type || null,
-    teacher_name: data.teacher_name || null,
     admin_contact: data.admin_contact || null,
     instructor_waiting_room: data.instructor_waiting_room || null,
     has_elevator: data.has_elevator ?? null,
