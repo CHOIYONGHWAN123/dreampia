@@ -28,7 +28,7 @@ async function fetchConsumableSupplyMap(
 
 type SupplyLogEntry = {
   supply_id: string
-  stock_type: 'total'
+  stock_type: 'kit'
   delta: number
   reason: string
   event_row_id: string
@@ -310,7 +310,7 @@ export async function createEvent(data: {
       if (!eventRowId) continue
       supplyLogs.push({
         supply_id: supply.id,
-        stock_type: 'total',
+        stock_type: 'kit',
         delta: -(r.headcount * supply.qty_per_person),
         reason: '행사 재고 차감',
         event_row_id: eventRowId,
@@ -462,7 +462,7 @@ export async function updateEvent(
         if (diff !== 0) {
           supplyLogs.push({
             supply_id: supply.id,
-            stock_type: 'total',
+            stock_type: 'kit',
             delta: -(diff * supply.qty_per_person),
             reason: diff > 0 ? '행사 인원 증가 재고 차감' : '행사 인원 감소 재고 복원',
             event_row_id: existing.id,
@@ -482,7 +482,7 @@ export async function updateEvent(
       if (supply && (r.headcount ?? 0) > 0 && newRow) {
         supplyLogs.push({
           supply_id: supply.id,
-          stock_type: 'total',
+          stock_type: 'kit',
           delta: -(r.headcount! * supply.qty_per_person),
           reason: '행사 재고 차감',
           event_row_id: newRow.id,
@@ -497,7 +497,7 @@ export async function updateEvent(
     if (supply && (removed.headcount ?? 0) > 0) {
       supplyLogs.push({
         supply_id: supply.id,
-        stock_type: 'total',
+        stock_type: 'kit',
         delta: +(removed.headcount! * supply.qty_per_person),
         reason: '행사 프로그램 제거 재고 복원',
         event_row_id: removed.id,
@@ -531,7 +531,7 @@ export async function deleteEvent(id: string) {
       if (!supply) continue
       supplyLogs.push({
         supply_id: supply.id,
-        stock_type: 'total',
+        stock_type: 'kit',
         delta: +(r.headcount! * supply.qty_per_person),
         reason: '행사 삭제 재고 복원',
         event_row_id: r.id,

@@ -4,13 +4,14 @@ import { SuppliesClient, type UnitWithSupply } from '@/components/features/suppl
 export default async function SuppliesPage() {
   const supabase = await createServerSupabaseClient()
 
-  const [fieldsRes, occsRes, progsRes, unitsRes, suppliesRes, logsRes] = await Promise.all([
+  const [fieldsRes, occsRes, progsRes, unitsRes, suppliesRes, logsRes, eventRowsRes] = await Promise.all([
     supabase.from('fields').select('id, name').order('name'),
     supabase.from('occupations').select('id, name, field_id').order('name'),
     supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
     supabase.from('occupation_program_unit').select('id, title, occupation_programs_id').order('title'),
     supabase.from('supplies').select('id, occupation_program_unit_id, qty_per_person, kit_threshold, max_daily_stock, is_consumable, memo'),
     supabase.from('supply_logs').select('supply_id, stock_type, delta'),
+    supabase.from('event_rows').select('occupation_program_unit_id, headcount, events(event_end_at)'),
   ])
 
   const fieldMap = new Map((fieldsRes.data ?? []).map((f) => [f.id, f]))
@@ -26,6 +27,20 @@ export default async function SuppliesPage() {
     if (log.stock_type === 'total') cur.total += log.delta
     else if (log.stock_type === 'kit') cur.kit += log.delta
     stockMap.set(log.supply_id, cur)
+  }
+
+  // 아직 끝나지 않은(예정 또는 진행 중) 행사의 event_rows 중 유닛별 최대 인원수 집계
+  // → "일 최대 수용" 초과 위험 판단에 사용 (지나간 행사는 제외)
+  const now = Date.now()
+  const maxActiveHeadcountByUnit = new Map<string, number>()
+  for (const row of eventRowsRes.data ?? []) {
+    if (!row.occupation_program_unit_id || row.headcount == null) continue
+    const eventRef = row.events as unknown
+    const eventEndAt = (Array.isArray(eventRef) ? eventRef[0] : eventRef) as { event_end_at: string | null } | null
+    const isActive = !eventEndAt?.event_end_at || new Date(eventEndAt.event_end_at).getTime() >= now
+    if (!isActive) continue
+    const cur = maxActiveHeadcountByUnit.get(row.occupation_program_unit_id) ?? 0
+    if (row.headcount > cur) maxActiveHeadcountByUnit.set(row.occupation_program_unit_id, row.headcount)
   }
 
   const units: UnitWithSupply[] = (unitsRes.data ?? []).map((u) => {
@@ -56,6 +71,7 @@ export default async function SuppliesPage() {
         : null,
       totalStock: stock.total,
       kitStock: stock.kit,
+      maxActiveHeadcount: maxActiveHeadcountByUnit.get(u.id) ?? 0,
     }
   })
 

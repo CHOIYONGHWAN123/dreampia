@@ -24,6 +24,7 @@ export type UnitWithSupply = {
   } | null
   totalStock: number
   kitStock: number
+  maxActiveHeadcount: number
 }
 
 type NavOption = { id: string; name: string }
@@ -171,7 +172,7 @@ export function SuppliesClient({ units, fields }: Props) {
               <th className={thCls} style={{ width: 84 }}>키트 재고</th>
               <th className={thCls} style={{ width: 90 }}>키트 재고 상태</th>
               <th className={thCls} style={{ width: 96 }}>일 최대 수용</th>
-              <th className={thCls} style={{ width: 96 }}>일 최대 수용 상태</th>
+              <th className={thCls} style={{ width: 96 }} title="예정/진행 중인 행사 중 일 최대 수용량을 초과하는 인원수가 있으면 위험으로 표시">일 최대 수용 상태</th>
               <th className={thCls} style={{ width: 96 }}>변동 이력</th>
               <th className={thCls} style={{ width: 80 }}>재고 조정</th>
               <th className={thCls} style={{ width: 80 }}>수정하기</th>
@@ -208,7 +209,11 @@ export function SuppliesClient({ units, fields }: Props) {
                           {u.supply!.max_daily_stock != null ? u.supply!.max_daily_stock.toLocaleString() : '-'}
                         </td>
                         <td className={td}>
-                          <StockStatus current={u.totalStock} threshold={u.supply!.max_daily_stock} dangerWhenBelow />
+                          <StockStatus
+                            current={u.maxActiveHeadcount}
+                            threshold={u.supply!.max_daily_stock}
+                            dangerWhenBelow={false}
+                          />
                         </td>
                       </>
                     ) : (

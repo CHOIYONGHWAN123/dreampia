@@ -574,11 +574,18 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ## 비즈니스 로직 핵심 규칙
 
 ### 재고 차감
-- `event_rows`에 row가 생성되고 `session_headcount` 값이 입력되면 재고가 차감된다.
+- `event_rows`에 row가 생성되고 `headcount`(인원수) 값이 입력되면 `headcount × qty_per_person`만큼 **키트재고(`kit`)**가 차감된다. (`session_headcount`는 차시별 인원수 기록용으로 저장만 되며 재고 계산에는 사용하지 않는다.)
+- 키트재고는 수업 나갈 때 미리 세팅(포장)해두는 재고를 의미한다. 행사가 등록되면 강사가 이 세팅된 키트재고를 들고 나가는 것이므로 총재고(`total`)가 아닌 키트재고에서 차감한다.
 - 재고는 `supply_logs` 테이블에 로그를 남기는 방식으로 관리한다.
 - 재고 종류는 `total`(총재고)과 `kit`(키트재고) 두 가지이며, `free`(여유재고)는 `total - kit`으로 계산한다.
 - `delta` 값은 양수=입고, 음수=출고를 의미한다.
 - 소모성(`is_consumable = true`) 재료만 차감 처리한다.
+- 해당 프로그램 유닛에 `supplies` 레지스트리(재고 등록)가 없으면 차감 로직은 조용히 스킵된다.
+
+### 준비물 관리 경고 상태
+- **키트 재고 상태**: 현재 키트재고(`kit`)가 `supplies.kit_threshold`("키트재고 경고 기준값") 미만이면 위험.
+- **일 최대 수용 상태**: `supplies.max_daily_stock`("일 최대 수용 재고")는 하루에 소화 가능한 상한선(캐파) 개념. 아직 끝나지 않은(예정 또는 진행 중) 행사의 `event_rows` 중 해당 프로그램 유닛의 `headcount`가 `max_daily_stock`을 초과하는 건이 하나라도 있으면 위험. (재고 수량이 아니라 등록된 행사의 인원수 기준으로 판단하며, 이미 종료된 행사는 제외한다.)
+- 두 상태 모두 기준값(`kit_threshold`/`max_daily_stock`)이 비어있으면 상태를 표시하지 않는다.
 
 ### 행사 체크 상태 (event_check_status)
 - `smallint` 타입으로 1~4 값만 허용한다.
