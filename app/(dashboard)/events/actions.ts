@@ -59,7 +59,6 @@ type EventRowInput = {
   lecture_fee_after_tax?: number | null
   headcount?: number | null
   session_headcount?: number | null
-  mentor_id?: string | null
 }
 
 export type MentorOptionForUnit = {
@@ -290,7 +289,6 @@ export async function createEvent(data: {
           lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
           headcount: r.headcount ?? null,
           session_headcount: r.session_headcount ?? null,
-          mentor_id: r.mentor_id || null,
         }))
       )
       .select('id, occupation_program_unit_id')
@@ -452,7 +450,6 @@ export async function updateEvent(
       lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
       headcount: r.headcount ?? null,
       session_headcount: r.session_headcount ?? null,
-      mentor_id: r.mentor_id || null,
     }
     const existing = existingByUnit.get(r.occupation_program_unit_id)
     if (existing) {

@@ -155,7 +155,12 @@ export function EventProgramUnitSection({
 
   return (
     <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-      <h3 className="text-sm font-semibold text-gray-700">프로그램 추가</h3>
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700">프로그램 추가</h3>
+        <p className="mt-0.5 text-xs text-gray-400">
+          여기서는 프로그램 유닛 추가까지만 진행합니다. 강사 배정은 저장 후 강사 섭외 페이지에서 진행됩니다.
+        </p>
+      </div>
 
       {/* 검색 */}
       <div className="relative">
@@ -287,22 +292,19 @@ export function EventProgramUnitSection({
                 </div>
 
                 <div>
-                  <label className="text-xs text-gray-500 mb-0.5 block">강사 선택</label>
-                  <select
-                    value={v.mentorId ?? ''}
-                    onChange={(e) => updateUnit(v.unitId, { mentorId: e.target.value || null })}
-                    className={fieldInputCls}
-                  >
-                    <option value="">선택안함</option>
-                    {candidateMentors.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} (점수: {m.score ?? '-'} / 소속: {m.belongsToName ?? '개인'})
-                      </option>
-                    ))}
-                  </select>
-                  {candidateMentors.length === 0 && (
-                    <p className="mt-0.5 text-xs text-gray-400">이 프로그램에 배정 가능한 강사가 없습니다.</p>
-                  )}
+                  <label className="text-xs text-gray-500 mb-0.5 block">강사 배정</label>
+                  {(() => {
+                    const assignedMentor = v.mentorId
+                      ? candidateMentors.find((m) => m.id === v.mentorId)
+                      : undefined
+                    return (
+                      <p className="text-sm text-gray-600">
+                        {assignedMentor
+                          ? `${assignedMentor.name} (배정 완료)`
+                          : '미배정 (저장 후 강사 섭외 페이지에서 진행)'}
+                      </p>
+                    )
+                  })()}
                 </div>
 
                 <div className="grid grid-cols-4 gap-2">

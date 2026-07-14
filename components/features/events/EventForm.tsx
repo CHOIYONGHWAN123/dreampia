@@ -305,7 +305,6 @@ export function EventForm({
           lecture_fee_after_tax: calcLectureFeeAfterTax(u.lectureFee),
           headcount: u.headcount,
           session_headcount: u.sessionHeadcount,
-          mentor_id: u.mentorId || null,
         })),
       }
 
