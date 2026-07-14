@@ -2,8 +2,16 @@
 
 import { usePathname } from 'next/navigation'
 
-const menus = [
+type MenuItem =
+  | { href: string; label: string; children?: undefined }
+  | { href?: undefined; label: string; children: { href: string; label: string }[] }
+
+const menus: MenuItem[] = [
   { href: '/dashboard', label: '대시보드' },
+  {
+    label: '나의 할일',
+    children: [{ href: '/my-tasks/recruiting', label: '강사 섭외' }],
+  },
   { href: '/counter', label: '카운터 관리' },
   { href: '/company-info', label: '회사소개' },
   { href: '/terms', label: '이용약관' },
@@ -17,25 +25,51 @@ const menus = [
   { href: '/event-operations', label: '행사운영확인표' },
 ]
 
+function isMenuActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(href + '/')
+}
+
 export function NavMenu() {
   const pathname = usePathname()
 
   return (
     <nav className="flex-1 p-3">
       <p className="text-xs font-medium text-gray-400 px-2 mb-2">메뉴</p>
-      {menus.map(({ href, label }) => {
-        const isActive = pathname === href || pathname.startsWith(href + '/')
+      {menus.map((menu) => {
+        if (menu.children) {
+          return (
+            <div key={menu.label} className="mb-1">
+              <p className="px-2 py-2 text-sm font-medium text-gray-500">{menu.label}</p>
+              <div className="ml-2 space-y-0.5">
+                {menu.children.map((child) => (
+                  <a
+                    key={child.href}
+                    href={child.href}
+                    className={`flex items-center px-2 py-2 text-sm rounded-lg transition-colors ${
+                      isMenuActive(pathname, child.href)
+                        ? 'bg-gray-900 text-white font-medium'
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {child.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )
+        }
+
         return (
           <a
-            key={href}
-            href={href}
+            key={menu.href}
+            href={menu.href}
             className={`flex items-center px-2 py-2 text-sm rounded-lg transition-colors ${
-              isActive
+              isMenuActive(pathname, menu.href)
                 ? 'bg-gray-900 text-white font-medium'
                 : 'text-gray-600 hover:bg-gray-50'
             }`}
           >
-            {label}
+            {menu.label}
           </a>
         )
       })}

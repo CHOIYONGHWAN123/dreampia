@@ -195,6 +195,7 @@ export type Database = {
           school_request_response: string | null
           session_headcount: number | null
           start_time: string | null
+          target: string | null
         }
         Insert: {
           attendance?: boolean | null
@@ -214,6 +215,7 @@ export type Database = {
           school_request_response?: string | null
           session_headcount?: number | null
           start_time?: string | null
+          target?: string | null
         }
         Update: {
           attendance?: boolean | null
@@ -233,6 +235,7 @@ export type Database = {
           school_request_response?: string | null
           session_headcount?: number | null
           start_time?: string | null
+          target?: string | null
         }
         Relationships: [
           {
@@ -603,7 +606,6 @@ export type Database = {
         Row: {
           address: string | null
           admin_contact: string | null
-          category: string | null
           contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
@@ -630,7 +632,6 @@ export type Database = {
         Insert: {
           address?: string | null
           admin_contact?: string | null
-          category?: string | null
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
@@ -657,7 +658,6 @@ export type Database = {
         Update: {
           address?: string | null
           admin_contact?: string | null
-          category?: string | null
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
@@ -682,6 +682,149 @@ export type Database = {
           teacher_name?: string | null
         }
         Relationships: []
+      }
+      invitation_event_rows: {
+        Row: {
+          event_row_id: string
+          invitation_id: string
+        }
+        Insert: {
+          event_row_id: string
+          invitation_id: string
+        }
+        Update: {
+          event_row_id?: string
+          invitation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitation_event_rows_event_row_id_fkey"
+            columns: ["event_row_id"]
+            isOneToOne: false
+            referencedRelation: "event_rows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitation_event_rows_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "invitations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitation_mentors: {
+        Row: {
+          id: string
+          invitation_id: string
+          mentor_id: string
+          notified_at: string | null
+          responded_at: string | null
+          status: Database["public"]["Enums"]["invitation_mentor_status"]
+        }
+        Insert: {
+          id?: string
+          invitation_id: string
+          mentor_id: string
+          notified_at?: string | null
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["invitation_mentor_status"]
+        }
+        Update: {
+          id?: string
+          invitation_id?: string
+          mentor_id?: string
+          notified_at?: string | null
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["invitation_mentor_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitation_mentors_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "invitations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitation_mentors_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "mentors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitation_row_responses: {
+        Row: {
+          accepted_at: string
+          event_row_id: string
+          id: string
+          invitation_mentor_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          event_row_id: string
+          id?: string
+          invitation_mentor_id: string
+        }
+        Update: {
+          accepted_at?: string
+          event_row_id?: string
+          id?: string
+          invitation_mentor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitation_row_responses_event_row_id_fkey"
+            columns: ["event_row_id"]
+            isOneToOne: false
+            referencedRelation: "event_rows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitation_row_responses_invitation_mentor_id_fkey"
+            columns: ["invitation_mentor_id"]
+            isOneToOne: false
+            referencedRelation: "invitation_mentors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          is_all_approval_required: boolean
+          status: Database["public"]["Enums"]["invitation_status"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          is_all_approval_required?: boolean
+          status?: Database["public"]["Enums"]["invitation_status"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          is_all_approval_required?: boolean
+          status?: Database["public"]["Enums"]["invitation_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lesson_plans: {
         Row: {
@@ -1107,6 +1250,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation_all: {
+        Args: { p_invitation_mentor_id: string }
+        Returns: undefined
+      }
+      accept_invitation_event_row: {
+        Args: { p_event_row_id: string; p_invitation_mentor_id: string }
+        Returns: undefined
+      }
+      decline_invitation: {
+        Args: { p_invitation_mentor_id: string }
+        Returns: undefined
+      }
+      expire_stale_invitations: { Args: never; Returns: undefined }
       is_approved_admin: { Args: never; Returns: boolean }
       is_authenticated_admin: { Args: never; Returns: boolean }
       is_authenticated_admin_or_mentor: { Args: never; Returns: boolean }
@@ -1147,6 +1303,8 @@ export type Database = {
         | "기관"
         | "특수학교"
         | "문화센터"
+      invitation_mentor_status: "대기" | "수락" | "거절" | "마감" | "만료"
+      invitation_status: "발송중" | "마감" | "만료" | "취소"
       lesson_category: "직업체험" | "문화예술체험" | "진로박람회"
       prep_by: "강사" | "드림피아" | "모두가능"
       recruit_status: "섭외대기" | "섭외진행중" | "섭외완료"
@@ -1327,6 +1485,8 @@ export const Constants = {
         "특수학교",
         "문화센터",
       ],
+      invitation_mentor_status: ["대기", "수락", "거절", "마감", "만료"],
+      invitation_status: ["발송중", "마감", "만료", "취소"],
       lesson_category: ["직업체험", "문화예술체험", "진로박람회"],
       prep_by: ["강사", "드림피아", "모두가능"],
       recruit_status: ["섭외대기", "섭외진행중", "섭외완료"],

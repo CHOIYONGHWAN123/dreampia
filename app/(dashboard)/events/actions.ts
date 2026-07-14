@@ -54,6 +54,7 @@ type EventRowInput = {
   start_time?: string | null
   end_time?: string | null
   classroom?: string | null
+  target?: string | null
   lecture_fee?: number | null
   lecture_fee_after_tax?: number | null
   headcount?: number | null
@@ -120,6 +121,7 @@ export type EventRowDetailData = {
   start_time: string | null
   end_time: string | null
   classroom: string | null
+  target: string | null
   lecture_fee: number | null
   headcount: number | null
   session_headcount: number | null
@@ -138,7 +140,7 @@ export async function getEventDetail(id: string): Promise<{
     supabase
       .from('event_rows')
       .select(
-        'occupation_program_unit_id, start_time, end_time, classroom, lecture_fee, headcount, session_headcount, mentor_id'
+        'occupation_program_unit_id, start_time, end_time, classroom, target, lecture_fee, headcount, session_headcount, mentor_id'
       )
       .eq('event_id', id),
   ])
@@ -283,6 +285,7 @@ export async function createEvent(data: {
           start_time: r.start_time || null,
           end_time: r.end_time || null,
           classroom: r.classroom || null,
+          target: r.target || null,
           lecture_fee: r.lecture_fee ?? null,
           lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
           headcount: r.headcount ?? null,
@@ -444,6 +447,7 @@ export async function updateEvent(
       start_time: r.start_time || null,
       end_time: r.end_time || null,
       classroom: r.classroom || null,
+      target: r.target || null,
       lecture_fee: r.lecture_fee ?? null,
       lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
       headcount: r.headcount ?? null,

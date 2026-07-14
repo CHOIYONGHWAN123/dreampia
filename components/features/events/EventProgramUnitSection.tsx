@@ -17,6 +17,7 @@ export type SelectedProgramUnit = {
   startTime: string
   endTime: string
   classroom: string
+  target: string
   lectureFee: number | null
   headcount: number | null
   sessionHeadcount: number | null
@@ -128,6 +129,7 @@ export function EventProgramUnitSection({
         startTime: defaultStartTime ?? '',
         endTime: defaultEndTime ?? '',
         classroom: '',
+        target: '',
         lectureFee: null,
         headcount: null,
         sessionHeadcount: null,
@@ -329,6 +331,16 @@ export function EventProgramUnitSection({
                       value={v.classroom}
                       onChange={(e) => updateUnit(v.unitId, { classroom: e.target.value })}
                       placeholder="예: 1-1반"
+                      className={fieldInputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-0.5 block">대상</label>
+                    <input
+                      type="text"
+                      value={v.target}
+                      onChange={(e) => updateUnit(v.unitId, { target: e.target.value })}
+                      placeholder="예: 1학년, 2학년, 3학년"
                       className={fieldInputCls}
                     />
                   </div>

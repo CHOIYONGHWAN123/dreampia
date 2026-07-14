@@ -424,6 +424,7 @@ Table event_rows {
   remarks               text
   criminal_background_check varchar [note: '회보서 파일 URL']
   school_request_response text [note: '학교 요청사항 답변']
+  target varchar [note: '대상 예 : 1학년, 2학년, 3학년']
 
 }
 
@@ -657,3 +658,6 @@ institutions → events → event_rows ← mentors
 
 
 ## 디비 테이블 생성 쿼리문 작성시 RLS 쿼리도 같이 작성
+
+## 피드백 가능
+- 요청에 수정사항이 있거나 피드백 사항이 있으면 제안해주기
