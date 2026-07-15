@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { deleteEvent } from '@/app/(dashboard)/events/actions'
 
@@ -249,7 +250,14 @@ export function InstitutionDetailClient({
                     <td className="px-4 py-2.5 text-center text-gray-600">{index + 1}</td>
                     <td className="px-4 py-2.5 text-center text-gray-800">{formatDateTime(event.event_start_at)}</td>
                     <td className="px-4 py-2.5 text-center text-gray-800">{formatDateTime(event.event_end_at)}</td>
-                    <td className="px-4 py-2.5 text-gray-800">{event.name}</td>
+                    <td className="px-4 py-2.5 text-gray-800">
+                      <Link
+                        href={`/events/${event.id}/recruiting`}
+                        className="underline underline-offset-2 hover:text-gray-600 transition-colors"
+                      >
+                        {event.name}
+                      </Link>
+                    </td>
                     <td className="px-4 py-2.5 text-gray-600">{event.memo ?? '-'}</td>
                     <td className="px-4 py-2.5 text-center text-gray-800">{event.teacher_name ?? '-'}</td>
                     <td className="px-4 py-2.5 text-center">

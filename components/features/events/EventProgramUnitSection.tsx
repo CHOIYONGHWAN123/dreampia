@@ -9,6 +9,8 @@ export type UnitOption = { id: string; title: string; occupation_programs_id: st
 export type MentorOption = { id: string; name: string; score: number | null; belongsToName: string | null }
 
 export type SelectedProgramUnit = {
+  key: string
+  rowId: string | null
   unitId: string
   title: string
   fieldName: string
@@ -118,11 +120,14 @@ export function EventProgramUnitSection({
     [units, programId]
   )
 
+  // 동일한 프로그램 유닛을 여러 일정(예: 같은 프로그램을 여러 날짜에 진행)으로 중복 추가할 수 있어야 하므로
+  // unitId가 아닌 별도의 key로 각 행을 구분한다.
   const addUnit = (unit: UnitOption) => {
-    if (value.some((v) => v.unitId === unit.id)) return
     onChange([
       ...value,
       {
+        key: crypto.randomUUID(),
+        rowId: null,
         unitId: unit.id,
         title: unit.title,
         ...buildPath(unit),
@@ -145,12 +150,12 @@ export function EventProgramUnitSection({
     setUnitId('')
   }
 
-  const removeUnit = (id: string) => {
-    onChange(value.filter((v) => v.unitId !== id))
+  const removeUnit = (key: string) => {
+    onChange(value.filter((v) => v.key !== key))
   }
 
-  const updateUnit = (id: string, patch: Partial<SelectedProgramUnit>) => {
-    onChange(value.map((v) => (v.unitId === id ? { ...v, ...patch } : v)))
+  const updateUnit = (key: string, patch: Partial<SelectedProgramUnit>) => {
+    onChange(value.map((v) => (v.key === key ? { ...v, ...patch } : v)))
   }
 
   return (
@@ -274,7 +279,7 @@ export function EventProgramUnitSection({
             const lectureFeeAfterTax = calcLectureFeeAfterTax(v.lectureFee)
             const candidateMentors = mentorsByUnit[v.unitId] ?? []
             return (
-              <div key={v.unitId} className="border border-gray-200 rounded p-3 space-y-2">
+              <div key={v.key} className="border border-gray-200 rounded p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="font-medium text-gray-800 text-sm">{v.title}</span>
@@ -284,7 +289,7 @@ export function EventProgramUnitSection({
                   </div>
                   <button
                     type="button"
-                    onClick={() => removeUnit(v.unitId)}
+                    onClick={() => removeUnit(v.key)}
                     className="text-xs text-red-400 hover:text-red-600"
                   >
                     삭제
@@ -313,7 +318,7 @@ export function EventProgramUnitSection({
                     <input
                       type="datetime-local"
                       value={v.startTime}
-                      onChange={(e) => updateUnit(v.unitId, { startTime: e.target.value })}
+                      onChange={(e) => updateUnit(v.key, { startTime: e.target.value })}
                       className={fieldInputCls}
                     />
                   </div>
@@ -322,7 +327,7 @@ export function EventProgramUnitSection({
                     <input
                       type="datetime-local"
                       value={v.endTime}
-                      onChange={(e) => updateUnit(v.unitId, { endTime: e.target.value })}
+                      onChange={(e) => updateUnit(v.key, { endTime: e.target.value })}
                       className={fieldInputCls}
                     />
                   </div>
@@ -331,7 +336,7 @@ export function EventProgramUnitSection({
                     <input
                       type="text"
                       value={v.classroom}
-                      onChange={(e) => updateUnit(v.unitId, { classroom: e.target.value })}
+                      onChange={(e) => updateUnit(v.key, { classroom: e.target.value })}
                       placeholder="예: 1-1반"
                       className={fieldInputCls}
                     />
@@ -341,7 +346,7 @@ export function EventProgramUnitSection({
                     <input
                       type="text"
                       value={v.target}
-                      onChange={(e) => updateUnit(v.unitId, { target: e.target.value })}
+                      onChange={(e) => updateUnit(v.key, { target: e.target.value })}
                       placeholder="예: 1학년, 2학년, 3학년"
                       className={fieldInputCls}
                     />
@@ -352,7 +357,7 @@ export function EventProgramUnitSection({
                       type="number"
                       value={v.lectureFee ?? ''}
                       onChange={(e) =>
-                        updateUnit(v.unitId, { lectureFee: e.target.value === '' ? null : Number(e.target.value) })
+                        updateUnit(v.key, { lectureFee: e.target.value === '' ? null : Number(e.target.value) })
                       }
                       min={0}
                       className={fieldInputCls}
@@ -374,7 +379,7 @@ export function EventProgramUnitSection({
                       type="number"
                       value={v.headcount ?? ''}
                       onChange={(e) =>
-                        updateUnit(v.unitId, { headcount: e.target.value === '' ? null : Number(e.target.value) })
+                        updateUnit(v.key, { headcount: e.target.value === '' ? null : Number(e.target.value) })
                       }
                       min={0}
                       className={fieldInputCls}
@@ -386,7 +391,7 @@ export function EventProgramUnitSection({
                       type="number"
                       value={v.sessionHeadcount ?? ''}
                       onChange={(e) =>
-                        updateUnit(v.unitId, {
+                        updateUnit(v.key, {
                           sessionHeadcount: e.target.value === '' ? null : Number(e.target.value),
                         })
                       }

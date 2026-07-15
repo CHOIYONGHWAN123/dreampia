@@ -685,15 +685,18 @@ export type Database = {
       }
       invitation_event_rows: {
         Row: {
-          event_row_id: string
+          event_row_id: string | null
+          id: string
           invitation_id: string
         }
         Insert: {
-          event_row_id: string
+          event_row_id?: string | null
+          id?: string
           invitation_id: string
         }
         Update: {
-          event_row_id?: string
+          event_row_id?: string | null
+          id?: string
           invitation_id?: string
         }
         Relationships: [
@@ -758,19 +761,19 @@ export type Database = {
       invitation_row_responses: {
         Row: {
           accepted_at: string
-          event_row_id: string
+          event_row_id: string | null
           id: string
           invitation_mentor_id: string
         }
         Insert: {
           accepted_at?: string
-          event_row_id: string
+          event_row_id?: string | null
           id?: string
           invitation_mentor_id: string
         }
         Update: {
           accepted_at?: string
-          event_row_id?: string
+          event_row_id?: string | null
           id?: string
           invitation_mentor_id?: string
         }

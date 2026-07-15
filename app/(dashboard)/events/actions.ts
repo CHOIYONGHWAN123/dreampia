@@ -50,6 +50,7 @@ type ScheduleInput = {
 }
 
 type EventRowInput = {
+  id?: string | null
   occupation_program_unit_id: string
   start_time?: string | null
   end_time?: string | null
@@ -116,6 +117,7 @@ export type EventScheduleRow = {
 }
 
 export type EventRowDetailData = {
+  id: string
   occupation_program_unit_id: string | null
   start_time: string | null
   end_time: string | null
@@ -139,7 +141,7 @@ export async function getEventDetail(id: string): Promise<{
     supabase
       .from('event_rows')
       .select(
-        'occupation_program_unit_id, start_time, end_time, classroom, target, lecture_fee, headcount, session_headcount, mentor_id'
+        'id, occupation_program_unit_id, start_time, end_time, classroom, target, lecture_fee, headcount, session_headcount, mentor_id'
       )
       .eq('event_id', id),
   ])
@@ -275,6 +277,7 @@ export async function createEvent(data: {
 
   if (data.eventRows && data.eventRows.length > 0) {
     // event_rows 삽입 후 ID를 받아 supply_logs에 event_row_id로 기록
+    // (동일 프로그램 유닛이 여러 행으로 들어올 수 있으므로 unitId가 아닌 입력 순서로 매칭한다)
     const { data: insertedRows, error: rowsErr } = await supabase
       .from('event_rows')
       .insert(
@@ -291,24 +294,19 @@ export async function createEvent(data: {
           session_headcount: r.session_headcount ?? null,
         }))
       )
-      .select('id, occupation_program_unit_id')
+      .select('id')
     if (rowsErr) throw new Error(rowsErr.message)
-
-    // unitId → event_row_id 맵
-    const eventRowIdByUnit = new Map(
-      (insertedRows ?? []).map((r) => [r.occupation_program_unit_id, r.id])
-    )
 
     // is_consumable 준비물 재고 차감 (headcount × qty_per_person)
     const unitIds = data.eventRows.map((r) => r.occupation_program_unit_id)
     const supplyMap = await fetchConsumableSupplyMap(supabase, unitIds)
     const supplyLogs: SupplyLogEntry[] = []
-    for (const r of data.eventRows) {
-      if (!r.headcount || r.headcount <= 0) continue
+    data.eventRows.forEach((r, i) => {
+      if (!r.headcount || r.headcount <= 0) return
       const supply = supplyMap.get(r.occupation_program_unit_id)
-      if (!supply) continue
-      const eventRowId = eventRowIdByUnit.get(r.occupation_program_unit_id)
-      if (!eventRowId) continue
+      if (!supply) return
+      const eventRowId = insertedRows?.[i]?.id
+      if (!eventRowId) return
       supplyLogs.push({
         supply_id: supply.id,
         stock_type: 'kit',
@@ -316,7 +314,7 @@ export async function createEvent(data: {
         reason: '행사 재고 차감',
         event_row_id: eventRowId,
       })
-    }
+    })
     await insertSupplyLogs(supabase, supplyLogs)
   }
 
@@ -413,19 +411,18 @@ export async function updateEvent(
   }
 
   // event_rows는 attendance 등 폼 외부에서 채워지는 값이 있으므로 통째로 갈아엎지 않고
-  // occupation_program_unit_id 기준으로 매칭해 갱신하고, 폼에서 제거된 유닛만 삭제한다.
+  // event_row id 기준으로 매칭해 갱신한다 (동일 프로그램 유닛이 여러 행으로 존재할 수 있으므로
+  // occupation_program_unit_id가 아닌 행 고유 id로 매칭해야 한다). 폼에서 제거된 행만 삭제한다.
   const { data: existingRows, error: existingErr } = await supabase
     .from('event_rows')
     .select('id, occupation_program_unit_id, headcount')
     .eq('event_id', id)
   if (existingErr) throw new Error(existingErr.message)
 
-  const existingByUnit = new Map(
-    (existingRows ?? []).map((r) => [r.occupation_program_unit_id, { id: r.id, headcount: r.headcount }])
-  )
-  const incomingUnitIds = new Set((data.eventRows ?? []).map((r) => r.occupation_program_unit_id))
+  const existingById = new Map((existingRows ?? []).map((r) => [r.id, r]))
+  const incomingIds = new Set((data.eventRows ?? []).map((r) => r.id).filter(Boolean) as string[])
 
-  const rowsToDelete = (existingRows ?? []).filter((r) => !incomingUnitIds.has(r.occupation_program_unit_id))
+  const rowsToDelete = (existingRows ?? []).filter((r) => !incomingIds.has(r.id))
   const idsToDelete = rowsToDelete.map((r) => r.id)
   if (idsToDelete.length > 0) {
     const { error: delErr } = await supabase.from('event_rows').delete().in('id', idsToDelete)
@@ -451,7 +448,7 @@ export async function updateEvent(
       headcount: r.headcount ?? null,
       session_headcount: r.session_headcount ?? null,
     }
-    const existing = existingByUnit.get(r.occupation_program_unit_id)
+    const existing = r.id ? existingById.get(r.id) : undefined
     if (existing) {
       const { error: updErr } = await supabase.from('event_rows').update(fields).eq('id', existing.id)
       if (updErr) throw new Error(updErr.message)

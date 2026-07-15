@@ -94,6 +94,8 @@ function buildInitialProgramUnits(
       ? buildUnitPath(unit, programs, occupations, fields)
       : { fieldName: '-', occupationName: '-', programName: '-' }
     return {
+      key: r.id,
+      rowId: r.id,
       unitId: r.occupation_program_unit_id ?? '',
       title: unit?.title ?? '-',
       ...path,
@@ -296,6 +298,7 @@ export function EventForm({
         comm_admin_id: data.comm_admin_id,
         schedules,
         eventRows: programUnits.map((u) => ({
+          id: u.rowId,
           occupation_program_unit_id: u.unitId,
           start_time: u.startTime || null,
           end_time: u.endTime || null,
