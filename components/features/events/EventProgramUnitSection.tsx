@@ -86,6 +86,12 @@ export function EventProgramUnitSection({
   const [programId, setProgramId] = useState('')
   const [unitId, setUnitId] = useState('')
 
+  // 일괄 적용 (대상 / 강의료 / 시작·종료 일시를 추가된 모든 행에 한 번에 반영)
+  const [bulkTarget, setBulkTarget] = useState('')
+  const [bulkLectureFee, setBulkLectureFee] = useState<number | null>(null)
+  const [bulkStartTime, setBulkStartTime] = useState('')
+  const [bulkEndTime, setBulkEndTime] = useState('')
+
   const occupationMap = useMemo(() => new Map(occupations.map((o) => [o.id, o])), [occupations])
   const programMap = useMemo(() => new Map(programs.map((p) => [p.id, p])), [programs])
   const fieldMap = useMemo(() => new Map(fields.map((f) => [f.id, f])), [fields])
@@ -156,6 +162,27 @@ export function EventProgramUnitSection({
 
   const updateUnit = (key: string, patch: Partial<SelectedProgramUnit>) => {
     onChange(value.map((v) => (v.key === key ? { ...v, ...patch } : v)))
+  }
+
+  const applyBulkTarget = () => {
+    if (!bulkTarget) return
+    onChange(value.map((v) => ({ ...v, target: bulkTarget })))
+  }
+
+  const applyBulkLectureFee = () => {
+    if (bulkLectureFee === null) return
+    onChange(value.map((v) => ({ ...v, lectureFee: bulkLectureFee })))
+  }
+
+  const applyBulkTime = () => {
+    if (!bulkStartTime && !bulkEndTime) return
+    onChange(
+      value.map((v) => ({
+        ...v,
+        startTime: bulkStartTime || v.startTime,
+        endTime: bulkEndTime || v.endTime,
+      }))
+    )
   }
 
   return (
@@ -269,6 +296,73 @@ export function EventProgramUnitSection({
           추가
         </button>
       </div>
+
+      {/* 일괄 적용 */}
+      {value.length > 0 && (
+        <div className="border border-gray-200 rounded-lg p-3 space-y-2 bg-gray-50">
+          <p className="text-xs font-medium text-gray-600">
+            일괄 적용 <span className="text-gray-400 font-normal">(추가된 모든 프로그램에 값을 한 번에 적용합니다)</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              type="datetime-local"
+              value={bulkStartTime}
+              onChange={(e) => setBulkStartTime(e.target.value)}
+              className={`${fieldInputCls} w-auto`}
+            />
+            <span className="text-xs text-gray-400">~</span>
+            <input
+              type="datetime-local"
+              value={bulkEndTime}
+              onChange={(e) => setBulkEndTime(e.target.value)}
+              className={`${fieldInputCls} w-auto`}
+            />
+            <button
+              type="button"
+              onClick={applyBulkTime}
+              disabled={!bulkStartTime && !bulkEndTime}
+              className="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors whitespace-nowrap"
+            >
+              전체 적용
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={bulkTarget}
+              onChange={(e) => setBulkTarget(e.target.value)}
+              placeholder="대상 (예: 1학년)"
+              className={`${fieldInputCls} max-w-50`}
+            />
+            <button
+              type="button"
+              onClick={applyBulkTarget}
+              disabled={!bulkTarget}
+              className="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors whitespace-nowrap"
+            >
+              전체 적용
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={bulkLectureFee ?? ''}
+              onChange={(e) => setBulkLectureFee(e.target.value === '' ? null : Number(e.target.value))}
+              placeholder="강의료"
+              min={0}
+              className={`${fieldInputCls} max-w-50`}
+            />
+            <button
+              type="button"
+              onClick={applyBulkLectureFee}
+              disabled={bulkLectureFee === null}
+              className="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors whitespace-nowrap"
+            >
+              전체 적용
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 추가된 프로그램 목록 */}
       <div className="space-y-2">
