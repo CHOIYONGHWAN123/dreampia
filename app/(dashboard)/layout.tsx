@@ -22,9 +22,9 @@ export default async function DashboardLayout({
     .single()
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="h-screen overflow-hidden bg-gray-50 flex">
       {/* 사이드바 */}
-      <aside className="w-56 bg-white border-r border-gray-200 flex flex-col">
+      <aside className="w-56 bg-white border-r border-gray-200 flex flex-col overflow-y-auto">
         <div className="px-5 py-5 border-b border-gray-100">
           <p className="font-bold text-gray-900">드림피아</p>
           <p className="text-xs text-gray-400 mt-0.5">관리자 시스템</p>

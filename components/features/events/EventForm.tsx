@@ -329,8 +329,8 @@ export function EventForm({
 
   return (
     <div className="p-8 max-w-7xl">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-8">
+      {/* 헤더 - 스크롤해도 항상 보이도록 상단에 고정 */}
+      <div className="sticky top-0 z-10 bg-white flex items-center justify-between py-4 border-b border-gray-200 mb-8">
         <h1 className="text-2xl font-bold text-gray-900">{eventId ? '행사 수정' : '행사 등록'}</h1>
         <div className="flex gap-2">
           <button

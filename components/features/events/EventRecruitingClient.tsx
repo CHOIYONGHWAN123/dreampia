@@ -74,9 +74,28 @@ export function EventRecruitingClient({
 
   const selectedRows = rows.filter((r) => selectedRowIds.has(r.id))
 
+  // 모든수락은 한 명의 강사가 선택된 일정을 전부 수락해야 하므로, 선택한 일정끼리
+  // 시간이 겹치면 애초에 어떤 강사도 전부 수락할 수 없다.
+  const timeConflictAmongSelected = useMemo(() => {
+    for (let i = 0; i < selectedRows.length; i++) {
+      for (let j = i + 1; j < selectedRows.length; j++) {
+        const a = selectedRows[i]
+        const b = selectedRows[j]
+        if (!a.startTime || !a.endTime || !b.startTime || !b.endTime) continue
+        const aStart = new Date(a.startTime).getTime()
+        const aEnd = new Date(a.endTime).getTime()
+        const bStart = new Date(b.startTime).getTime()
+        const bEnd = new Date(b.endTime).getTime()
+        if (aStart < bEnd && aEnd > bStart) return true
+      }
+    }
+    return false
+  }, [selectedRows])
+
   // 모든수락: 선택된 모든 유닛에 등록된(교집합) 멘토만 후보. 부분수락: 선택된 유닛 중 하나라도 등록된(합집합) 멘토.
   const eligibleMentors = useMemo(() => {
     if (!pendingType) return []
+    if (pendingType === 'all' && timeConflictAmongSelected) return []
     const selectedUnitIds = [...new Set(selectedRows.map((r) => r.unitId).filter(Boolean))] as string[]
     if (selectedUnitIds.length === 0) return []
     const lists = selectedUnitIds.map((uid) => mentorsByUnit[uid] ?? [])
@@ -88,7 +107,7 @@ export function EventRecruitingClient({
     if (lists.some((l) => l.length === 0)) return []
     const [first, ...rest] = lists
     return first.filter((m) => rest.every((list) => list.some((m2) => m2.id === m.id)))
-  }, [pendingType, selectedRows, mentorsByUnit])
+  }, [pendingType, timeConflictAmongSelected, selectedRows, mentorsByUnit])
 
   const openPicker = (type: InviteType) => {
     setPendingType(type)
@@ -236,7 +255,11 @@ export function EventRecruitingClient({
                 )}
               </p>
 
-              {eligibleMentors.length === 0 ? (
+              {pendingType === 'all' && timeConflictAmongSelected ? (
+                <p className="text-xs text-red-500">
+                  선택한 일정끼리 시간이 겹쳐 한 명의 강사가 모두 수락할 수 없습니다. 선택을 다시 확인해주세요.
+                </p>
+              ) : eligibleMentors.length === 0 ? (
                 <p className="text-xs text-red-500">
                   {pendingType === 'all'
                     ? '선택한 일정을 전부 소화할 수 있는 강사가 없습니다. 프로그램 조합을 다시 확인해주세요.'

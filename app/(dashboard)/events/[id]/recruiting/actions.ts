@@ -225,6 +225,33 @@ export async function createInvitation(input: {
   if (input.mentorIds.length === 0) throw new Error('초대할 강사를 선택해주세요.')
 
   const supabase = await createServerSupabaseClient()
+
+  // 모든수락은 한 명의 강사가 포함된 일정을 전부 소화해야 하므로, 선택한 일정끼리
+  // 시간이 겹치면 애초에 어떤 강사도 수락할 수 없다 - 생성 단계에서 미리 막는다.
+  if (input.isAllApprovalRequired) {
+    const { data: selectedRows, error: rowsCheckErr } = await supabase
+      .from('event_rows')
+      .select('id, start_time, end_time')
+      .in('id', input.eventRowIds)
+    if (rowsCheckErr) throw new Error(rowsCheckErr.message)
+
+    const rows = (selectedRows ?? []).map((r) => ({
+      id: r.id,
+      start: r.start_time ? new Date(r.start_time).getTime() : null,
+      end: r.end_time ? new Date(r.end_time).getTime() : null,
+    }))
+    for (let i = 0; i < rows.length; i++) {
+      for (let j = i + 1; j < rows.length; j++) {
+        const a = rows[i]
+        const b = rows[j]
+        if (a.start === null || a.end === null || b.start === null || b.end === null) continue
+        if (a.start < b.end && a.end > b.start) {
+          throw new Error('선택한 일정끼리 시간이 겹쳐 모든수락으로 초대할 수 없습니다.')
+        }
+      }
+    }
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
