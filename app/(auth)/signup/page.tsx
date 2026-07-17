@@ -25,8 +25,9 @@ export default function SignupPage() {
       email: data.email,
       password: data.password,
       options: {
-        // DB Trigger가 이 값을 읽어 admins.name으로 저장
-        data: { name: data.name },
+        // DB Trigger(on_admin_signup)가 이 값을 읽어 admins에 행을 생성한다.
+        // account_type으로 멘토 앱 회원가입(on_mentor_signup)과 분기된다.
+        data: { name: data.name, account_type: 'admin' },
       },
     })
 
