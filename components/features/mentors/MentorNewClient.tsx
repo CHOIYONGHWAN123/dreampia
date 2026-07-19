@@ -8,6 +8,7 @@ import { DaumAddressButton } from './DaumAddressButton'
 import { FieldSectionForm } from './FieldSectionForm'
 import { createFieldSection, type FieldSectionState } from './new-mentor-types'
 import { BANK_OPTIONS } from '@/constants/banks'
+import { generateId } from '@/lib/generate-id'
 
 const inputCls =
   'w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-300'
@@ -15,7 +16,7 @@ const labelCls = 'text-xs text-gray-500 mb-1 block'
 
 export function MentorNewClient({ selectData }: { selectData: AddProgramSelectData }) {
   const router = useRouter()
-  const [mentorId] = useState(() => crypto.randomUUID())
+  const [mentorId] = useState(() => generateId())
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

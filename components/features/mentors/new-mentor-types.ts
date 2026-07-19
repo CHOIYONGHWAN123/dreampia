@@ -1,4 +1,5 @@
 import type { ProgramSelectionValue } from './ProgramUnitPicker'
+import { generateId } from '@/lib/generate-id'
 
 export interface ProgramEntryState {
   key: string
@@ -18,7 +19,7 @@ export interface FieldSectionState {
 
 export function createProgramEntry(): ProgramEntryState {
   return {
-    key: crypto.randomUUID(),
+    key: generateId(),
     selection: { occupationProgramId: '', levels: [] },
     lectureFeePayerId: '',
     materialFeePayerId: '',
@@ -29,7 +30,7 @@ export function createProgramEntry(): ProgramEntryState {
 
 export function createFieldSection(): FieldSectionState {
   return {
-    key: crypto.randomUUID(),
+    key: generateId(),
     fieldId: '',
     occupationId: '',
     programEntries: [createProgramEntry()],

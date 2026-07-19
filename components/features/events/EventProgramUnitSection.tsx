@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { generateId } from '@/lib/generate-id'
 
 export type FieldOption = { id: string; name: string }
 export type OccupationOption = { id: string; name: string; field_id: string | null }
@@ -132,7 +133,7 @@ export function EventProgramUnitSection({
     onChange([
       ...value,
       {
-        key: crypto.randomUUID(),
+        key: generateId(),
         rowId: null,
         unitId: unit.id,
         title: unit.title,
