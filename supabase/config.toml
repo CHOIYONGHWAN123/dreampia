@@ -179,6 +179,14 @@ otp_expiry = 3600
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
+# 멘토 앱 "아이디 찾기"의 signInWithOtp가 매직링크 대신 인증번호({{ .Token }})를
+# 보내도록 커스텀. 로컬 config.toml에만 반영되어 있고, 실서비스 프로젝트에는
+# 대시보드(Authentication > Email Templates > Magic Link)에서 직접 반영해야 한다
+# (config push는 site_url 등 다른 설정까지 통째로 덮어써서 위험하므로 사용하지 않음).
+[auth.email.template.magic_link]
+subject = "드림피아 아이디 찾기 인증번호"
+content_path = "./supabase/templates/magic_link.html"
+
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
 enable_signup = false
@@ -306,3 +314,14 @@ s3_region = "env(S3_REGION)"
 s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
+
+[functions.mentor-find-id]
+enabled = true
+verify_jwt = false
+import_map = "./functions/mentor-find-id/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/mentor-find-id/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/mentor-find-id/*.html" ]
