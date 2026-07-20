@@ -23,6 +23,21 @@ function fmtTime(iso: string | null) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
+// 종료 일시가 시작 일시와 날짜가 다르면(자정을 넘기는 일정 등) 날짜까지 같이 보여줘서
+// "시:분"만 보고 같은 날로 착각해 실제로는 날짜가 겹치는 걸 놓치는 일을 방지한다.
+function fmtEndTime(startIso: string | null, endIso: string | null) {
+  if (!endIso) return '-'
+  const start = startIso ? new Date(startIso) : null
+  const end = new Date(endIso)
+  const sameDate =
+    start &&
+    start.getFullYear() === end.getFullYear() &&
+    start.getMonth() === end.getMonth() &&
+    start.getDate() === end.getDate()
+  const time = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
+  return sameDate ? time : `${end.getMonth() + 1}/${end.getDate()} ${time}`
+}
+
 const INVITE_TYPE_LABEL: Record<InviteType, string> = {
   partial: '부분수락',
   all: '모든수락',
@@ -193,7 +208,7 @@ export function EventRecruitingClient({
                     </td>
                     <td className="px-3 py-2.5 text-center text-gray-800 whitespace-nowrap">{fmtDate(r.startTime)}</td>
                     <td className="px-3 py-2.5 text-center text-gray-800">{fmtTime(r.startTime)}</td>
-                    <td className="px-3 py-2.5 text-center text-gray-800">{fmtTime(r.endTime)}</td>
+                    <td className="px-3 py-2.5 text-center text-gray-800 whitespace-nowrap">{fmtEndTime(r.startTime, r.endTime)}</td>
                     <td className="px-3 py-2.5 text-center text-gray-800">{r.target ?? '-'}</td>
                     <td className="px-3 py-2.5 text-center text-gray-800">{r.occupationName}</td>
                     <td className="px-3 py-2.5 text-center text-gray-800">{r.unitTitle}</td>
