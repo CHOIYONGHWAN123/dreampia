@@ -191,6 +191,7 @@ export type Database = {
           material_fee_payer_id: string | null
           mentor_id: string | null
           occupation_program_unit_id: string | null
+          preparing: boolean
           remarks: string | null
           school_request_response: string | null
           session_headcount: number | null
@@ -211,6 +212,7 @@ export type Database = {
           material_fee_payer_id?: string | null
           mentor_id?: string | null
           occupation_program_unit_id?: string | null
+          preparing?: boolean
           remarks?: string | null
           school_request_response?: string | null
           session_headcount?: number | null
@@ -231,6 +233,7 @@ export type Database = {
           material_fee_payer_id?: string | null
           mentor_id?: string | null
           occupation_program_unit_id?: string | null
+          preparing?: boolean
           remarks?: string | null
           school_request_response?: string | null
           session_headcount?: number | null

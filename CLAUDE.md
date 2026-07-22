@@ -87,8 +87,8 @@ Table institutions {
   laptop_wifi_note    text    [note: 노트북/와이파이]
   crime_check_method  crime_check_method [note: '회보서 or 동의서']
   crime_check_info    text    [note: '기관아이디/검증번호']
-  indoor_shoes_note   text
-  parking_note        text
+  indoor_shoes_note   text    [note: '실내화(내빈화) 위치']
+  parking_note        text    [note: '주차 및 엘레베이터']
   created_at timestamp [not null, default: `now()`]
 }
 
@@ -348,9 +348,9 @@ Table events {
   indoor_shoes_note   text
   parking_note        text
   student_rotation    varchar [note: '1교시마다/2교시마다 변경']
-  notice              text
+  notice              text    [note : '공지사항']
   prep_note           text    [note: '준비사항(드림피아)']
-  memo                text
+  memo                text    [note : '메모']
   contact_name        varchar [note: '담당자 이름']
   contact_email       varchar [note: '담당자 이메일']
   contact_phone       varchar [note: '담당자 연락처']
@@ -416,6 +416,7 @@ Table event_rows {
   material_fee_payer_id uuid    [ref: > mentors.id, note: '재료비 입금자']
   classroom             varchar [note: '강의실 예: 1-1반']
   instructor_waiting_room varchar [note: '강사대기실 예: 2층 2학년 학년연구실']
+  preparing             boolean [default: false]
   attendance            boolean [default: false]
   lecture_fee           integer
   lecture_fee_after_tax integer [note: '세후 강의료']
