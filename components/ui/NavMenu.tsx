@@ -23,6 +23,7 @@ const menus: MenuItem[] = [
   { href: '/programs', label: '프로그램' },
   { href: '/supplies', label: '준비물 관리' },
   { href: '/event-operations', label: '행사운영확인표' },
+  { href: '/event-check', label: '일자별 행사 진행 여부' },
 ]
 
 function isMenuActive(pathname: string, href: string) {
