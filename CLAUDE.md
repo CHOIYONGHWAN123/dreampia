@@ -55,6 +55,16 @@ Table mentors {
   created_at  timestamp [not null, default: `now()`]
 }
 
+// 선생님(학교측 계정) — 회원가입/로그인 기능은 추후 구현 예정, 현재는 관리자가 계정을 생성/관리
+Table teachers {
+  id             uuid      [pk, default: `gen_random_uuid()`]
+  institution_id uuid      [ref: > institutions.id, note: '소속 기관']
+  user_id        uuid      [ref: > auth.users.id, note: '로그인 계정 미생성 시 null']
+  name           varchar   [not null, note: '선생님 성함']
+  email          varchar   [note: '로그인 계정 이메일 (표시용 캐시)']
+  created_at     timestamp [not null, default: `now()`]
+}
+
 
 
 
