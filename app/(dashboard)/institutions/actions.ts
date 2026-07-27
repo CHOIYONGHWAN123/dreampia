@@ -12,8 +12,19 @@ export async function getInstitutionEventCount(id: string): Promise<number> {
   return count ?? 0
 }
 
+// 이 기관 소속으로 등록된 선생님 계정 정리 (Auth 계정 자체는 mentors 삭제와 동일하게
+// 남겨둠 — teachers.user_id는 고아로 남지만 이 프로젝트의 기존 관례를 따름)
+async function deleteTeachersByInstitution(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  institutionId: string
+) {
+  const { error } = await supabase.from('teachers').delete().eq('institution_id', institutionId)
+  if (error) throw new Error(error.message)
+}
+
 export async function deleteInstitution(id: string) {
   const supabase = await createServerSupabaseClient()
+  await deleteTeachersByInstitution(supabase, id)
   const { error } = await supabase.from('institutions').delete().eq('id', id)
   if (error) throw new Error(error.message)
   revalidatePath('/institutions')
@@ -22,33 +33,34 @@ export async function deleteInstitution(id: string) {
 export async function deleteInstitutionWithEvents(institutionId: string) {
   const supabase = await createServerSupabaseClient()
 
-  // 행사 ID 목록 조회
+  // event_rows/event_photos/supply_logs/event_sessions/event_schedules는 모두
+  // events.id에 ON DELETE CASCADE(또는 SET NULL)로 연결되어 있어 events만 지우면
+  // 자동으로 정리된다 (event_admins/tasks 테이블은 실제로 존재하지 않아 삭제 대상이 아니었음).
   const { data: events } = await supabase
     .from('events')
     .select('id')
     .eq('institution_id', institutionId)
 
   if (events && events.length > 0) {
-    const eventIds = events.map((e) => e.id)
-
-    // event_rows 조회 후 하위 데이터 순서대로 삭제
-    const { data: rows } = await supabase
-      .from('event_rows')
-      .select('id')
-      .in('event_id', eventIds)
-
-    if (rows && rows.length > 0) {
-      const rowIds = rows.map((r) => r.id)
-      await supabase.from('event_photos').delete().in('event_rows_id', rowIds)
-      await supabase.from('supply_logs').delete().in('event_row_id', rowIds)
-      await supabase.from('event_rows').delete().in('event_id', eventIds)
+    // events 테이블 삭제는 RLS상 슈퍼관리자만 가능하다. 일반 관리자가 시도하면
+    // RLS가 조용히 0건을 지우고 넘어가서 institutions FK 에러로만 뒤늦게 드러나므로,
+    // 여기서 미리 확인해 명확한 메시지로 막는다.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    const { data: admin } = user
+      ? await supabase.from('admins').select('is_super').eq('id', user.id).single()
+      : { data: null }
+    if (!admin?.is_super) {
+      throw new Error('행사가 등록된 기관은 슈퍼관리자만 삭제할 수 있습니다.')
     }
 
-    await supabase.from('event_sessions').delete().in('event_id', eventIds)
-    await supabase.from('event_admins').delete().in('event_id', eventIds)
-    await supabase.from('tasks').delete().in('event_id', eventIds)
-    await supabase.from('events').delete().in('id', eventIds)
+    const eventIds = events.map((e) => e.id)
+    const { error: eventsError } = await supabase.from('events').delete().in('id', eventIds)
+    if (eventsError) throw new Error(eventsError.message)
   }
+
+  await deleteTeachersByInstitution(supabase, institutionId)
 
   const { error } = await supabase.from('institutions').delete().eq('id', institutionId)
   if (error) throw new Error(error.message)
