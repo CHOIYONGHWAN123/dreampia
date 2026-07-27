@@ -1,12 +1,25 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth'
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
+  const searchParams = useSearchParams()
+  const resetSuccess = searchParams.get('reset') === 'success'
+
   const {
     register,
     handleSubmit,
@@ -36,6 +49,12 @@ export default function LoginPage() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <h2 className="text-lg font-semibold text-gray-800 mb-6">로그인</h2>
 
+      {resetSuccess && (
+        <p className="text-sm text-green-600 text-center bg-green-50 border border-green-100 rounded-lg py-2">
+          비밀번호가 변경되었습니다. 다시 로그인해주세요.
+        </p>
+      )}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           이메일
@@ -64,6 +83,11 @@ export default function LoginPage() {
         {errors.password && (
           <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
         )}
+        <p className="mt-1 text-right">
+          <Link href="/forgot-password" className="text-xs text-blue-600 hover:underline font-medium">
+            비밀번호를 잊으셨나요?
+          </Link>
+        </p>
       </div>
 
       {errors.root && (

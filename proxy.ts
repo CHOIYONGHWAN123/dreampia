@@ -32,7 +32,7 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const isAuthPage = pathname === '/login' || pathname === '/signup'
+  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password'
   const isPendingPage = pathname === '/pending'
 
   // 세션 없음 → 로그인 페이지로 (인증 페이지, pending은 제외)
