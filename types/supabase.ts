@@ -1288,7 +1288,55 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      mentor_event_row_detail: {
+        Row: {
+          attendance: boolean | null
+          campaign_name: string | null
+          classroom: string | null
+          criminal_background_check: string | null
+          dreampia_material_cost: number | null
+          end_time: string | null
+          event_id: string | null
+          event_name: string | null
+          event_row_id: string | null
+          headcount: number | null
+          indoor_shoes_note: string | null
+          institution_address: string | null
+          institution_name: string | null
+          instructor_waiting_room: string | null
+          laptop_wifi_note: string | null
+          lecture_fee: number | null
+          lecture_fee_after_tax: number | null
+          lecture_fee_payer_id: string | null
+          material_fee_payer_id: string | null
+          memo: string | null
+          mentor_id: string | null
+          mentor_material_cost: number | null
+          mentor_name: string | null
+          mentor_phone: string | null
+          notice: string | null
+          occupation_name: string | null
+          parking_note: string | null
+          prep_by: Database["public"]["Enums"]["prep_by"] | null
+          preparing: boolean | null
+          program_name: string | null
+          session_headcount: number | null
+          start_time: string | null
+          student_rotation: string | null
+          target: string | null
+          unit_id: string | null
+          unit_title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_rows_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "mentors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       accept_invitation_all: {

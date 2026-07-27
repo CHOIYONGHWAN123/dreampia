@@ -20,6 +20,7 @@ const menus: MenuItem[] = [
   { href: '/campaigns', label: '행사명' },
   { href: '/institutions', label: '기관' },
   { href: '/mentors', label: '강사' },
+  { href: '/mentor-fees', label: '강사료 대장' },
   { href: '/teachers', label: '선생님' },
   { href: '/programs', label: '프로그램' },
   { href: '/supplies', label: '준비물 관리' },
