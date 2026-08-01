@@ -21,13 +21,7 @@ export interface UnitOption {
   id: string
   title: string
   occupation_programs_id: string | null
-  program_category_id: string | null
-}
-
-export interface ProgramCategoryOption {
-  id: string
   school_level: string | null
-  experience_type: string
 }
 
 const selCls =
@@ -38,20 +32,16 @@ const selCls =
 export function ProgramUnitPicker({
   programs,
   units,
-  programCategories,
   excludedUnitIds,
   value,
   onChange,
 }: {
   programs: ProgramOption[]
   units: UnitOption[]
-  programCategories: ProgramCategoryOption[]
   excludedUnitIds?: Set<string>
   value: ProgramSelectionValue
   onChange: (value: ProgramSelectionValue) => void
 }) {
-  const categoryMap = useMemo(() => new Map(programCategories.map((c) => [c.id, c])), [programCategories])
-
   const unitsForProgram = useMemo(
     () => units.filter((u) => u.occupation_programs_id === value.occupationProgramId),
     [units, value.occupationProgramId]
@@ -60,14 +50,14 @@ export function ProgramUnitPicker({
   const levelToUnits = useMemo(() => {
     const map = new Map<string, UnitOption[]>()
     for (const unit of unitsForProgram) {
-      const level = unit.program_category_id ? categoryMap.get(unit.program_category_id)?.school_level : null
+      const level = unit.school_level
       if (!level) continue
       const arr = map.get(level) ?? []
       arr.push(unit)
       map.set(level, arr)
     }
     return map
-  }, [unitsForProgram, categoryMap])
+  }, [unitsForProgram])
 
   const availableLevels = useMemo(() => [...levelToUnits.keys()], [levelToUnits])
 

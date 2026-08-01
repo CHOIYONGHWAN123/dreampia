@@ -282,11 +282,11 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
           <FieldSectionForm
             key={section.key}
             section={section}
+            eventCategories={selectData.eventCategories}
             fields={selectData.fields}
             occupations={selectData.occupations}
             programs={selectData.programs}
             units={selectData.units}
-            programCategories={selectData.programCategories}
             mentors={selectData.mentors}
             globalExcludedUnitIds={globalExcludedUnitIds}
             selfId={mentorId}

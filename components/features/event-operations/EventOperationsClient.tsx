@@ -20,8 +20,6 @@ export type EventOperationRow = {
   region2: string | null
   category: string | null
   institutionName: string | null
-  campaignId: string | null
-  campaignName: string | null
   fieldAdminIds: string[]
   fieldAdminNames: string[]
   eventStartAt: string | null
@@ -58,7 +56,6 @@ export type EventOperationRow = {
 }
 
 type AdminOption = { id: string; name: string }
-type CampaignOption = { id: string; name: string }
 
 interface Props {
   rows: EventOperationRow[]
@@ -66,7 +63,6 @@ interface Props {
   currentYear: number
   currentMonth: number
   admins: AdminOption[]
-  campaigns: CampaignOption[]
 }
 
 // ── 상수 ─────────────────────────────────────────────────────────────
@@ -533,49 +529,6 @@ function InlineTextCell({
   )
 }
 
-// ── ID/이름 쌍 셀렉트 (캠페인 등) ────────────────────────────────────
-
-function InlineIdSelect({
-  value,
-  options,
-  onSave,
-}: {
-  value: string | null
-  options: CampaignOption[]
-  onSave: (id: string | null) => Promise<void>
-}) {
-  const [val, setVal] = useState(value ?? '')
-  const [saving, setSaving] = useState(false)
-
-  const handleChange = async (newVal: string) => {
-    const prev = val
-    setVal(newVal)
-    setSaving(true)
-    try {
-      await onSave(newVal || null)
-    } catch {
-      setVal(prev)
-      alert('저장에 실패했습니다.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <select
-      value={val}
-      onChange={(e) => handleChange(e.target.value)}
-      disabled={saving}
-      className={selectCls}
-    >
-      <option value="">-</option>
-      {options.map((o) => (
-        <option key={o.id} value={o.id}>{o.name}</option>
-      ))}
-    </select>
-  )
-}
-
 // ── 예산 인라인 편집 셀 ───────────────────────────────────────────────
 
 function InlineBudgetCell({
@@ -728,7 +681,6 @@ export function EventOperationsClient({
   currentYear,
   currentMonth,
   admins,
-  campaigns,
 }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -792,7 +744,6 @@ export function EventOperationsClient({
               <th className={th} style={{ width: 56 }}>지역2</th>
               <th className={th} style={{ width: 56 }}>분류</th>
               <th className={th} style={{ width: 120 }}>기관</th>
-              <th className={th} style={{ width: 80 }}>행사분류</th>
               <th className={th} style={{ width: 120 }}>현장담당</th>
               <th className={th} style={{ width: 140 }}>행사일시</th>
               <th className={th} style={{ width: 64 }}>학년</th>
@@ -862,14 +813,6 @@ export function EventOperationsClient({
                       ) : (
                         <span className="text-gray-800">{row.institutionName ?? '-'}</span>
                       )}
-                    </td>
-
-                    <td className={td}>
-                      <InlineIdSelect
-                        value={row.campaignId}
-                        options={campaigns}
-                        onSave={(id) => updateEventField(row.id, { campaign_id: id })}
-                      />
                     </td>
 
                     {/* 현장담당 — 다중 선택 */}

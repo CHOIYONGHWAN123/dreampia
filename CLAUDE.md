@@ -105,9 +105,18 @@ Table institutions {
 // ── 프로그램 / 직업 ────────────────────────
 
 
+// 행사 구분 (최상위 분류, 예: 직업체험/문화예술체험/진로박람회)
+Table event_categories {
+  id         uuid      [pk, default: `gen_random_uuid()`]
+  name       varchar   [not null, note: '예: 직업체험, 문화예술체험, 진로박람회']
+  sort_order integer
+  created_at timestamp [not null, default: `now()`]
+}
+
 // 분야
 Table fields {
   id   uuid    [pk, default: `gen_random_uuid()`]
+  event_category_id uuid [ref: > event_categories.id, note: '행사 구분 (분야 단위 1:1)']
   name varchar [not null, note: '분야 예: 요리, 마술, 공예']
 }
 
@@ -126,18 +135,9 @@ Table occupation_programs{
   name                   varchar [not null, note: '예: 액체함수']
 }
 
-// --- 프로그램 카테고리
-Table program_categories {
-    id                     uuid    [pk, default: `gen_random_uuid()`]
-    school_level           school_level school_level [note: '교급 예: 초등/중고등/유치원'] 
-    experience_type        experience_type [not null, note: '예: 초등 직업체험, 초등 문화예술체험']
-    sort_order             integer
-}
-
-
 // --- 직종에 따른 프로그램의 유닛
-(ex. 액체함수 프로그램1, 액체함수 프로그램2 이런식으로 존재 가능,내용도 달라짐, program_categories에 의해 구분가능) 
-(ex. 마카롱 만들기에서 초등만선택했다면 occupation_program_unit중 program_category의 school_level에 초등인것만 필터링)
+(ex. 액체함수 프로그램1, 액체함수 프로그램2 이런식으로 존재 가능,내용도 달라짐, school_level에 의해 구분가능)
+(ex. 마카롱 만들기에서 초등만선택했다면 occupation_program_unit중 school_level이 초등인것만 필터링)
 Table occupation_program_unit{
   id                     uuid     [pk, default: `gen_random_uuid()`]
   occupation_programs_id uuid [ref:> occupation_programs.id, note:"직업 프로그램"]
@@ -149,7 +149,7 @@ Table occupation_program_unit{
   final_product_available boolean     [note: '완성품제공가능 여부']
   description             text     [note: '프로그램 설명']
   is_delivery_available boolean [not null, default: false, note: '택배 가능 여부']
-  program_category_id      uuid      [ref: > program_categories.id, note: '프로그램 카테고리 연결']
+  school_level           school_level [note: '교급 예: 초등/중고등/유치원']
   created_at            timestamp [not null, default: `now()`]  
 }
 
@@ -184,19 +184,6 @@ enum school_level{
 
 
 
-enum experience_type{
-  "직업체험"
-  "문화예술체험"
-}
-
-
-
-enum lesson_category{
-  "직업체험"
-  "문화예술체험"
-  "진로박람회"
-}
-
 enum grade {
   "유치원"
   "초등학교"
@@ -208,12 +195,12 @@ Table lesson_plans{
       id                     uuid    [pk, default: `gen_random_uuid()`]
       occupation_program_id  uuid    [ref: > occupation_programs.id]
       grade                  grade   [not null]
-      lesson_category        lesson_category [not null]
+      event_category_id      uuid    [ref: > event_categories.id, note: '행사 구분']
       file_url       varchar [note: '강의계획서 파일 URL']
       created_at timestamp [not null, default: `now()`]
 
       indexes {
-        (occupation_program_id, grade, lesson_category) [unique]
+        (occupation_program_id, grade, event_category_id) [unique]
       }
 
 }
@@ -290,12 +277,6 @@ enum institution_request_status{
 }
 
 
-Table campaign {
-  id       uuid    [pk, default: `gen_random_uuid()`]
-  name     varchar [not null]
-  content  text    
-}
-
 enum contract_type{
   "학교장터"
   "수의계약"
@@ -337,7 +318,6 @@ enum contract_status{
 
 Table events {
   id                uuid      [pk, default: `gen_random_uuid()`]
-  campaign_id       uuid      [ref: > campaign.id]
   institution_id    uuid      [ref: > institutions.id]
   occupation_program_id        uuid      [ref: > occupation_programs.id]
   sales_admin_id    uuid      [ref: > admins.id, note: '영업담당자']

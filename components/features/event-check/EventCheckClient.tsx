@@ -7,6 +7,7 @@ import {
   type EventCheckFormData,
 } from '@/app/(dashboard)/event-check/actions'
 import { AREA_OPTIONS } from '@/components/features/mentors/shared'
+import { SCHOOL_LEVEL_OPTIONS } from '@/app/(dashboard)/programs/constants'
 
 const rowCls = 'flex items-center gap-3'
 const labelCls = 'w-28 shrink-0 text-sm font-medium text-gray-700'
@@ -16,16 +17,12 @@ const selectCls =
   'flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm bg-white text-gray-700 outline-none focus:border-gray-500 transition-colors'
 
 export function EventCheckClient({ formData }: { formData: EventCheckFormData }) {
-  const { programCategories, units, programs, occupations } = formData
+  const { units, programs, occupations } = formData
 
-  const categoryMap = useMemo(() => new Map(programCategories.map((c) => [c.id, c])), [programCategories])
   const programMap = useMemo(() => new Map(programs.map((p) => [p.id, p])), [programs])
   const occupationMap = useMemo(() => new Map(occupations.map((o) => [o.id, o])), [occupations])
 
-  const schoolLevels = useMemo(
-    () => [...new Set(programCategories.map((c) => c.school_level).filter(Boolean))] as string[],
-    [programCategories]
-  )
+  const schoolLevels = SCHOOL_LEVEL_OPTIONS
 
   const [schoolLevel, setSchoolLevel] = useState('')
   const [unitId, setUnitId] = useState('')
@@ -40,8 +37,8 @@ export function EventCheckClient({ formData }: { formData: EventCheckFormData })
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const unitsForLevel = useMemo(
-    () => units.filter((u) => (u.program_category_id ? categoryMap.get(u.program_category_id)?.school_level : null) === schoolLevel),
-    [units, categoryMap, schoolLevel]
+    () => units.filter((u) => u.school_level === schoolLevel),
+    [units, schoolLevel]
   )
 
   // 직종별로 묶어서 optgroup으로 표시

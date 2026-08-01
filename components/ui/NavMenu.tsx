@@ -17,7 +17,6 @@ const menus: MenuItem[] = [
   { href: '/terms', label: '이용약관' },
   { href: '/announcements', label: '공지사항' },
   { href: '/banners', label: '배너' },
-  { href: '/campaigns', label: '행사명' },
   { href: '/institutions', label: '기관' },
   { href: '/mentors', label: '강사' },
   { href: '/mentor-fees', label: '강사료 대장' },

@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { ProgramEntryForm } from './ProgramEntryForm'
 import { createProgramEntry, type FieldSectionState } from './new-mentor-types'
-import type { UnitOption, ProgramCategoryOption } from './ProgramUnitPicker'
+import type { UnitOption } from './ProgramUnitPicker'
 
 const selCls =
   'w-full border border-gray-300 rounded px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-300 disabled:bg-gray-50 disabled:text-gray-400'
@@ -12,11 +12,11 @@ const selCls =
 // "프로그램 추가" 버튼으로 여러 개 등록할 수 있다.
 export function FieldSectionForm({
   section,
+  eventCategories,
   fields,
   occupations,
   programs,
   units,
-  programCategories,
   mentors,
   globalExcludedUnitIds,
   selfId,
@@ -24,17 +24,22 @@ export function FieldSectionForm({
   onRemove,
 }: {
   section: FieldSectionState
-  fields: { id: string; name: string }[]
+  eventCategories: { id: string; name: string }[]
+  fields: { id: string; name: string; event_category_id: string | null }[]
   occupations: { id: string; name: string; field_id: string | null }[]
   programs: { id: string; name: string; occupation_id: string | null }[]
   units: UnitOption[]
-  programCategories: ProgramCategoryOption[]
   mentors: { id: string; name: string }[]
   globalExcludedUnitIds: Set<string>
   selfId: string
   onChange: (next: FieldSectionState) => void
   onRemove?: () => void
 }) {
+  const filteredFields = useMemo(
+    () => fields.filter((f) => !section.eventCategoryId || f.event_category_id === section.eventCategoryId),
+    [fields, section.eventCategoryId]
+  )
+
   const filteredOccupations = useMemo(
     () => occupations.filter((o) => !section.fieldId || o.field_id === section.fieldId),
     [occupations, section.fieldId]
@@ -56,12 +61,35 @@ export function FieldSectionForm({
         )}
       </div>
 
+      <div>
+        <label className="text-xs text-gray-500 mb-1 block">행사구분</label>
+        <select
+          className={selCls}
+          value={section.eventCategoryId}
+          onChange={(e) =>
+            onChange({
+              ...section,
+              eventCategoryId: e.target.value,
+              fieldId: '',
+              occupationId: '',
+              programEntries: [createProgramEntry()],
+            })
+          }
+        >
+          <option value="">행사구분 선택</option>
+          {eventCategories.map((ec) => (
+            <option key={ec.id} value={ec.id}>{ec.name}</option>
+          ))}
+        </select>
+      </div>
+
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="text-xs text-gray-500 mb-1 block">분야</label>
           <select
             className={selCls}
             value={section.fieldId}
+            disabled={!section.eventCategoryId}
             onChange={(e) =>
               onChange({
                 ...section,
@@ -72,7 +100,7 @@ export function FieldSectionForm({
             }
           >
             <option value="">분야 선택</option>
-            {fields.map((f) => (
+            {filteredFields.map((f) => (
               <option key={f.id} value={f.id}>{f.name}</option>
             ))}
           </select>
@@ -107,7 +135,6 @@ export function FieldSectionForm({
               entry={entry}
               programs={filteredPrograms}
               units={units}
-              programCategories={programCategories}
               mentors={mentors}
               excludedUnitIds={globalExcludedUnitIds}
               selfId={selfId}

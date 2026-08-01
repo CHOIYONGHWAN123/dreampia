@@ -5,9 +5,15 @@ import { revalidatePath } from 'next/cache'
 
 // ── 타입 ─────────────────────────────────────────────────────────────
 
+export interface EventCategoryData {
+  id: string
+  name: string
+}
+
 export interface FieldData {
   id: string
   name: string
+  event_category_id: string | null
 }
 
 export interface OccupationData {
@@ -22,13 +28,6 @@ export interface OccupationProgramData {
   occupation_id: string
 }
 
-export interface ProgramCategoryData {
-  id: string
-  school_level: string | null
-  experience_type: string
-  sort_order: number | null
-}
-
 export interface OccupationProgramUnitData {
   id: string
   occupation_programs_id: string
@@ -40,7 +39,7 @@ export interface OccupationProgramUnitData {
   final_product_available: boolean | null
   description: string | null
   is_delivery_available: boolean
-  program_category_id: string | null
+  school_level: string | null
   created_at: string
 }
 
@@ -53,28 +52,96 @@ export interface UnitFormPayload {
   finalProductAvailable: boolean | null
   description: string | null
   isDeliveryAvailable: boolean
-  programCategoryId: string | null
+  schoolLevel: string | null
+}
+
+// ── 행사 구분 (event_categories) ────────────────────────────────────
+
+export async function getEventCategories(): Promise<EventCategoryData[]> {
+  const supabase = await createServerSupabaseClient()
+  const { data, error } = await supabase.from('event_categories').select('id, name').order('sort_order')
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function createEventCategory(name: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase.from('event_categories').insert({ name })
+  if (error) throw new Error(error.message)
+  revalidatePath('/programs')
+}
+
+export async function updateEventCategory(id: string, name: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase.from('event_categories').update({ name }).eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/programs')
+}
+
+export async function getEventCategoryChildCount(id: string): Promise<number> {
+  const supabase = await createServerSupabaseClient()
+  const { count } = await supabase
+    .from('fields')
+    .select('id', { count: 'exact', head: true })
+    .eq('event_category_id', id)
+  return count ?? 0
+}
+
+export async function deleteEventCategory(id: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase.from('event_categories').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/programs')
+}
+
+export async function deleteEventCategoryCascade(id: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+
+  const { data: fields } = await supabase.from('fields').select('id').eq('event_category_id', id)
+  if (fields?.length) {
+    const fieldIds = fields.map((f) => f.id)
+    const { data: occupations } = await supabase.from('occupations').select('id').in('field_id', fieldIds)
+    if (occupations?.length) {
+      const occIds = occupations.map((o) => o.id)
+      const { data: programs } = await supabase.from('occupation_programs').select('id').in('occupation_id', occIds)
+      if (programs?.length) {
+        const progIds = programs.map((p) => p.id)
+        const { data: units } = await supabase.from('occupation_program_unit').select('id').in('occupation_programs_id', progIds)
+        if (units?.length) await cascadeDeleteUnits(supabase, units.map((u) => u.id))
+        await supabase.from('occupation_programs').delete().in('id', progIds)
+      }
+      await supabase.from('occupations').delete().in('id', occIds)
+    }
+    await supabase.from('fields').delete().in('id', fieldIds)
+  }
+
+  const { error } = await supabase.from('event_categories').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/programs')
 }
 
 // ── 분야 (fields) ──────────────────────────────────────────────────
 
 export async function getFields(): Promise<FieldData[]> {
   const supabase = await createServerSupabaseClient()
-  const { data, error } = await supabase.from('fields').select('id, name').order('name')
+  const { data, error } = await supabase.from('fields').select('id, name, event_category_id').order('name')
   if (error) throw new Error(error.message)
   return data || []
 }
 
-export async function createField(name: string): Promise<void> {
+export async function createField(eventCategoryId: string | null, name: string): Promise<void> {
   const supabase = await createServerSupabaseClient()
-  const { error } = await supabase.from('fields').insert({ name })
+  const { error } = await supabase.from('fields').insert({ event_category_id: eventCategoryId, name })
   if (error) throw new Error(error.message)
   revalidatePath('/programs')
 }
 
-export async function updateField(id: string, name: string): Promise<void> {
+export async function updateField(id: string, name: string, eventCategoryId: string | null): Promise<void> {
   const supabase = await createServerSupabaseClient()
-  const { error } = await supabase.from('fields').update({ name }).eq('id', id)
+  const { error } = await supabase
+    .from('fields')
+    .update({ name, event_category_id: eventCategoryId })
+    .eq('id', id)
   if (error) throw new Error(error.message)
   revalidatePath('/programs')
 }
@@ -242,7 +309,7 @@ export async function getUnitsByOccupationProgramId(
   const { data, error } = await supabase
     .from('occupation_program_unit')
     .select(
-      'id, occupation_programs_id, title, mentor_material_cost, dreampia_material_cost, prep_by, school_request_note, final_product_available, description, is_delivery_available, program_category_id, created_at'
+      'id, occupation_programs_id, title, mentor_material_cost, dreampia_material_cost, prep_by, school_request_note, final_product_available, description, is_delivery_available, school_level, created_at'
     )
     .eq('occupation_programs_id', occupationProgramId)
     .order('created_at')
@@ -265,7 +332,7 @@ export async function createUnit(
     final_product_available: payload.finalProductAvailable,
     description: payload.description,
     is_delivery_available: payload.isDeliveryAvailable,
-    program_category_id: payload.programCategoryId,
+    school_level: payload.schoolLevel,
   })
   if (error) throw new Error(error.message)
   revalidatePath('/programs')
@@ -284,7 +351,7 @@ export async function updateUnit(id: string, payload: UnitFormPayload): Promise<
       final_product_available: payload.finalProductAvailable,
       description: payload.description,
       is_delivery_available: payload.isDeliveryAvailable,
-      program_category_id: payload.programCategoryId,
+      school_level: payload.schoolLevel,
     })
     .eq('id', id)
   if (error) throw new Error(error.message)
@@ -321,16 +388,4 @@ export async function deleteUnit(id: string): Promise<void> {
   const supabase = await createServerSupabaseClient()
   await cascadeDeleteUnits(supabase, [id])
   revalidatePath('/programs')
-}
-
-// ── 프로그램 카테고리 (읽기 전용 — 유닛 폼의 선택지로만 사용) ──────
-
-export async function getProgramCategories(): Promise<ProgramCategoryData[]> {
-  const supabase = await createServerSupabaseClient()
-  const { data, error } = await supabase
-    .from('program_categories')
-    .select('id, school_level, experience_type, sort_order')
-    .order('sort_order')
-  if (error) throw new Error(error.message)
-  return data || []
 }

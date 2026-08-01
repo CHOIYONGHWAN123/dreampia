@@ -44,7 +44,6 @@ export default async function SupplyLogsPage({
     headcount: number | null
     mentorId: string | null
   }>()
-  let campaignMap = new Map<string, string>()
   let institutionMap = new Map<string, { region1: string; region2: string | null; name: string }>()
   let mentorMap = new Map<string, string>()
 
@@ -70,30 +69,22 @@ export default async function SupplyLogsPage({
     if (eventIds.length > 0) {
       const { data: events } = await supabase
         .from('events')
-        .select('id, campaign_id, institution_id')
+        .select('id, institution_id')
         .in('id', eventIds)
 
-      const campaignIds = [...new Set(events?.map((e) => e.campaign_id).filter(Boolean) as string[])]
       const institutionIds = [...new Set(events?.map((e) => e.institution_id).filter(Boolean) as string[])]
 
-      const [campaignsRes, institutionsRes] = await Promise.all([
-        campaignIds.length > 0
-          ? supabase.from('campaign').select('id, name').in('id', campaignIds)
-          : Promise.resolve({ data: [] }),
-        institutionIds.length > 0
-          ? supabase.from('institutions').select('id, region1, region2, name').in('id', institutionIds)
-          : Promise.resolve({ data: [] }),
-      ])
+      const { data: institutionsData } = institutionIds.length > 0
+        ? await supabase.from('institutions').select('id, region1, region2, name').in('id', institutionIds)
+        : { data: [] }
 
-      const campaignById = new Map((campaignsRes.data ?? []).map((c) => [c.id, c.name]))
       const institutionById = new Map(
-        (institutionsRes.data ?? []).map((i) => [i.id, { region1: i.region1, region2: i.region2, name: i.name }])
+        (institutionsData ?? []).map((i) => [i.id, { region1: i.region1, region2: i.region2, name: i.name }])
       )
 
-      // event_id → campaign/institution 맵 빌드
+      // event_id → institution 맵 빌드
       events?.forEach((e) => {
         const key = e.id
-        if (e.campaign_id) campaignMap.set(key, campaignById.get(e.campaign_id) ?? '-')
         if (e.institution_id) {
           const inst = institutionById.get(e.institution_id)
           if (inst) institutionMap.set(key, inst)
@@ -129,7 +120,6 @@ export default async function SupplyLogsPage({
       region1: eventId ? (institutionMap.get(eventId)?.region1 ?? null) : null,
       region2: eventId ? (institutionMap.get(eventId)?.region2 ?? null) : null,
       institutionName: eventId ? (institutionMap.get(eventId)?.name ?? null) : null,
-      campaignName: eventId ? (campaignMap.get(eventId) ?? null) : null,
       mentorName: eventRow?.mentorId ? (mentorMap.get(eventRow.mentorId) ?? null) : null,
       startTime: eventRow?.startTime ?? null,
       endTime: eventRow?.endTime ?? null,

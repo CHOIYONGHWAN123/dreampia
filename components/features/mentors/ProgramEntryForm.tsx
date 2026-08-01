@@ -1,6 +1,6 @@
 'use client'
 
-import { ProgramUnitPicker, type ProgramOption, type UnitOption, type ProgramCategoryOption } from './ProgramUnitPicker'
+import { ProgramUnitPicker, type ProgramOption, type UnitOption } from './ProgramUnitPicker'
 import { MentorSearchSelect } from './shared'
 import { LevelFileInputs } from './LevelFileInputs'
 import type { ProgramEntryState } from './new-mentor-types'
@@ -10,7 +10,6 @@ export function ProgramEntryForm({
   entry,
   programs,
   units,
-  programCategories,
   mentors,
   excludedUnitIds,
   selfId,
@@ -20,7 +19,6 @@ export function ProgramEntryForm({
   entry: ProgramEntryState
   programs: ProgramOption[]
   units: UnitOption[]
-  programCategories: ProgramCategoryOption[]
   mentors: { id: string; name: string }[]
   excludedUnitIds: Set<string>
   selfId: string
@@ -45,7 +43,6 @@ export function ProgramEntryForm({
       <ProgramUnitPicker
         programs={programs}
         units={units}
-        programCategories={programCategories}
         excludedUnitIds={excludedUnitIds}
         value={entry.selection}
         onChange={(selection) => onChange({ ...entry, selection, pptFiles: {}, profileFiles: {} })}

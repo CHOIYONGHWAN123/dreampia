@@ -1,16 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { PREP_BY_OPTIONS } from '@/app/(dashboard)/programs/constants'
+import { PREP_BY_OPTIONS, SCHOOL_LEVEL_OPTIONS } from '@/app/(dashboard)/programs/constants'
 import type {
   OccupationProgramUnitData,
-  ProgramCategoryData,
   UnitFormPayload,
 } from '@/app/(dashboard)/programs/actions'
 
 interface Props {
   initial: OccupationProgramUnitData | null
-  programCategories: ProgramCategoryData[]
   onClose: () => void
   onSubmit: (payload: UnitFormPayload) => Promise<void>
 }
@@ -24,7 +22,7 @@ const emptyForm: UnitFormPayload = {
   finalProductAvailable: false,
   description: '',
   isDeliveryAvailable: false,
-  programCategoryId: null,
+  schoolLevel: null,
 }
 
 // 팝업이 열릴 때마다 새로 마운트되므로(부모가 unitPopup.open으로 마운트/언마운트를 제어)
@@ -40,11 +38,11 @@ function toFormState(initial: OccupationProgramUnitData | null): UnitFormPayload
     finalProductAvailable: initial.final_product_available ?? false,
     description: initial.description ?? '',
     isDeliveryAvailable: initial.is_delivery_available,
-    programCategoryId: initial.program_category_id,
+    schoolLevel: initial.school_level,
   }
 }
 
-export function UnitFormPopup({ initial, programCategories, onClose, onSubmit }: Props) {
+export function UnitFormPopup({ initial, onClose, onSubmit }: Props) {
   const [form, setForm] = useState<UnitFormPayload>(() => toFormState(initial))
 
   const handleSubmit = async () => {
@@ -127,16 +125,16 @@ export function UnitFormPopup({ initial, programCategories, onClose, onSubmit }:
           </div>
 
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">프로그램 카테고리</label>
+            <label className="text-xs text-gray-500 mb-1 block">교급</label>
             <select
-              value={form.programCategoryId ?? ''}
-              onChange={e => setForm(f => ({ ...f, programCategoryId: e.target.value || null }))}
+              value={form.schoolLevel ?? ''}
+              onChange={e => setForm(f => ({ ...f, schoolLevel: e.target.value || null }))}
               className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500"
             >
               <option value="">선택안함</option>
-              {programCategories.map(category => (
-                <option key={category.id} value={category.id}>
-                  {[category.school_level, category.experience_type].filter(Boolean).join(' / ')}
+              {SCHOOL_LEVEL_OPTIONS.map(level => (
+                <option key={level} value={level}>
+                  {level}
                 </option>
               ))}
             </select>

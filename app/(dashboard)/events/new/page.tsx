@@ -12,7 +12,6 @@ export default async function NewEventPage({
 
   const [
     institutionResult,
-    campaignsResult,
     salesAdminsResult,
     commAdminsResult,
     programSelectData,
@@ -20,18 +19,16 @@ export default async function NewEventPage({
     institutionId
       ? supabase.from('institutions').select('id, name, address, institution_type, contact_name, contact_email, contact_phone, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, teacher_name').eq('id', institutionId).single()
       : Promise.resolve({ data: null, error: null }),
-    supabase.from('campaign').select('id, name').order('name'),
     supabase.from('admins').select('id, name').eq('is_sales', true).order('name'),
     supabase.from('admins').select('id, name').eq('is_comm', true).order('name'),
     getEventProgramSelectData(),
   ])
 
-  const { data: campaigns } = campaignsResult
   const { data: salesAdmins } = salesAdminsResult
   const { data: commAdmins } = commAdminsResult
 
   const queryError =
-    institutionResult.error || campaignsResult.error || salesAdminsResult.error || commAdminsResult.error
+    institutionResult.error || salesAdminsResult.error || commAdminsResult.error
 
   if (queryError) {
     console.error('[NewEventPage] 데이터 조회 오류:', queryError.message)
@@ -46,9 +43,9 @@ export default async function NewEventPage({
       )}
       <EventForm
         institution={institutionResult.data ?? null}
-        campaigns={campaigns || []}
         salesAdmins={salesAdmins || []}
         commAdmins={commAdmins || []}
+        eventCategories={programSelectData.eventCategories}
         fields={programSelectData.fields}
         occupations={programSelectData.occupations}
         programs={programSelectData.programs}

@@ -194,7 +194,6 @@ function AddProgramModal({
             <ProgramUnitPicker
               programs={filteredPrograms}
               units={selectData.units}
-              programCategories={selectData.programCategories}
               excludedUnitIds={linkedUnitIds}
               value={selection}
               onChange={(next) => {

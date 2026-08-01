@@ -12,6 +12,7 @@ export interface ProgramEntryState {
 
 export interface FieldSectionState {
   key: string
+  eventCategoryId: string
   fieldId: string
   occupationId: string
   programEntries: ProgramEntryState[]
@@ -31,6 +32,7 @@ export function createProgramEntry(): ProgramEntryState {
 export function createFieldSection(): FieldSectionState {
   return {
     key: generateId(),
+    eventCategoryId: '',
     fieldId: '',
     occupationId: '',
     programEntries: [createProgramEntry()],

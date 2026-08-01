@@ -12,7 +12,6 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
 
   const [
     { data: institution },
-    { data: campaigns },
     { data: salesAdmins },
     { data: commAdmins },
     programSelectData,
@@ -21,7 +20,6 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
     detail.event.institution_id
       ? supabase.from('institutions').select('id, name, address, institution_type, contact_name, contact_email, contact_phone, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, teacher_name').eq('id', detail.event.institution_id).single()
       : Promise.resolve({ data: null }),
-    supabase.from('campaign').select('id, name').order('name'),
     supabase.from('admins').select('id, name').eq('is_sales', true).order('name'),
     supabase.from('admins').select('id, name').eq('is_comm', true).order('name'),
     getEventProgramSelectData(),
@@ -33,9 +31,9 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
   return (
     <EventForm
       institution={institution ?? null}
-      campaigns={campaigns || []}
       salesAdmins={salesAdmins || []}
       commAdmins={commAdmins || []}
+      eventCategories={programSelectData.eventCategories}
       fields={programSelectData.fields}
       occupations={programSelectData.occupations}
       programs={programSelectData.programs}

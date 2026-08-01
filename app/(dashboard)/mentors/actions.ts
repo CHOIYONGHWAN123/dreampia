@@ -93,7 +93,7 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
   const [unitsRes, feePayersRes] = await Promise.all([
     supabase
       .from('occupation_program_unit')
-      .select('id, title, occupation_programs_id, program_category_id, mentor_material_cost, prep_by')
+      .select('id, title, occupation_programs_id, school_level, mentor_material_cost, prep_by')
       .in('id', unitIds),
     feePayerIds.length
       ? supabase.from('mentors').select('id, name').in('id', feePayerIds)
@@ -102,14 +102,6 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
 
   const unitMap = new Map((unitsRes.data ?? []).map((u) => [u.id, u]))
   const feePayerMap = new Map((feePayersRes.data ?? []).map((m: { id: string; name: string }) => [m.id, m.name]))
-
-  const categoryIds = [
-    ...new Set((unitsRes.data ?? []).map((u) => u.program_category_id).filter(Boolean)),
-  ] as string[]
-  const { data: categories } = categoryIds.length
-    ? await supabase.from('program_categories').select('id, school_level').in('id', categoryIds)
-    : { data: [] }
-  const categoryMap = new Map((categories ?? []).map((c) => [c.id, c]))
 
   const programIds = [
     ...new Set((unitsRes.data ?? []).map((u) => u.occupation_programs_id).filter(Boolean)),
@@ -154,7 +146,6 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
     const rows = mopByMentor.get(m.id) ?? []
     const occupationPrograms: MentorOccupationProgramRow[] = rows.map((r) => {
       const unit = unitMap.get(r.occupation_program_unit_id)
-      const category = unit?.program_category_id ? categoryMap.get(unit.program_category_id) : null
       const prog = unit?.occupation_programs_id ? programMap.get(unit.occupation_programs_id) : null
       const occ = prog?.occupation_id ? occupationMap.get(prog.occupation_id) : null
       return {
@@ -167,7 +158,7 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
         material_fee_payer_id: r.material_fee_payer_id,
         material_fee_payer_name: r.material_fee_payer_id ? (feePayerMap.get(r.material_fee_payer_id) ?? null) : null,
         program_title: unit?.title ?? '-',
-        school_level: category?.school_level ?? null,
+        school_level: unit?.school_level ?? null,
         mentor_material_cost: unit?.mentor_material_cost ?? null,
         prep_by: unit?.prep_by ?? null,
         occupation_id: prog?.occupation_id ?? '',
@@ -308,7 +299,7 @@ export async function addMentorOccupationProgram(
   const [unitRes, payersRes] = await Promise.all([
     supabase
       .from('occupation_program_unit')
-      .select('id, title, occupation_programs_id, program_category_id, mentor_material_cost, prep_by')
+      .select('id, title, occupation_programs_id, school_level, mentor_material_cost, prep_by')
       .eq('id', occupationProgramUnitId)
       .single(),
     payerIds.length
@@ -320,16 +311,6 @@ export async function addMentorOccupationProgram(
   const payerMap = new Map(
     (payersRes.data ?? []).map((m: { id: string; name: string }) => [m.id, m.name])
   )
-
-  let category: { id: string; school_level: string | null } | null = null
-  if (unit?.program_category_id) {
-    const { data } = await supabase
-      .from('program_categories')
-      .select('id, school_level')
-      .eq('id', unit.program_category_id)
-      .single()
-    category = data
-  }
 
   let prog: { id: string; name: string; occupation_id: string | null } | null = null
   if (unit?.occupation_programs_id) {
@@ -377,7 +358,7 @@ export async function addMentorOccupationProgram(
       ? (payerMap.get(mop.material_fee_payer_id) ?? null)
       : null,
     program_title: unit?.title ?? '-',
-    school_level: category?.school_level ?? null,
+    school_level: unit?.school_level ?? null,
     mentor_material_cost: unit?.mentor_material_cost ?? null,
     prep_by: unit?.prep_by ?? null,
     occupation_id: prog?.occupation_id ?? '',
@@ -388,33 +369,33 @@ export async function addMentorOccupationProgram(
 }
 
 export type AddProgramSelectData = {
-  fields: { id: string; name: string }[]
+  eventCategories: { id: string; name: string }[]
+  fields: { id: string; name: string; event_category_id: string | null }[]
   occupations: { id: string; name: string; field_id: string | null }[]
   programs: { id: string; name: string; occupation_id: string | null }[]
-  units: { id: string; title: string; occupation_programs_id: string | null; program_category_id: string | null }[]
-  programCategories: { id: string; school_level: string | null; experience_type: string }[]
+  units: { id: string; title: string; occupation_programs_id: string | null; school_level: string | null }[]
   mentors: { id: string; name: string }[]
 }
 
 export async function getAddProgramSelectData(): Promise<AddProgramSelectData> {
   const supabase = await createServerSupabaseClient()
-  const [fieldsRes, occsRes, progsRes, unitsRes, categoriesRes, mentorsRes] = await Promise.all([
-    supabase.from('fields').select('id, name').order('name'),
+  const [eventCategoriesRes, fieldsRes, occsRes, progsRes, unitsRes, mentorsRes] = await Promise.all([
+    supabase.from('event_categories').select('id, name').order('sort_order'),
+    supabase.from('fields').select('id, name, event_category_id').order('name'),
     supabase.from('occupations').select('id, name, field_id').order('name'),
     supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
     supabase
       .from('occupation_program_unit')
-      .select('id, title, occupation_programs_id, program_category_id')
+      .select('id, title, occupation_programs_id, school_level')
       .order('title'),
-    supabase.from('program_categories').select('id, school_level, experience_type').order('sort_order'),
     supabase.from('mentors').select('id, name').order('name'),
   ])
   return {
+    eventCategories: eventCategoriesRes.data ?? [],
     fields: fieldsRes.data ?? [],
     occupations: (occsRes.data ?? []) as { id: string; name: string; field_id: string | null }[],
     programs: (progsRes.data ?? []) as { id: string; name: string; occupation_id: string | null }[],
     units: unitsRes.data ?? [],
-    programCategories: categoriesRes.data ?? [],
     mentors: mentorsRes.data ?? [],
   }
 }

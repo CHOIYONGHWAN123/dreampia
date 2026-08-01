@@ -14,7 +14,6 @@ export type LogRow = {
   region1: string | null
   region2: string | null
   institutionName: string | null
-  campaignName: string | null
   mentorName: string | null
   startTime: string | null
   endTime: string | null
@@ -80,7 +79,7 @@ export function SupplyLogsClient({ logs, supplyOptions, defaultSupplyId }: Props
   const exportCSV = () => {
     const headers = [
       'NO', '일시', '프로그램 유닛', '재고 유형', '변동량', '사유',
-      '지역1', '지역2', '기관명', '행사구분', '강사명', '시작시간', '종료시간', '수량',
+      '지역1', '지역2', '기관명', '강사명', '시작시간', '종료시간', '수량',
     ]
     const rows = filtered.map((log, i) => [
       i + 1,
@@ -92,7 +91,6 @@ export function SupplyLogsClient({ logs, supplyOptions, defaultSupplyId }: Props
       log.region1 ?? '',
       log.region2 ?? '',
       log.institutionName ?? '',
-      log.campaignName ?? '',
       log.mentorName ?? '',
       formatDateTime(log.startTime),
       formatDateTime(log.endTime),
@@ -208,7 +206,6 @@ export function SupplyLogsClient({ logs, supplyOptions, defaultSupplyId }: Props
               <th className={thCls} style={{ width: 56 }}>지역1</th>
               <th className={thCls} style={{ width: 72 }}>지역2</th>
               <th className={thCls} style={{ width: 120 }}>기관명</th>
-              <th className={thCls} style={{ width: 80 }}>행사구분</th>
               <th className={thCls} style={{ width: 80 }}>강사명</th>
               <th className={thCls} style={{ width: 120 }}>시작시간</th>
               <th className={thCls} style={{ width: 120 }}>종료시간</th>
@@ -218,7 +215,7 @@ export function SupplyLogsClient({ logs, supplyOptions, defaultSupplyId }: Props
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={14} className="py-16 text-center text-gray-400">
+                <td colSpan={13} className="py-16 text-center text-gray-400">
                   조건에 맞는 변동 이력이 없습니다.
                 </td>
               </tr>
@@ -247,11 +244,6 @@ export function SupplyLogsClient({ logs, supplyOptions, defaultSupplyId }: Props
                     <td className={td}>{log.region1 ?? tdDash}</td>
                     <td className={td}>{log.region2 ?? tdDash}</td>
                     <td className={`${td} text-left`}>{log.institutionName ?? tdDash}</td>
-                    <td className={td}>
-                      {log.campaignName
-                        ? <span className="inline-block px-1.5 py-0.5 bg-orange-50 text-orange-600 rounded text-[11px]">{log.campaignName}</span>
-                        : tdDash}
-                    </td>
                     <td className={td}>{log.mentorName ?? tdDash}</td>
                     <td className={td}>{formatDateTime(log.startTime)}</td>
                     <td className={td}>{formatDateTime(log.endTime)}</td>

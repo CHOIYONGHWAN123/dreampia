@@ -19,6 +19,7 @@ import {
   EventProgramUnitSection,
   calcLectureFeeAfterTax,
   buildUnitPath,
+  type EventCategoryOption,
   type FieldOption,
   type OccupationOption,
   type ProgramOption,
@@ -43,11 +44,6 @@ type Institution = {
   teacher_name: string | null
 }
 
-type Campaign = {
-  id: string
-  name: string
-}
-
 type Admin = {
   id: string
   name: string
@@ -55,9 +51,9 @@ type Admin = {
 
 interface Props {
   institution: Institution | null
-  campaigns: Campaign[]
   salesAdmins: Admin[]
   commAdmins: Admin[]
+  eventCategories: EventCategoryOption[]
   fields: FieldOption[]
   occupations: OccupationOption[]
   programs: ProgramOption[]
@@ -128,7 +124,6 @@ function buildDefaultValues(
   return {
     reception_date: initialEvent.created_at.split('T')[0],
     name: initialEvent.name,
-    campaign_id: initialEvent.campaign_id,
     institution_id: initialEvent.institution_id,
     event_start_at_date: start.date,
     event_start_at_time: start.time,
@@ -171,9 +166,9 @@ const rowCls = 'flex items-center gap-3'
 
 export function EventForm({
   institution,
-  campaigns,
   salesAdmins,
   commAdmins,
+  eventCategories,
   fields,
   occupations,
   programs,
@@ -273,7 +268,6 @@ export function EventForm({
       const payload = {
         reception_date: data.reception_date,
         name: data.name,
-        campaign_id: data.campaign_id,
         institution_id: data.institution_id,
         event_start_at: eventStartAt,
         event_end_at: eventEndAt,
@@ -376,21 +370,6 @@ export function EventForm({
             </div>
           </div>
 
-          {/* 행사 구분 */}
-          <div className={rowCls}>
-            <label className={labelCls}>행사 구분</label>
-            <select
-              {...register('campaign_id', { setValueAs: (v) => v || null })}
-              className={selectCls}
-            >
-              <option value="">선택</option>
-              {campaigns.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
 
           {/* 학교/기관명 */}
           <div className={rowCls}>
@@ -679,6 +658,7 @@ export function EventForm({
 
       <div className="mt-8">
         <EventProgramUnitSection
+          eventCategories={eventCategories}
           fields={fields}
           occupations={occupations}
           programs={programs}

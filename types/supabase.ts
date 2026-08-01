@@ -137,27 +137,6 @@ export type Database = {
         }
         Relationships: []
       }
-      campaign: {
-        Row: {
-          content: string | null
-          created_at: string
-          id: string
-          name: string
-        }
-        Insert: {
-          content?: string | null
-          created_at?: string
-          id?: string
-          name: string
-        }
-        Update: {
-          content?: string | null
-          created_at?: string
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
       company_info: {
         Row: {
           content_html: string
@@ -351,7 +330,6 @@ export type Database = {
           admin_docs: string | null
           admin_docs_delivered: boolean | null
           budget: number | null
-          campaign_id: string | null
           comm_admin_id: string | null
           comm_content: string | null
           contact_email: string | null
@@ -417,7 +395,6 @@ export type Database = {
           admin_docs?: string | null
           admin_docs_delivered?: boolean | null
           budget?: number | null
-          campaign_id?: string | null
           comm_admin_id?: string | null
           comm_content?: string | null
           contact_email?: string | null
@@ -487,7 +464,6 @@ export type Database = {
           admin_docs?: string | null
           admin_docs_delivered?: boolean | null
           budget?: number | null
-          campaign_id?: string | null
           comm_admin_id?: string | null
           comm_content?: string | null
           contact_email?: string | null
@@ -554,13 +530,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "events_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "campaign"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "events_comm_admin_id_fkey"
             columns: ["comm_admin_id"]
             isOneToOne: false
@@ -590,20 +559,52 @@ export type Database = {
           },
         ]
       }
+      event_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       fields: {
         Row: {
+          event_category_id: string | null
           id: string
           name: string
         }
         Insert: {
+          event_category_id?: string | null
           id?: string
           name: string
         }
         Update: {
+          event_category_id?: string | null
           id?: string
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fields_event_category_id_fkey"
+            columns: ["event_category_id"]
+            isOneToOne: false
+            referencedRelation: "event_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       institutions: {
         Row: {
@@ -835,29 +836,36 @@ export type Database = {
       lesson_plans: {
         Row: {
           created_at: string
+          event_category_id: string
           file_url: string | null
           grade: Database["public"]["Enums"]["grade"]
           id: string
-          lesson_category: Database["public"]["Enums"]["lesson_category"]
           occupation_program_id: string
         }
         Insert: {
           created_at?: string
+          event_category_id: string
           file_url?: string | null
           grade: Database["public"]["Enums"]["grade"]
           id?: string
-          lesson_category: Database["public"]["Enums"]["lesson_category"]
           occupation_program_id: string
         }
         Update: {
           created_at?: string
+          event_category_id?: string
           file_url?: string | null
           grade?: Database["public"]["Enums"]["grade"]
           id?: string
-          lesson_category?: Database["public"]["Enums"]["lesson_category"]
           occupation_program_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "lesson_plans_event_category_id_fkey"
+            columns: ["event_category_id"]
+            isOneToOne: false
+            referencedRelation: "event_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lesson_plans_occupation_program_id_fkey"
             columns: ["occupation_program_id"]
@@ -1012,7 +1020,7 @@ export type Database = {
           mentor_material_cost: number | null
           occupation_programs_id: string | null
           prep_by: Database["public"]["Enums"]["prep_by"] | null
-          program_category_id: string | null
+          school_level: Database["public"]["Enums"]["school_level"] | null
           school_request_note: string | null
           title: string
         }
@@ -1026,7 +1034,7 @@ export type Database = {
           mentor_material_cost?: number | null
           occupation_programs_id?: string | null
           prep_by?: Database["public"]["Enums"]["prep_by"] | null
-          program_category_id?: string | null
+          school_level?: Database["public"]["Enums"]["school_level"] | null
           school_request_note?: string | null
           title: string
         }
@@ -1040,7 +1048,7 @@ export type Database = {
           mentor_material_cost?: number | null
           occupation_programs_id?: string | null
           prep_by?: Database["public"]["Enums"]["prep_by"] | null
-          program_category_id?: string | null
+          school_level?: Database["public"]["Enums"]["school_level"] | null
           school_request_note?: string | null
           title?: string
         }
@@ -1050,13 +1058,6 @@ export type Database = {
             columns: ["occupation_programs_id"]
             isOneToOne: false
             referencedRelation: "occupation_programs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "occupation_program_unit_program_category_id_fkey"
-            columns: ["program_category_id"]
-            isOneToOne: false
-            referencedRelation: "program_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -1112,27 +1113,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      program_categories: {
-        Row: {
-          experience_type: Database["public"]["Enums"]["experience_type"]
-          id: string
-          school_level: Database["public"]["Enums"]["school_level"] | null
-          sort_order: number
-        }
-        Insert: {
-          experience_type: Database["public"]["Enums"]["experience_type"]
-          id?: string
-          school_level?: Database["public"]["Enums"]["school_level"] | null
-          sort_order?: number
-        }
-        Update: {
-          experience_type?: Database["public"]["Enums"]["experience_type"]
-          id?: string
-          school_level?: Database["public"]["Enums"]["school_level"] | null
-          sort_order?: number
-        }
-        Relationships: []
       }
       supplies: {
         Row: {
@@ -1291,7 +1271,6 @@ export type Database = {
       mentor_event_row_detail: {
         Row: {
           attendance: boolean | null
-          campaign_name: string | null
           classroom: string | null
           criminal_background_check: string | null
           dreampia_material_cost: number | null

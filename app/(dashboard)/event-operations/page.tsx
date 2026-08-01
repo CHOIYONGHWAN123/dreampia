@@ -35,7 +35,7 @@ export default async function EventOperationsPage({
 
   const { data: events } = await supabase
     .from('events')
-    .select(`id, name, event_start_at, event_end_at, target_grade, budget, contract_type, contract_status, event_check_status, supplies_status, pre_notice_sent, recruit_status, recruit_delivered, start_recruit_at, school_request_delivered, crime_check_method, crime_check_notified, crime_check_status, admin_docs_delivered, estimate_file_url, teacher_name, remarks, group_chat_link, inflow_source, payment_confirmed, photo_sent, report_sent, field_admin_ids, comm_admin_id, sales_admin_id, institution_id, campaign_id`)
+    .select(`id, name, event_start_at, event_end_at, target_grade, budget, contract_type, contract_status, event_check_status, supplies_status, pre_notice_sent, recruit_status, recruit_delivered, start_recruit_at, school_request_delivered, crime_check_method, crime_check_notified, crime_check_status, admin_docs_delivered, estimate_file_url, teacher_name, remarks, group_chat_link, inflow_source, payment_confirmed, photo_sent, report_sent, field_admin_ids, comm_admin_id, sales_admin_id, institution_id`)
     .gte('event_end_at', startOfMonth)
     .lte('event_end_at', endOfMonth)
     .order('event_end_at', { ascending: true })
@@ -52,7 +52,6 @@ export default async function EventOperationsPage({
         currentYear={year}
         currentMonth={month}
         admins={admins}
-        campaigns={[]}
       />
     )
   }
@@ -62,13 +61,11 @@ export default async function EventOperationsPage({
   // 관련 데이터 병렬 조회
   const [
     institutionsRes,
-    campaignsRes,
     sessionsRes,
     eventRowsRes,
   ] = await Promise.all([
     supabase.from('institutions').select('id, region1, region2, institution_type, name')
       .in('id', events.map((e) => e.institution_id).filter(Boolean) as string[]),
-    supabase.from('campaign').select('id, name').order('name'),
     supabase.from('event_sessions').select('id, event_id, start_at, end_at, sort_order')
       .in('event_id', eventIds).order('sort_order'),
     supabase.from('event_rows').select('id, event_id').in('event_id', eventIds),
@@ -82,8 +79,6 @@ export default async function EventOperationsPage({
 
   // 맵 구성
   const institutionMap = new Map((institutionsRes.data ?? []).map((i) => [i.id, i]))
-  const campaignList = (campaignsRes.data ?? []).map((c) => ({ id: c.id, name: c.name }))
-  const campaignMap = new Map(campaignList.map((c) => [c.id, c.name]))
   const adminMap = new Map(admins.map((a) => [a.id, a.name]))
 
   const sessionsByEvent = new Map<string, typeof sessionsRes.data>()
@@ -124,8 +119,6 @@ export default async function EventOperationsPage({
       region2: inst?.region2 ?? null,
       category: inst?.institution_type ?? null,
       institutionName: inst?.name ?? null,
-      campaignId: e.campaign_id,
-      campaignName: e.campaign_id ? (campaignMap.get(e.campaign_id) ?? null) : null,
       fieldAdminIds: e.field_admin_ids ?? [],
       fieldAdminNames,
       eventStartAt: e.event_start_at,
@@ -169,7 +162,6 @@ export default async function EventOperationsPage({
       currentYear={year}
       currentMonth={month}
       admins={admins}
-      campaigns={campaignList}
     />
   )
 }

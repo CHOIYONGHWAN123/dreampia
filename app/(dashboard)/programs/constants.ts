@@ -2,3 +2,6 @@
 
 export const PREP_BY_OPTIONS = ['강사', '드림피아', '모두가능'] as const
 export type PrepBy = (typeof PREP_BY_OPTIONS)[number]
+
+export const SCHOOL_LEVEL_OPTIONS = ['초등', '중고등', '유치원'] as const
+export type SchoolLevel = (typeof SCHOOL_LEVEL_OPTIONS)[number]

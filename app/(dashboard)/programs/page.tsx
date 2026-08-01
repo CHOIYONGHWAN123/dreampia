@@ -1,8 +1,16 @@
-import { getFields, getProgramCategories } from './actions'
+import { getEventCategories, getFields } from './actions'
 import { ProgramsClient } from '@/components/features/programs/ProgramsClient'
 
 export default async function ProgramsPage() {
-  const [fields, programCategories] = await Promise.all([getFields(), getProgramCategories()])
+  const [eventCategories, fields] = await Promise.all([
+    getEventCategories(),
+    getFields(),
+  ])
 
-  return <ProgramsClient initialFields={fields} programCategories={programCategories} />
+  return (
+    <ProgramsClient
+      initialEventCategories={eventCategories}
+      initialFields={fields}
+    />
+  )
 }

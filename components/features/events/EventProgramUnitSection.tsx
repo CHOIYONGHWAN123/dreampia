@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react'
 import { generateId } from '@/lib/generate-id'
 
-export type FieldOption = { id: string; name: string }
+export type EventCategoryOption = { id: string; name: string }
+export type FieldOption = { id: string; name: string; event_category_id: string | null }
 export type OccupationOption = { id: string; name: string; field_id: string | null }
 export type ProgramOption = { id: string; name: string; occupation_id: string | null }
 export type UnitOption = { id: string; title: string; occupation_programs_id: string | null }
@@ -61,6 +62,7 @@ const fieldInputCls =
 
 // 검색 또는 분야 > 직종 > 프로그램 > 프로그램 유닛 드릴다운으로 occupation_program_unit을 찾아 추가하는 섹션.
 export function EventProgramUnitSection({
+  eventCategories,
   fields,
   occupations,
   programs,
@@ -71,6 +73,7 @@ export function EventProgramUnitSection({
   defaultStartTime,
   defaultEndTime,
 }: {
+  eventCategories: EventCategoryOption[]
   fields: FieldOption[]
   occupations: OccupationOption[]
   programs: ProgramOption[]
@@ -82,6 +85,7 @@ export function EventProgramUnitSection({
   defaultEndTime?: string
 }) {
   const [search, setSearch] = useState('')
+  const [eventCategoryId, setEventCategoryId] = useState('')
   const [fieldId, setFieldId] = useState('')
   const [occupationId, setOccupationId] = useState('')
   const [programId, setProgramId] = useState('')
@@ -114,6 +118,10 @@ export function EventProgramUnitSection({
     return units.filter((u) => u.title.includes(q)).slice(0, 8)
   }, [units, search])
 
+  const filteredFields = useMemo(
+    () => fields.filter((f) => f.event_category_id === eventCategoryId),
+    [fields, eventCategoryId]
+  )
   const filteredOccupations = useMemo(
     () => occupations.filter((o) => o.field_id === fieldId),
     [occupations, fieldId]
@@ -229,13 +237,30 @@ export function EventProgramUnitSection({
         )}
       </div>
 
-      <div className="text-xs text-gray-400">또는 분야 &gt; 직종 &gt; 프로그램 &gt; 프로그램 유닛 순으로 선택</div>
+      <div className="text-xs text-gray-400">또는 행사구분 &gt; 분야 &gt; 직종 &gt; 프로그램 &gt; 프로그램 유닛 순으로 선택</div>
 
       {/* 드릴다운 */}
       <div className="flex items-center gap-2">
         <select
           className={`${selCls} flex-1`}
+          value={eventCategoryId}
+          onChange={(e) => {
+            setEventCategoryId(e.target.value)
+            setFieldId('')
+            setOccupationId('')
+            setProgramId('')
+            setUnitId('')
+          }}
+        >
+          <option value="">행사구분</option>
+          {eventCategories.map((ec) => (
+            <option key={ec.id} value={ec.id}>{ec.name}</option>
+          ))}
+        </select>
+        <select
+          className={`${selCls} flex-1`}
           value={fieldId}
+          disabled={!eventCategoryId}
           onChange={(e) => {
             setFieldId(e.target.value)
             setOccupationId('')
@@ -244,7 +269,7 @@ export function EventProgramUnitSection({
           }}
         >
           <option value="">분야</option>
-          {fields.map((f) => (
+          {filteredFields.map((f) => (
             <option key={f.id} value={f.id}>{f.name}</option>
           ))}
         </select>

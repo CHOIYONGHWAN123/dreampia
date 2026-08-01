@@ -4,16 +4,10 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 
 // ── 폼 참조 데이터 ─────────────────────────────────────────────────
 
-export interface ProgramCategoryOption {
-  id: string
-  school_level: string | null
-  experience_type: string
-}
-
 export interface OccupationProgramUnitOption {
   id: string
   title: string
-  program_category_id: string | null
+  school_level: string | null
   occupation_programs_id: string | null
 }
 
@@ -29,7 +23,6 @@ export interface OccupationOption {
 }
 
 export interface EventCheckFormData {
-  programCategories: ProgramCategoryOption[]
   units: OccupationProgramUnitOption[]
   programs: OccupationProgramOption[]
   occupations: OccupationOption[]
@@ -38,18 +31,16 @@ export interface EventCheckFormData {
 export async function getEventCheckFormData(): Promise<EventCheckFormData> {
   const supabase = await createServerSupabaseClient()
 
-  const [categoriesRes, unitsRes, programsRes, occupationsRes] = await Promise.all([
-    supabase.from('program_categories').select('id, school_level, experience_type').order('sort_order'),
+  const [unitsRes, programsRes, occupationsRes] = await Promise.all([
     supabase
       .from('occupation_program_unit')
-      .select('id, title, program_category_id, occupation_programs_id')
+      .select('id, title, school_level, occupation_programs_id')
       .order('title'),
     supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
     supabase.from('occupations').select('id, name').order('name'),
   ])
 
   return {
-    programCategories: categoriesRes.data ?? [],
     units: unitsRes.data ?? [],
     programs: programsRes.data ?? [],
     occupations: occupationsRes.data ?? [],

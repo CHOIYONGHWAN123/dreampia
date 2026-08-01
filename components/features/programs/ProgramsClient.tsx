@@ -1,7 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
+  getEventCategories,
+  createEventCategory,
+  updateEventCategory,
+  deleteEventCategory,
+  deleteEventCategoryCascade,
+  getEventCategoryChildCount,
   getFields,
   getOccupationsByFieldId,
   getOccupationProgramsByOccupationId,
@@ -24,22 +30,27 @@ import {
   createUnit,
   updateUnit,
   deleteUnit,
+  type EventCategoryData,
   type FieldData,
   type OccupationData,
   type OccupationProgramData,
   type OccupationProgramUnitData,
-  type ProgramCategoryData,
   type UnitFormPayload,
 } from '@/app/(dashboard)/programs/actions'
 import { NameColumn } from './NameColumn'
+import { FieldColumn } from './FieldColumn'
 import { UnitFormPopup } from './UnitFormPopup'
 
 interface Props {
+  initialEventCategories: EventCategoryData[]
   initialFields: FieldData[]
-  programCategories: ProgramCategoryData[]
 }
 
-export function ProgramsClient({ initialFields, programCategories }: Props) {
+export function ProgramsClient({ initialEventCategories, initialFields }: Props) {
+  const [eventCategories, setEventCategories] = useState(initialEventCategories)
+  const [selectedEventCategoryId, setSelectedEventCategoryId] = useState<string | null>(null)
+  const [viewingUnassigned, setViewingUnassigned] = useState(false)
+
   const [fields, setFields] = useState(initialFields)
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null)
 
@@ -55,7 +66,12 @@ export function ProgramsClient({ initialFields, programCategories }: Props) {
     unit: null,
   })
 
-  // 직종/프로그램/유닛 선택 상태를 한 번에 비움 (필드 변경, 직종 삭제 등에서 사용)
+  // 분야/직종/프로그램/유닛 선택 상태를 한 번에 비움 (행사구분 변경 등에서 사용)
+  const clearFieldLevel = () => {
+    setSelectedFieldId(null)
+    setOccupations([])
+    clearOccupationLevel()
+  }
   const clearOccupationLevel = () => {
     setSelectedOccupationId(null)
     setPrograms([])
@@ -64,6 +80,24 @@ export function ProgramsClient({ initialFields, programCategories }: Props) {
   const clearProgramLevel = () => {
     setSelectedProgramId(null)
     setUnits([])
+  }
+
+  const fieldsInView = useMemo(() => {
+    if (viewingUnassigned) return fields.filter((f) => f.event_category_id === null)
+    if (selectedEventCategoryId) return fields.filter((f) => f.event_category_id === selectedEventCategoryId)
+    return []
+  }, [fields, selectedEventCategoryId, viewingUnassigned])
+
+  // ── 행사구분 선택 ──
+  const selectEventCategory = (id: string) => {
+    setSelectedEventCategoryId(id)
+    setViewingUnassigned(false)
+    clearFieldLevel()
+  }
+  const selectUnassigned = () => {
+    setSelectedEventCategoryId(null)
+    setViewingUnassigned(true)
+    clearFieldLevel()
   }
 
   // ── 선택 ──
@@ -82,13 +116,44 @@ export function ProgramsClient({ initialFields, programCategories }: Props) {
     setUnits(await getUnitsByOccupationProgramId(programId))
   }
 
+  // ── 행사구분 ──
+  const handleAddEventCategory = async (name: string) => {
+    await createEventCategory(name)
+    setEventCategories(await getEventCategories())
+  }
+  const handleEditEventCategory = async (id: string, name: string) => {
+    await updateEventCategory(id, name)
+    setEventCategories(await getEventCategories())
+  }
+  const handleDeleteEventCategory = async (id: string) => {
+    const categoryName = eventCategories.find((c) => c.id === id)?.name ?? ''
+    try {
+      const childCount = await getEventCategoryChildCount(id)
+      if (childCount > 0) {
+        if (!confirm(`"${categoryName}" 행사구분을 삭제하면 하위 분야 ${childCount}개와 관련 직종/프로그램/유닛이 모두 삭제됩니다.\n계속하시겠습니까?`)) return
+        await deleteEventCategoryCascade(id)
+      } else {
+        if (!confirm(`"${categoryName}" 행사구분을 삭제하시겠습니까?`)) return
+        await deleteEventCategory(id)
+      }
+      setEventCategories(await getEventCategories())
+      setFields(await getFields())
+      if (selectedEventCategoryId === id) {
+        setSelectedEventCategoryId(null)
+        clearFieldLevel()
+      }
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+    }
+  }
+
   // ── 분야 ──
-  const handleAddField = async (name: string) => {
-    await createField(name)
+  const handleAddField = async (name: string, eventCategoryId: string | null) => {
+    await createField(eventCategoryId, name)
     setFields(await getFields())
   }
-  const handleEditField = async (id: string, name: string) => {
-    await updateField(id, name)
+  const handleEditField = async (id: string, name: string, eventCategoryId: string | null) => {
+    await updateField(id, name, eventCategoryId)
     setFields(await getFields())
   }
   const handleDeleteField = async (id: string) => {
@@ -104,9 +169,7 @@ export function ProgramsClient({ initialFields, programCategories }: Props) {
       }
       setFields(await getFields())
       if (selectedFieldId === id) {
-        setSelectedFieldId(null)
-        setOccupations([])
-        clearOccupationLevel()
+        clearFieldLevel()
       }
     } catch (e) {
       alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
@@ -190,6 +253,9 @@ export function ProgramsClient({ initialFields, programCategories }: Props) {
     }
   }
 
+  const selectedEventCategoryName = viewingUnassigned
+    ? '미분류'
+    : eventCategories.find((c) => c.id === selectedEventCategoryId)?.name
   const selectedFieldName = fields.find(f => f.id === selectedFieldId)?.name
   const selectedOccupationName = occupations.find(o => o.id === selectedOccupationId)?.name
   const selectedProgramName = programs.find(p => p.id === selectedProgramId)?.name
@@ -199,20 +265,48 @@ export function ProgramsClient({ initialFields, programCategories }: Props) {
       <div className="pb-4 border-b border-gray-200 mb-6">
         <h1 className="text-2xl font-bold text-gray-900">프로그램 관리</h1>
         <p className="text-sm text-gray-400 mt-1">
-          분야 → 직종 → 프로그램 → 프로그램 유닛 순서로 선택하며 관리합니다.
+          행사구분 → 분야 → 직종 → 프로그램 → 프로그램 유닛 순서로 선택하며 관리합니다.
         </p>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
-        <NameColumn
+      <div className="grid grid-cols-5 gap-4">
+        <div className="flex flex-col min-w-0">
+          <NameColumn
+            title="행사구분"
+            items={eventCategories}
+            selectedId={viewingUnassigned ? null : selectedEventCategoryId}
+            onSelect={selectEventCategory}
+            onAdd={handleAddEventCategory}
+            onEdit={handleEditEventCategory}
+            onDelete={handleDeleteEventCategory}
+            emptyMessage="등록된 행사구분이 없습니다."
+          />
+          <button
+            type="button"
+            onClick={selectUnassigned}
+            className={`mt-2 px-3 py-1.5 text-xs rounded border transition-colors ${
+              viewingUnassigned
+                ? 'bg-gray-900 text-white border-gray-900'
+                : 'border-gray-300 text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            미분류 분야 보기
+          </button>
+        </div>
+
+        <FieldColumn
           title="분야"
-          items={fields}
+          items={fieldsInView}
+          eventCategories={eventCategories}
           selectedId={selectedFieldId}
           onSelect={selectField}
           onAdd={handleAddField}
           onEdit={handleEditField}
           onDelete={handleDeleteField}
           emptyMessage="등록된 분야가 없습니다."
+          disabled={!selectedEventCategoryId && !viewingUnassigned}
+          disabledMessage="행사구분을 먼저 선택해주세요."
+          defaultEventCategoryId={selectedEventCategoryId}
         />
 
         <NameColumn
@@ -291,16 +385,15 @@ export function ProgramsClient({ initialFields, programCategories }: Props) {
       </div>
 
       {/* 선택 경로 표시 */}
-      {(selectedFieldName || selectedOccupationName || selectedProgramName) && (
+      {(selectedEventCategoryName || selectedFieldName || selectedOccupationName || selectedProgramName) && (
         <p className="text-xs text-gray-400 mt-4">
-          {[selectedFieldName, selectedOccupationName, selectedProgramName].filter(Boolean).join(' › ')}
+          {[selectedEventCategoryName, selectedFieldName, selectedOccupationName, selectedProgramName].filter(Boolean).join(' › ')}
         </p>
       )}
 
       {unitPopup.open && (
         <UnitFormPopup
           initial={unitPopup.unit}
-          programCategories={programCategories}
           onClose={() => setUnitPopup({ open: false, unit: null })}
           onSubmit={handleSubmitUnit}
         />

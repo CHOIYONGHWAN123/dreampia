@@ -70,7 +70,8 @@ export type MentorOptionForUnit = {
 }
 
 export type EventProgramSelectData = {
-  fields: { id: string; name: string }[]
+  eventCategories: { id: string; name: string }[]
+  fields: { id: string; name: string; event_category_id: string | null }[]
   occupations: { id: string; name: string; field_id: string | null }[]
   programs: { id: string; name: string; occupation_id: string | null }[]
   units: { id: string; title: string; occupation_programs_id: string | null }[]
@@ -78,12 +79,11 @@ export type EventProgramSelectData = {
 }
 
 const EVENT_DETAIL_COLUMNS =
-  'id, name, campaign_id, institution_id, created_at, event_start_at, event_end_at, target_grade, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, student_rotation, notice, prep_note, memo, contact_name, contact_email, contact_phone, teacher_name, inflow_source, institution_type, sales_admin_id, budget, estimate_file_url, comm_admin_id'
+  'id, name, institution_id, created_at, event_start_at, event_end_at, target_grade, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, student_rotation, notice, prep_note, memo, contact_name, contact_email, contact_phone, teacher_name, inflow_source, institution_type, sales_admin_id, budget, estimate_file_url, comm_admin_id'
 
 export type EventDetailData = {
   id: string
   name: string
-  campaign_id: string | null
   institution_id: string | null
   created_at: string
   event_start_at: string | null
@@ -151,8 +151,9 @@ export async function getEventDetail(id: string): Promise<{
 
 export async function getEventProgramSelectData(): Promise<EventProgramSelectData> {
   const supabase = await createServerSupabaseClient()
-  const [fieldsRes, occsRes, progsRes, unitsRes, mopRes, mentorsRes] = await Promise.all([
-    supabase.from('fields').select('id, name').order('name'),
+  const [eventCategoriesRes, fieldsRes, occsRes, progsRes, unitsRes, mopRes, mentorsRes] = await Promise.all([
+    supabase.from('event_categories').select('id, name').order('sort_order'),
+    supabase.from('fields').select('id, name, event_category_id').order('name'),
     supabase.from('occupations').select('id, name, field_id').order('name'),
     supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
     supabase.from('occupation_program_unit').select('id, title, occupation_programs_id').order('title'),
@@ -177,6 +178,7 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
   }
 
   return {
+    eventCategories: eventCategoriesRes.data ?? [],
     fields: fieldsRes.data ?? [],
     occupations: (occsRes.data ?? []) as { id: string; name: string; field_id: string | null }[],
     programs: (progsRes.data ?? []) as { id: string; name: string; occupation_id: string | null }[],
@@ -188,7 +190,6 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
 export async function createEvent(data: {
   reception_date?: string
   name: string
-  campaign_id?: string | null
   institution_id?: string | null
   event_start_at?: string | null
   event_end_at?: string | null
@@ -219,7 +220,6 @@ export async function createEvent(data: {
 
   const payload: Record<string, unknown> = {
     name: data.name,
-    campaign_id: data.campaign_id || null,
     institution_id: data.institution_id || null,
     event_start_at: data.event_start_at || null,
     event_end_at: data.event_end_at || null,
@@ -327,7 +327,6 @@ export async function updateEvent(
   data: {
     reception_date?: string
     name: string
-    campaign_id?: string | null
     institution_id?: string | null
     event_start_at?: string | null
     event_end_at?: string | null
@@ -359,7 +358,6 @@ export async function updateEvent(
 
   const payload: Record<string, unknown> = {
     name: data.name,
-    campaign_id: data.campaign_id || null,
     institution_id: data.institution_id || null,
     event_start_at: data.event_start_at || null,
     event_end_at: data.event_end_at || null,
