@@ -1236,6 +1236,7 @@ export type Database = {
         Row: {
           attendance: boolean | null
           classroom: string | null
+          crime_check_info: string | null
           criminal_background_check: string | null
           dreampia_material_cost: number | null
           end_time: string | null
