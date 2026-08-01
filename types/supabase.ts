@@ -904,6 +904,8 @@ export type Database = {
           detail_address: string | null
           id: string
           id_number: string | null
+          identity_verification_ci: string | null
+          identity_verified_at: string | null
           is_authenticated: boolean
           is_available: boolean
           mentor_unique_code: string
@@ -925,6 +927,8 @@ export type Database = {
           detail_address?: string | null
           id?: string
           id_number?: string | null
+          identity_verification_ci?: string | null
+          identity_verified_at?: string | null
           is_authenticated?: boolean
           is_available?: boolean
           mentor_unique_code?: string
@@ -946,6 +950,8 @@ export type Database = {
           detail_address?: string | null
           id?: string
           id_number?: string | null
+          identity_verification_ci?: string | null
+          identity_verified_at?: string | null
           is_authenticated?: boolean
           is_available?: boolean
           mentor_unique_code?: string
