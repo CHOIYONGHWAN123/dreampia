@@ -95,8 +95,6 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
         }
       }
 
-      const bankAccount = [bankName, bankAccountNumber.trim()].filter(Boolean).join(' ') || null
-
       await createMentor({
         id: mentorId,
         userId: userId.trim() || null,
@@ -107,7 +105,8 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
         address: address.trim() || null,
         detailAddress: detailAddress.trim() || null,
         idNumber: idNumber.trim() || null,
-        bankAccount,
+        bank: bankName || null,
+        bankAccount: bankAccountNumber.trim() || null,
         belongsTo: belongsTo || null,
         availableAreas: availableAreas.length ? availableAreas : null,
         agreementFileUrl,

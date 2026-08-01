@@ -21,6 +21,7 @@ import {
   deleteMentor,
 } from '@/app/(dashboard)/mentors/actions'
 import { AreaSelector, MentorSearchSelect, FileCell, uploadFile } from './shared'
+import { BANK_OPTIONS } from '@/constants/banks'
 import { ProgramUnitPicker, type ProgramSelectionValue } from './ProgramUnitPicker'
 import { LevelFileInputs } from './LevelFileInputs'
 
@@ -281,6 +282,7 @@ function MentorRows({
     address: mentor.address ?? '',
     score: mentor.score != null ? String(mentor.score) : '',
     id_number: mentor.id_number ?? '',
+    bank: mentor.bank ?? '',
     bank_account: mentor.bank_account ?? '',
     phone: mentor.phone ?? '',
     available_areas: mentor.available_areas ?? [] as string[],
@@ -334,6 +336,7 @@ function MentorRows({
         address: editFields.address || null,
         score: editFields.score !== '' ? Number(editFields.score) : null,
         id_number: editFields.id_number || null,
+        bank: editFields.bank || null,
         bank_account: editFields.bank_account || null,
         phone: editFields.phone || null,
         available_areas: editFields.available_areas.length > 0 ? editFields.available_areas : null,
@@ -445,6 +448,20 @@ function MentorRows({
           onChange={(v) => setEditFields((p) => ({ ...p, id_number: v }))}
           placeholder="주민번호"
         />
+      </td>
+      <td className={td} rowSpan={totalRows} style={{ minWidth: 100 }}>
+        <select
+          value={editFields.bank}
+          onChange={(e) => setEditFields((p) => ({ ...p, bank: e.target.value }))}
+          className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 text-center bg-white"
+        >
+          <option value="">은행 선택</option>
+          {BANK_OPTIONS.map((bank) => (
+            <option key={bank} value={bank}>
+              {bank}
+            </option>
+          ))}
+        </select>
       </td>
       <td className={td} rowSpan={totalRows} style={{ minWidth: 130 }}>
         <EditInput
@@ -675,6 +692,7 @@ const THEAD = [
   { label: '강사분류', w: 64 },
   { label: '소속', w: 80 },
   { label: '주민번호', w: 120 },
+  { label: '은행', w: 100 },
   { label: '계좌번호', w: 140 },
   { label: '핸드폰번호', w: 120 },
   { label: '멘토등록일', w: 80 },

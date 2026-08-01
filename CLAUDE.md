@@ -45,6 +45,7 @@ phone varchar
 address varchar
 detail_address varchar
 id_number varchar [note: '주민번호']
+bank varchar [note: '은행명']
 bank_account varchar [note: '계좌번호']
 belongs_to uuid [ref: > mentors.id, note: '소속 멘토']
 agreement_file_url varchar [note: '동의서 Supabase Storage URL']

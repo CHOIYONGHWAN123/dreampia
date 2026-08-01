@@ -35,6 +35,7 @@ export type MentorWithPrograms = {
   created_at: string
   belongs_to: string | null
   id_number: string | null
+  bank: string | null
   bank_account: string | null
   agreement_file_url: string | null
   terms_agreed_at: string | null
@@ -49,7 +50,7 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
   const { data: mentors, error: mentorError } = await supabase
     .from('mentors')
     .select(
-      'id, user_id, name, phone, address, available_areas, is_available, is_authenticated, score, created_at, belongs_to, id_number, bank_account, agreement_file_url, terms_agreed_at'
+      'id, user_id, name, phone, address, available_areas, is_available, is_authenticated, score, created_at, belongs_to, id_number, bank, bank_account, agreement_file_url, terms_agreed_at'
     )
     .order('created_at', { ascending: true })
 
@@ -219,6 +220,7 @@ export async function updateMentorFields(
     address?: string | null
     score?: number | null
     id_number?: string | null
+    bank?: string | null
     bank_account?: string | null
     phone?: string | null
     available_areas?: string[] | null
@@ -420,6 +422,7 @@ export interface CreateMentorInput {
   address: string | null
   detailAddress: string | null
   idNumber: string | null
+  bank: string | null
   bankAccount: string | null
   belongsTo: string | null
   availableAreas: string[] | null
@@ -489,6 +492,7 @@ export async function createMentor(input: CreateMentorInput): Promise<void> {
     address: input.address,
     detail_address: input.detailAddress,
     id_number: input.idNumber,
+    bank: input.bank,
     bank_account: input.bankAccount,
     belongs_to: input.belongsTo,
     available_areas: input.availableAreas,

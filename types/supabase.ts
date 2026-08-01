@@ -897,6 +897,7 @@ export type Database = {
           address: string | null
           agreement_file_url: string | null
           available_areas: string[] | null
+          bank: string | null
           bank_account: string | null
           belongs_to: string | null
           created_at: string
@@ -916,6 +917,7 @@ export type Database = {
           address?: string | null
           agreement_file_url?: string | null
           available_areas?: string[] | null
+          bank?: string | null
           bank_account?: string | null
           belongs_to?: string | null
           created_at?: string
@@ -935,6 +937,7 @@ export type Database = {
           address?: string | null
           agreement_file_url?: string | null
           available_areas?: string[] | null
+          bank?: string | null
           bank_account?: string | null
           belongs_to?: string | null
           created_at?: string

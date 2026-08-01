@@ -141,18 +141,19 @@ export async function getMentorFeeLedger(input: GetMentorFeeLedgerInput): Promis
 
   const payerIds = [...linesByPayer.keys()]
   const { data: mentorsData } = payerIds.length > 0
-    ? await supabase.from('mentors').select('id, name, bank_account, id_number').in('id', payerIds)
-    : { data: [] as { id: string; name: string; bank_account: string | null; id_number: string | null }[] }
+    ? await supabase.from('mentors').select('id, name, bank, bank_account, id_number').in('id', payerIds)
+    : { data: [] as { id: string; name: string; bank: string | null; bank_account: string | null; id_number: string | null }[] }
   const mentorMap = new Map((mentorsData ?? []).map((m) => [m.id, m]))
 
   const groups: PayerLedgerGroup[] = payerIds.map((payerId) => {
     const lines = linesByPayer.get(payerId)!
     const totalFee = lines.reduce((sum, l) => sum + l.lineTotal, 0)
     const mentor = mentorMap.get(payerId)
+    const bankAccount = [mentor?.bank, mentor?.bank_account].filter(Boolean).join(' ') || null
     return {
       payerId,
       payerName: mentor?.name ?? '-',
-      bankAccount: mentor?.bank_account ?? null,
+      bankAccount,
       idNumber: mentor?.id_number ?? null,
       totalFee,
       afterTax: Math.round(totalFee * (1 - WITHHOLDING_RATE)),
