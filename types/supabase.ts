@@ -1177,6 +1177,38 @@ export type Database = {
           },
         ]
       }
+      tasks: {
+        Row: {
+          created_at: string
+          event_id: string | null
+          id: string
+          is_done: boolean
+          task_type: Database["public"]["Enums"]["task_type"]
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          is_done?: boolean
+          task_type: Database["public"]["Enums"]["task_type"]
+        }
+        Update: {
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          is_done?: boolean
+          task_type?: Database["public"]["Enums"]["task_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teachers: {
         Row: {
           created_at: string
@@ -1358,6 +1390,17 @@ export type Database = {
         | "택배 예정"
         | "택배 발송"
         | "회수 필요"
+      task_type:
+        | "강사 섭외"
+        | "준비물 준비"
+        | "견적서 제작"
+        | "강사 섭외 전달"
+        | "학교 요청 사항 전달"
+        | "행정서류 전달"
+        | "계약 전달"
+        | "행사 안내"
+        | "행사 사진 전달"
+        | "보고서 전달"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1539,6 +1582,18 @@ export const Constants = {
         "택배 예정",
         "택배 발송",
         "회수 필요",
+      ],
+      task_type: [
+        "강사 섭외",
+        "준비물 준비",
+        "견적서 제작",
+        "강사 섭외 전달",
+        "학교 요청 사항 전달",
+        "행정서류 전달",
+        "계약 전달",
+        "행사 안내",
+        "행사 사진 전달",
+        "보고서 전달",
       ],
     },
   },

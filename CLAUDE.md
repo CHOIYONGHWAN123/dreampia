@@ -395,14 +395,21 @@ created_at timestamp [not null, default: `now()`]
 // ── 관리 / 운영 ────────────────────────────
 
 enum task_type {
-"강사섭외"
-"준비물준비"
-"견적서제작"
+"강사 섭외"
+"준비물 준비"
+"견적서 제작"
+"강사 섭외 전달"
+"학교 요청 사항 전달"
+"행정서류 전달"
+"계약 전달"
+"행사 안내"
+"행사 사진 전달"
+"보고서 전달"
 }
 
+// 나의 할일
 Table tasks {
 id uuid [pk, default: `gen_random_uuid()`]
-admin_id uuid [ref: > admins.id]
 event_id uuid [ref: > events.id]
 task_type task_type [not null]
 is_done boolean [not null, default: false]
