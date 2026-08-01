@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { createInvitation } from '@/app/(dashboard)/events/[id]/recruiting/actions'
+import { createInvitation, cancelAssignment } from '@/app/(dashboard)/events/[id]/recruiting/actions'
 import type {
   RecruitingEventRow,
   CandidateMentor,
@@ -71,10 +71,12 @@ export function EventRecruitingClient({
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [isCanceling, startCancelTransition] = useTransition()
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set())
   const [pendingType, setPendingType] = useState<InviteType | null>(null)
   const [selectedMentorIds, setSelectedMentorIds] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
+  const [cancelingRowId, setCancelingRowId] = useState<string | null>(null)
 
   const selectableRows = rows.filter((r) => !r.mentorId && !r.activeInvitation)
 
@@ -169,6 +171,21 @@ export function EventRecruitingClient({
     })
   }
 
+  const handleCancelAssignment = (rowId: string, mentorName: string | null) => {
+    if (!confirm(`${mentorName ?? '해당 강사'}의 배정을 취소하시겠습니까?`)) return
+    setCancelingRowId(rowId)
+    startCancelTransition(async () => {
+      try {
+        await cancelAssignment(eventId, rowId)
+        router.refresh()
+      } catch (e) {
+        alert(e instanceof Error ? e.message : '배정 취소에 실패했습니다.')
+      } finally {
+        setCancelingRowId(null)
+      }
+    })
+  }
+
   return (
     <div className="p-8 max-w-6xl">
       <div className="pb-4 border-b border-gray-200 mb-6">
@@ -189,6 +206,7 @@ export function EventRecruitingClient({
               <th className="px-3 py-2.5 text-center font-medium text-gray-700">프로그램</th>
               <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20">인원수</th>
               <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-40">배정 현황</th>
+              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">배정 취소</th>
             </tr>
           </thead>
           <tbody>
@@ -222,12 +240,24 @@ export function EventRecruitingClient({
                         <span className="text-xs text-gray-400">미배정</span>
                       )}
                     </td>
+                    <td className="px-3 py-2.5 text-center">
+                      {r.mentorId && (
+                        <button
+                          type="button"
+                          onClick={() => handleCancelAssignment(r.id, r.mentorName)}
+                          disabled={isCanceling && cancelingRowId === r.id}
+                          className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-red-50 hover:border-red-300 hover:text-red-600 disabled:opacity-40 transition-colors"
+                        >
+                          {isCanceling && cancelingRowId === r.id ? '취소 중...' : '배정 취소'}
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 )
               })
             ) : (
               <tr>
-                <td colSpan={9} className="py-10 text-center text-gray-400">
+                <td colSpan={10} className="py-10 text-center text-gray-400">
                   등록된 프로그램 유닛이 없습니다.
                 </td>
               </tr>

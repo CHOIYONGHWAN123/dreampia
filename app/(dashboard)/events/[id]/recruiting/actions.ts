@@ -281,3 +281,17 @@ export async function createInvitation(input: {
 
   revalidatePath(`/events/${input.eventId}/recruiting`)
 }
+
+// 관리자가 배정을 취소한다. 멘토 자기취소(cancel_event_row_assignment RPC)와 같은 패턴으로
+// mentor_id/preparing/attendance만 초기화하고, 해당 배정의 근거가 된 초대(invitation_mentors)의
+// 수락 기록은 건드리지 않는다 — 초대 단위라 되돌리면 같은 초대로 받은 다른 일정 상태까지 꼬일 수 있다.
+// 관리자용이라 멘토 RPC와 달리 지난 일정도 취소를 허용한다.
+export async function cancelAssignment(eventId: string, eventRowId: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase
+    .from('event_rows')
+    .update({ mentor_id: null, preparing: false, attendance: false })
+    .eq('id', eventRowId)
+  if (error) throw new Error(error.message)
+  revalidatePath(`/events/${eventId}/recruiting`)
+}
