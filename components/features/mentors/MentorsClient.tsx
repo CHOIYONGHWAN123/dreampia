@@ -434,6 +434,7 @@ function MentorRows({
         />
       </td>
       <td className={td} rowSpan={totalRows}>{mentor.mentor_type}</td>
+      <td className={td} rowSpan={totalRows} style={{ minWidth: 70 }}>{mentor.mentor_unique_code}</td>
       <td className={td} rowSpan={totalRows} style={{ minWidth: 110 }}>
         <MentorSearchSelect
           mentors={selectData.mentors.filter((m) => m.id !== mentor.id)}
@@ -690,6 +691,7 @@ const THEAD = [
   { label: '주소', w: 130 },
   { label: '강사등급', w: 64 },
   { label: '강사분류', w: 64 },
+  { label: '고유코드', w: 70 },
   { label: '소속', w: 80 },
   { label: '주민번호', w: 120 },
   { label: '은행', w: 100 },

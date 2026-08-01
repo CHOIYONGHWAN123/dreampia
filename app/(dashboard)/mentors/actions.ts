@@ -39,6 +39,7 @@ export type MentorWithPrograms = {
   bank_account: string | null
   agreement_file_url: string | null
   terms_agreed_at: string | null
+  mentor_unique_code: string
   mentor_type: '소속강사' | '소속대표' | '개인'
   belongs_to_name: string | null
   occupation_programs: MentorOccupationProgramRow[]
@@ -50,7 +51,7 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
   const { data: mentors, error: mentorError } = await supabase
     .from('mentors')
     .select(
-      'id, user_id, name, phone, address, available_areas, is_available, is_authenticated, score, created_at, belongs_to, id_number, bank, bank_account, agreement_file_url, terms_agreed_at'
+      'id, user_id, name, phone, address, available_areas, is_available, is_authenticated, score, created_at, belongs_to, id_number, bank, bank_account, agreement_file_url, terms_agreed_at, mentor_unique_code'
     )
     .order('created_at', { ascending: true })
 

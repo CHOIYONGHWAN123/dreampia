@@ -906,6 +906,7 @@ export type Database = {
           id_number: string | null
           is_authenticated: boolean
           is_available: boolean
+          mentor_unique_code: string
           name: string
           phone: string | null
           score: number | null
@@ -926,6 +927,7 @@ export type Database = {
           id_number?: string | null
           is_authenticated?: boolean
           is_available?: boolean
+          mentor_unique_code?: string
           name: string
           phone?: string | null
           score?: number | null
@@ -946,6 +948,7 @@ export type Database = {
           id_number?: string | null
           is_authenticated?: boolean
           is_available?: boolean
+          mentor_unique_code?: string
           name?: string
           phone?: string | null
           score?: number | null
@@ -1296,6 +1299,10 @@ export type Database = {
         Returns: undefined
       }
       expire_stale_invitations: { Args: never; Returns: undefined }
+      find_mentor_by_unique_code: {
+        Args: { p_code: string }
+        Returns: { id: string; name: string }[]
+      }
       is_approved_admin: { Args: never; Returns: boolean }
       is_authenticated_admin: { Args: never; Returns: boolean }
       is_authenticated_admin_or_mentor: { Args: never; Returns: boolean }

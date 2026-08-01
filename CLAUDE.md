@@ -56,6 +56,7 @@ is_available boolean [not null, default: false, note: '강의 가능 여부']
 is_authenticated boolean [not null, default: false, note: '인증 여부']
 score [note: '강사등급을 위한 점수']
 created_at timestamp [not null, default: `now()`]
+mentor_unique_code varchar [not null, unique, note: '강사 고유 코드. 영문+숫자 랜덤 5자리(혼동되는 0/O/1/I/L 제외), 트리거로 자동발급(수동 수정 불가)']
 }
 
 // 선생님(학교측 계정) — 회원가입/로그인 기능은 추후 구현 예정, 현재는 관리자가 계정을 생성/관리
