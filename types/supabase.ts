@@ -833,48 +833,6 @@ export type Database = {
           },
         ]
       }
-      lesson_plans: {
-        Row: {
-          created_at: string
-          event_category_id: string
-          file_url: string | null
-          grade: Database["public"]["Enums"]["grade"]
-          id: string
-          occupation_program_id: string
-        }
-        Insert: {
-          created_at?: string
-          event_category_id: string
-          file_url?: string | null
-          grade: Database["public"]["Enums"]["grade"]
-          id?: string
-          occupation_program_id: string
-        }
-        Update: {
-          created_at?: string
-          event_category_id?: string
-          file_url?: string | null
-          grade?: Database["public"]["Enums"]["grade"]
-          id?: string
-          occupation_program_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lesson_plans_event_category_id_fkey"
-            columns: ["event_category_id"]
-            isOneToOne: false
-            referencedRelation: "event_categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lesson_plans_occupation_program_id_fkey"
-            columns: ["occupation_program_id"]
-            isOneToOne: false
-            referencedRelation: "occupation_programs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       mentor_occupation_programs: {
         Row: {
           id: string
@@ -1022,6 +980,7 @@ export type Database = {
           prep_by: Database["public"]["Enums"]["prep_by"] | null
           school_level: Database["public"]["Enums"]["school_level"] | null
           school_request_note: string | null
+          syllabus: string | null
           title: string
         }
         Insert: {
@@ -1036,6 +995,7 @@ export type Database = {
           prep_by?: Database["public"]["Enums"]["prep_by"] | null
           school_level?: Database["public"]["Enums"]["school_level"] | null
           school_request_note?: string | null
+          syllabus?: string | null
           title: string
         }
         Update: {
@@ -1050,6 +1010,7 @@ export type Database = {
           prep_by?: Database["public"]["Enums"]["prep_by"] | null
           school_level?: Database["public"]["Enums"]["school_level"] | null
           school_request_note?: string | null
+          syllabus?: string | null
           title?: string
         }
         Relationships: [
@@ -1350,7 +1311,6 @@ export type Database = {
       crime_check_method: "회보서" | "동의서"
       crime_check_status: "불필요" | "진행전" | "취합중" | "완료"
       experience_type: "직업체험" | "문화예술체험"
-      grade: "유치원" | "초등학교" | "중학교" | "고등학교"
       inflow_source:
         | "팜플렛"
         | "기존진행"
@@ -1530,7 +1490,6 @@ export const Constants = {
       crime_check_method: ["회보서", "동의서"],
       crime_check_status: ["불필요", "진행전", "취합중", "완료"],
       experience_type: ["직업체험", "문화예술체험"],
-      grade: ["유치원", "초등학교", "중학교", "고등학교"],
       inflow_source: [
         "팜플렛",
         "기존진행",

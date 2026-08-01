@@ -6,9 +6,11 @@ import type {
   OccupationProgramUnitData,
   UnitFormPayload,
 } from '@/app/(dashboard)/programs/actions'
+import { FileDropZone, uploadFile } from '@/components/features/mentors/shared'
 
 interface Props {
   initial: OccupationProgramUnitData | null
+  occupationProgramId: string
   onClose: () => void
   onSubmit: (payload: UnitFormPayload) => Promise<void>
 }
@@ -23,6 +25,7 @@ const emptyForm: UnitFormPayload = {
   description: '',
   isDeliveryAvailable: false,
   schoolLevel: null,
+  syllabus: null,
 }
 
 // 팝업이 열릴 때마다 새로 마운트되므로(부모가 unitPopup.open으로 마운트/언마운트를 제어)
@@ -39,11 +42,14 @@ function toFormState(initial: OccupationProgramUnitData | null): UnitFormPayload
     description: initial.description ?? '',
     isDeliveryAvailable: initial.is_delivery_available,
     schoolLevel: initial.school_level,
+    syllabus: initial.syllabus,
   }
 }
 
-export function UnitFormPopup({ initial, onClose, onSubmit }: Props) {
+export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit }: Props) {
   const [form, setForm] = useState<UnitFormPayload>(() => toFormState(initial))
+  const [syllabusFile, setSyllabusFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   const handleSubmit = async () => {
     if (!form.title.trim()) {
@@ -51,10 +57,17 @@ export function UnitFormPopup({ initial, onClose, onSubmit }: Props) {
       return
     }
     try {
-      await onSubmit({ ...form, title: form.title.trim() })
+      let syllabus = form.syllabus
+      if (syllabusFile) {
+        setIsUploading(true)
+        syllabus = await uploadFile('lesson-plans', occupationProgramId, syllabusFile)
+      }
+      await onSubmit({ ...form, title: form.title.trim(), syllabus })
       onClose()
     } catch (e) {
       alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -141,6 +154,21 @@ export function UnitFormPopup({ initial, onClose, onSubmit }: Props) {
           </div>
 
           <div>
+            <label className="text-xs text-gray-500 mb-1 block">강의계획서</label>
+            {form.syllabus && !syllabusFile && (
+              <a
+                href={form.syllabus}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:text-blue-800 underline block mb-1"
+              >
+                기존 파일 보기
+              </a>
+            )}
+            <FileDropZone file={syllabusFile} onChange={setSyllabusFile} accept=".hwp,.hwpx,.pdf,.doc,.docx" />
+          </div>
+
+          <div>
             <label className="text-xs text-gray-500 mb-1 block">학교요청사항</label>
             <textarea
               value={form.schoolRequestNote ?? ''}
@@ -183,9 +211,10 @@ export function UnitFormPopup({ initial, onClose, onSubmit }: Props) {
         <div className="flex justify-center gap-2 mt-6">
           <button
             onClick={handleSubmit}
-            className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm"
+            disabled={isUploading}
+            className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm disabled:opacity-50"
           >
-            확인
+            {isUploading ? '업로드 중...' : '확인'}
           </button>
           <button onClick={onClose} className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm">
             취소

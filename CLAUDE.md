@@ -1,12 +1,14 @@
 # Dreampea 프로젝트 claude.md
 
 ## 프로젝트 개요
+
 드림피아(Dreampea)는 학교, 진로센터 등 교육기관에 진로 수업을 제공하는 업체의 내부 관리 시스템이다.
 강사를 모집하여 기관에 파견하는 비즈니스 모델을 운영하며, 반복 업무를 시스템화하는 것이 목적이다.
 
 ---
 
 ## 데이터베이스 구조
+
 // =============================================
 // Dreampea ERD - dbdiagram.io DBML
 // =============================================
@@ -14,364 +16,324 @@
 // ── 사용자 / 인증 ──────────────────────────
 
 Table admins {
-  id            uuid        [pk, default: `gen_random_uuid()`]
-  approved_by   uuid        [ref: > admins.id, note: '승인한 슈퍼관리자 id']
-  name          varchar     [not null]
-  email         varchar     [not null, unique]
-  phone         varchar
-  is_super          boolean [not null, default: false]
-  is_authenticated  boolean [not null, default: false]
-  is_sales          boolean [not null, default: false]
-  is_comm           boolean [not null, default: false]
-  approved_at   timestamp
-  created_at    timestamp   [not null, default: `now()`]
+id uuid [pk, default: `gen_random_uuid()`]
+approved_by uuid [ref: > admins.id, note: '승인한 슈퍼관리자 id']
+name varchar [not null]
+email varchar [not null, unique]
+phone varchar
+is_super boolean [not null, default: false]
+is_authenticated boolean [not null, default: false]
+is_sales boolean [not null, default: false]
+is_comm boolean [not null, default: false]
+approved_at timestamp
+created_at timestamp [not null, default: `now()`]
 }
 
 enum area{
-  "부산"
-  "김해"
-  "울산"
-  "창원"
+"부산"
+"김해"
+"울산"
+"창원"
 }
 
 // 멘토(강사)
 Table mentors {
-  id          uuid      [pk, default: `gen_random_uuid()`]
-  user_id     varchar
-  name        varchar   [not null]
-  phone       varchar
-  address     varchar
-  detail_address varchar
-  id_number   varchar   [note: '주민번호']
-  bank_account varchar [note: '계좌번호']
-  belongs_to        uuid      [ref: > mentors.id, note: '소속 멘토']
-  agreement_file_url varchar  [note: '동의서 Supabase Storage URL']
-  available_areas   [area]
-  terms_agreed_at   timestamp  [note: 'null이면 미동의']
-  terms_version_id  uuid       [ref: > terms.id, note: '동의 시점의 약관 버전']
-  is_available      boolean   [not null, default: false, note: '강의 가능 여부']
-  is_authenticated  boolean [not null, default: false, note: '인증 여부']
-  score [note: '강사등급을 위한 점수']
-  created_at  timestamp [not null, default: `now()`]
+id uuid [pk, default: `gen_random_uuid()`]
+user_id varchar
+name varchar [not null]
+phone varchar
+address varchar
+detail_address varchar
+id_number varchar [note: '주민번호']
+bank_account varchar [note: '계좌번호']
+belongs_to uuid [ref: > mentors.id, note: '소속 멘토']
+agreement_file_url varchar [note: '동의서 Supabase Storage URL']
+available_areas [area]
+terms_agreed_at timestamp [note: 'null이면 미동의']
+terms_version_id uuid [ref: > terms.id, note: '동의 시점의 약관 버전']
+is_available boolean [not null, default: false, note: '강의 가능 여부']
+is_authenticated boolean [not null, default: false, note: '인증 여부']
+score [note: '강사등급을 위한 점수']
+created_at timestamp [not null, default: `now()`]
 }
 
 // 선생님(학교측 계정) — 회원가입/로그인 기능은 추후 구현 예정, 현재는 관리자가 계정을 생성/관리
 Table teachers {
-  id             uuid      [pk, default: `gen_random_uuid()`]
-  institution_id uuid      [ref: > institutions.id, note: '소속 기관']
-  user_id        uuid      [ref: > auth.users.id, note: '로그인 계정 미생성 시 null']
-  name           varchar   [not null, note: '선생님 성함']
-  email          varchar   [note: '로그인 계정 이메일 (표시용 캐시)']
-  created_at     timestamp [not null, default: `now()`]
+id uuid [pk, default: `gen_random_uuid()`]
+institution_id uuid [ref: > institutions.id, note: '소속 기관']
+user_id uuid [ref: > auth.users.id, note: '로그인 계정 미생성 시 null']
+name varchar [not null, note: '선생님 성함']
+email varchar [note: '로그인 계정 이메일 (표시용 캐시)']
+created_at timestamp [not null, default: `now()`]
 }
-
-
-
 
 // ── 기관 ───────────────────────────────────
 
 enum institution_type {
-  "유치원"
-  "초등"
-  "중등"
-  "고등"
-  "기관"
+"유치원"
+"초등"
+"중등"
+"고등"
+"기관"
 }
 
 Table institutions {
-  id        uuid      [pk, default: `gen_random_uuid()`]
-  region1   varchar   [not null, note: '예: 부산']
-  region2   varchar   [note: '예: 해운대구']
-  name      varchar   [not null]
-  address   varchar
-  category  varchar   [note: '유치원/초등/중등/고등/기관/특수학교/문화센터']
-  instructor_waiting_room varchar [note: '강사대기실 예: 2층 2학년 학년연구실']
-  teacher_name        varchar [note: '담당 선생님 성함 예: 3학년 부장 홍길동']
-  admin_contact       varchar [note: '계약담당 행정실 연락처']
-  has_elevator        boolean [note: '엘리베이터 유무']
-  floor_map_url       varchar [note: '학교 배치도 파일 URL']
-  institution_type    institution_type [note: '유치원/초등/중등/고등/기관']
-  contact_name        varchar [note: '담당자 이름']
-  contact_email       varchar [note: '담당자 이메일']
-  contact_phone       varchar [note: '담당자 연락처']
-  laptop_wifi_note    text    [note: 노트북/와이파이]
-  crime_check_method  crime_check_method [note: '회보서 or 동의서']
-  crime_check_info    text    [note: '기관아이디/검증번호']
-  indoor_shoes_note   text    [note: '실내화(내빈화) 위치']
-  parking_note        text    [note: '주차 및 엘레베이터']
-  created_at timestamp [not null, default: `now()`]
+id uuid [pk, default: `gen_random_uuid()`]
+region1 varchar [not null, note: '예: 부산']
+region2 varchar [note: '예: 해운대구']
+name varchar [not null]
+address varchar
+category varchar [note: '유치원/초등/중등/고등/기관/특수학교/문화센터']
+instructor_waiting_room varchar [note: '강사대기실 예: 2층 2학년 학년연구실']
+teacher_name varchar [note: '담당 선생님 성함 예: 3학년 부장 홍길동']
+admin_contact varchar [note: '계약담당 행정실 연락처']
+has_elevator boolean [note: '엘리베이터 유무']
+floor_map_url varchar [note: '학교 배치도 파일 URL']
+institution_type institution_type [note: '유치원/초등/중등/고등/기관']
+contact_name varchar [note: '담당자 이름']
+contact_email varchar [note: '담당자 이메일']
+contact_phone varchar [note: '담당자 연락처']
+laptop_wifi_note text [note: 노트북/와이파이]
+crime_check_method crime_check_method [note: '회보서 or 동의서']
+crime_check_info text [note: '기관아이디/검증번호']
+indoor_shoes_note text [note: '실내화(내빈화) 위치']
+parking_note text [note: '주차 및 엘레베이터']
+created_at timestamp [not null, default: `now()`]
 }
 
 // ── 프로그램 / 직업 ────────────────────────
 
-
 // 행사 구분 (최상위 분류, 예: 직업체험/문화예술체험/진로박람회)
 Table event_categories {
-  id         uuid      [pk, default: `gen_random_uuid()`]
-  name       varchar   [not null, note: '예: 직업체험, 문화예술체험, 진로박람회']
-  sort_order integer
-  created_at timestamp [not null, default: `now()`]
+id uuid [pk, default: `gen_random_uuid()`]
+name varchar [not null, note: '예: 직업체험, 문화예술체험, 진로박람회']
+sort_order integer
+created_at timestamp [not null, default: `now()`]
 }
 
 // 분야
 Table fields {
-  id   uuid    [pk, default: `gen_random_uuid()`]
-  event_category_id uuid [ref: > event_categories.id, note: '행사 구분 (분야 단위 1:1)']
-  name varchar [not null, note: '분야 예: 요리, 마술, 공예']
+id uuid [pk, default: `gen_random_uuid()`]
+event_category_id uuid [ref: > event_categories.id, note: '행사 구분 (분야 단위 1:1)']
+name varchar [not null, note: '분야 예: 요리, 마술, 공예']
 }
-
 
 // --- 직종(직업군)
 Table occupations{
-    id       uuid    [pk, default: `gen_random_uuid()`]
-    name     varchar [not null]
-    field_id   uuid      [ref: > fields.id, note: '분야']
+id uuid [pk, default: `gen_random_uuid()`]
+name varchar [not null]
+field_id uuid [ref: > fields.id, note: '분야']
 }
 
 // --- 직종에 따른 프로그램
 Table occupation_programs{
-  id                     uuid    [pk, default: `gen_random_uuid()`]
-  occupation_id          uuid    [ref: > occupations.id]
-  name                   varchar [not null, note: '예: 액체함수']
+id uuid [pk, default: `gen_random_uuid()`]
+occupation_id uuid [ref: > occupations.id]
+name varchar [not null, note: '예: 액체함수']
 }
 
 // --- 직종에 따른 프로그램의 유닛
 (ex. 액체함수 프로그램1, 액체함수 프로그램2 이런식으로 존재 가능,내용도 달라짐, school_level에 의해 구분가능)
 (ex. 마카롱 만들기에서 초등만선택했다면 occupation_program_unit중 school_level이 초등인것만 필터링)
 Table occupation_program_unit{
-  id                     uuid     [pk, default: `gen_random_uuid()`]
-  occupation_programs_id uuid [ref:> occupation_programs.id, note:"직업 프로그램"]
-  mentor_material_cost integer [note: '강사 재료비']
-  dreampia_material_cost integer [note: '드림피아 재료비']
-  prep_by                prep_by [note: '강사 or 드림피아 or 모두가능']
-  title                   varchar  [not null, note: '프로그램 이름']
-  school_request_note     text     [note: '학교요청사항']
-  final_product_available boolean     [note: '완성품제공가능 여부']
-  description             text     [note: '프로그램 설명']
-  is_delivery_available boolean [not null, default: false, note: '택배 가능 여부']
-  school_level           school_level [note: '교급 예: 초등/중고등/유치원']
-  created_at            timestamp [not null, default: `now()`]  
+id uuid [pk, default: `gen_random_uuid()`]
+occupation_programs_id uuid [ref:> occupation_programs.id, note:"직업 프로그램"]
+mentor_material_cost integer [note: '강사 재료비']
+dreampia_material_cost integer [note: '드림피아 재료비']
+prep_by prep_by [note: '강사 or 드림피아 or 모두가능']
+title varchar [not null, note: '프로그램 이름']
+school_request_note text [note: '학교요청사항']
+final_product_available boolean [note: '완성품제공가능 여부']
+description text [note: '프로그램 설명']
+is_delivery_available boolean [not null, default: false, note: '택배 가능 여부']
+school_level school_level [note: '교급 예: 초등/중고등/유치원']
+syllabus varchar [note: '강의 계획서 파일 URL']
+created_at timestamp [not null, default: `now()`]  
 }
-
 
 Table mentor_occupation_programs {
-  id                    uuid [pk, default: `gen_random_uuid()`]
-  mentor_id             uuid [ref: > mentors.id]
-  occupation_program_unit_id uuid [ref: > occupation_program_unit.id]
-  lecture_fee_payer_id  uuid [ref: > mentors.id, note: '강사료 입금자']
-  material_fee_payer_id uuid [ref: > mentors.id, note: '재료비 입금자']
-  ppt_file_url varchar [note: 'Supabase Storage URL']
-  profile_file_url text [note: '프로필 파일 URL (hwp 또는 pdf)']
+id uuid [pk, default: `gen_random_uuid()`]
+mentor_id uuid [ref: > mentors.id]
+occupation_program_unit_id uuid [ref: > occupation_program_unit.id]
+lecture_fee_payer_id uuid [ref: > mentors.id, note: '강사료 입금자']
+material_fee_payer_id uuid [ref: > mentors.id, note: '재료비 입금자']
+ppt_file_url varchar [note: 'Supabase Storage URL']
+profile_file_url text [note: '프로필 파일 URL (hwp 또는 pdf)']
 
-  indexes {
-    (mentor_id, occupation_program_unit_id) [unique]
-  }
+indexes {
+(mentor_id, occupation_program_unit_id) [unique]
+}
 }
 
-
 enum prep_by {
-  "강사"
-  "드림피아"
-  "모두가능"
+"강사"
+"드림피아"
+"모두가능"
 }
 
 enum school_level{
-  "초등"
-  "중고등"
-  "유치원"
+"초등"
+"중고등"
+"유치원"
 }
-
-
-
-
-enum grade {
-  "유치원"
-  "초등학교"
-  "중학교"
-  "고등학교"
-}
-
-Table lesson_plans{
-      id                     uuid    [pk, default: `gen_random_uuid()`]
-      occupation_program_id  uuid    [ref: > occupation_programs.id]
-      grade                  grade   [not null]
-      event_category_id      uuid    [ref: > event_categories.id, note: '행사 구분']
-      file_url       varchar [note: '강의계획서 파일 URL']
-      created_at timestamp [not null, default: `now()`]
-
-      indexes {
-        (occupation_program_id, grade, event_category_id) [unique]
-      }
-
-}
-
-
 
 // ── 준비물 / 재고 ──────────────────────────
 
 Table supplies {
-  id                    uuid      [pk, default: `gen_random_uuid()`]
-  occupation_program_unit_id uuid    [ref: > occupation_program_unit.id]
-  qty_per_person        integer   [not null, default: 1, note: '1인당 수량']
-  kit_threshold         integer   [note: '키트재고 경고 기준값']
-  max_daily_stock       integer   [note: '일 최대 수용 재고']
-  is_consumable boolean [not null, default: false, note: '소모성 여부']
-  memo text [note: '메모']
-  updated_at            timestamp [not null, default: `now()`]
+id uuid [pk, default: `gen_random_uuid()`]
+occupation_program_unit_id uuid [ref: > occupation_program_unit.id]
+qty_per_person integer [not null, default: 1, note: '1인당 수량']
+kit_threshold integer [note: '키트재고 경고 기준값']
+max_daily_stock integer [note: '일 최대 수용 재고']
+is_consumable boolean [not null, default: false, note: '소모성 여부']
+memo text [note: '메모']
+updated_at timestamp [not null, default: `now()`]
 }
 
-
 enum stock_type {
-  "total"
-  "kit"
+"total"
+"kit"
 }
 
 Table supply_logs {
-  id         uuid      [pk, default: `gen_random_uuid()`]
-  supply_id  uuid      [ref: > supplies.id]
-  admin_id   uuid      [ref: > admins.id, note: '처리한 관리자']
-  event_row_id   uuid      [ref: > event_rows.id, note: '행사로 인한 변동이면 연결']
-  stock_type stock_type [not null]
-  delta      integer   [not null, note: '양수=입고, 음수=출고']
-  reason     text      [note: '변동 사유 예: 행사출고, 신규입고, 파손폐기', '직접 수정']
-  created_at timestamp [not null, default: `now()`]
+id uuid [pk, default: `gen_random_uuid()`]
+supply_id uuid [ref: > supplies.id]
+admin_id uuid [ref: > admins.id, note: '처리한 관리자']
+event_row_id uuid [ref: > event_rows.id, note: '행사로 인한 변동이면 연결']
+stock_type stock_type [not null]
+delta integer [not null, note: '양수=입고, 음수=출고']
+reason text [note: '변동 사유 예: 행사출고, 신규입고, 파손폐기', '직접 수정']
+created_at timestamp [not null, default: `now()`]
 }
-
 
 // ── 행사 ───────────────────────────────────
 
 enum inflow_source {
-  "팜플렛"
-  "기존진행"
-  "홈페이지"
-  "블로그"
-  "전화영업"
-  "꿈길"
-  "카카오톡채널"
-  "MOU"
-  "입찰"
-  "소개"
+"팜플렛"
+"기존진행"
+"홈페이지"
+"블로그"
+"전화영업"
+"꿈길"
+"카카오톡채널"
+"MOU"
+"입찰"
+"소개"
 }
 
 enum crime_check_method {
-  "회보서"
-  "동의서"
+"회보서"
+"동의서"
 }
 
 enum student_rotation{
-  "1교시마다 변경"
-  "2교시마다 변경"
+"1교시마다 변경"
+"2교시마다 변경"
 }
 
 enum recruit_status{
-  "섭외대기"
-  "섭외진행중"
-  "섭외완료"
+"섭외대기"
+"섭외진행중"
+"섭외완료"
 }
-
 
 enum institution_request_status{
-  "예정"
-  "전달"
-  "회신"
+"예정"
+"전달"
+"회신"
 }
-
 
 enum contract_type{
-  "학교장터"
-  "수의계약"
-  "MyDesk"
-  "페이백"
-  "나라장터"
+"학교장터"
+"수의계약"
+"MyDesk"
+"페이백"
+"나라장터"
 }
 
-
 enum supplies_status{
-  "준비 완료"
-  "체크 전"
-  "재고 이상무"
-  "재고 파악"
-  "주문 필요"
-  "택배 예정"
-  "택배 발송"
-  "회수 필요"
+"준비 완료"
+"체크 전"
+"재고 이상무"
+"재고 파악"
+"주문 필요"
+"택배 예정"
+"택배 발송"
+"회수 필요"
 }
 
 enum crime_check_status {
-  "불필요"
-  "진행전"
-  "취합중"
-  "완료"
+"불필요"
+"진행전"
+"취합중"
+"완료"
 }
 
 enum contract_status{
-  "계약 시작 전"
-  "진행중(단일계약)"
-  "진행중(공동계약)"
-  "최종일 계약"
-  "계약 완료"
-  "계약 없음"
+"계약 시작 전"
+"진행중(단일계약)"
+"진행중(공동계약)"
+"최종일 계약"
+"계약 완료"
+"계약 없음"
 }
 
-
-
-
 Table events {
-  id                uuid      [pk, default: `gen_random_uuid()`]
-  institution_id    uuid      [ref: > institutions.id]
-  occupation_program_id        uuid      [ref: > occupation_programs.id]
-  sales_admin_id    uuid      [ref: > admins.id, note: '영업담당자']
-  comm_admin_id     uuid      [ref: > admins.id, note: '소통담당자']
-  field_admin_id.   uuid       [ref: > admins.id, note: '현장담당자']
-  budget            integer [note : '예산']
-  contract_type     contract_type
-  name              varchar   [not null]
-  requested_dates   date[]    [note: '행사 요청일 배열']
-  event_start_at          timestamp [note: '행사 시작 일시']
-  event_end_at            timestamp [note: '행사 종료 일시']
-  target_grade      varchar   [note: '대상 학년']
-  laptop_wifi_note    text    [note: 노트북/와이파이]
-  crime_check_method  crime_check_method [note: '회보서 or 동의서']
-  crime_check_info    text    [note: '기관아이디/검증번호']
-  crime_check_notified boolean [default: false, note: '회보서 등록 알림']
-  crime_check_status  crime_check_status
-  indoor_shoes_note   text
-  parking_note        text
-  student_rotation    varchar [note: '1교시마다/2교시마다 변경']
-  notice              text    [note : '공지사항']
-  prep_note           text    [note: '준비사항(드림피아)']
-  memo                text    [note : '메모']
-  contact_name        varchar [note: '담당자 이름']
-  contact_email       varchar [note: '담당자 이메일']
-  contact_phone       varchar [note: '담당자 연락처']
-  inflow_source       inflow_source [note: '유입경로']
-  estimate_file_url   varchar [note: '견적서 파일 URL']
-  recruit_start_date  date
-  comm_content        text    [note: '소통 내용']
-  contract_status     contract_status
-  supplies_status     supplies_status [note: '체크전/재고이상무/준비완료 등']
-  recruit_status      recruit_status [note: '섭외대기/섭외진행중/섭외완료']
-  institution_request_status      recruit_status [note: '예정/전달/회신']
-  start_recruit_at    timestamp [note: '강사 섭외 시작일']   
-  recruit_delivered   boolean [default: false, note: '강사섭외 전달 여부']
-  school_request_delivered boolean [default: false, note:'학교요청사항 전달 여부']
-  admin_docs          text    [note: '행정서류']
-  admin_docs_delivered boolean [default: false, note: '행정서류 전달여부']
-  remarks             text    [note: '비고']
-  group_chat_status   varchar [note: '개설전/완료']
-  payment_confirmed   boolean [default: false]
-  photo_sent          boolean [default: false]
-  report_sent         boolean [default: false]
-  event_check_status smallint [not null, default: 1, note: '행사체크 단계 1~4']
-  pre_notice_sent boolean [not null, default: false, note: '사전안내 발송 여부(1주일전)']
-  teacher_name        varchar [note: '담당 선생님 성함 예: 3학년 부장 홍길동']
-  admin_contact       varchar [note: '계약담당 행정실 연락처']
-  instructor_waiting_room varchar [note: '강사대기실 예: 2층 2학년 학년연구실']
-  has_elevator        boolean [note: '엘리베이터 유무']
-  floor_map_url       varchar [note: '학교 배치도 파일 URL']
-  group_chat_link varchar
-  created_at          timestamp [not null, default: `now()`]
-  
+id uuid [pk, default: `gen_random_uuid()`]
+institution_id uuid [ref: > institutions.id]
+occupation_program_id uuid [ref: > occupation_programs.id]
+sales_admin_id uuid [ref: > admins.id, note: '영업담당자']
+comm_admin_id uuid [ref: > admins.id, note: '소통담당자']
+field_admin_id. uuid [ref: > admins.id, note: '현장담당자']
+budget integer [note : '예산']
+contract_type contract_type
+name varchar [not null]
+requested_dates date[] [note: '행사 요청일 배열']
+event_start_at timestamp [note: '행사 시작 일시']
+event_end_at timestamp [note: '행사 종료 일시']
+target_grade varchar [note: '대상 학년']
+laptop_wifi_note text [note: 노트북/와이파이]
+crime_check_method crime_check_method [note: '회보서 or 동의서']
+crime_check_info text [note: '기관아이디/검증번호']
+crime_check_notified boolean [default: false, note: '회보서 등록 알림']
+crime_check_status crime_check_status
+indoor_shoes_note text
+parking_note text
+student_rotation varchar [note: '1교시마다/2교시마다 변경']
+notice text [note : '공지사항']
+prep_note text [note: '준비사항(드림피아)']
+memo text [note : '메모']
+contact_name varchar [note: '담당자 이름']
+contact_email varchar [note: '담당자 이메일']
+contact_phone varchar [note: '담당자 연락처']
+inflow_source inflow_source [note: '유입경로']
+estimate_file_url varchar [note: '견적서 파일 URL']
+recruit_start_date date
+comm_content text [note: '소통 내용']
+contract_status contract_status
+supplies_status supplies_status [note: '체크전/재고이상무/준비완료 등']
+recruit_status recruit_status [note: '섭외대기/섭외진행중/섭외완료']
+institution_request_status recruit_status [note: '예정/전달/회신']
+start_recruit_at timestamp [note: '강사 섭외 시작일']  
+ recruit_delivered boolean [default: false, note: '강사섭외 전달 여부']
+school_request_delivered boolean [default: false, note:'학교요청사항 전달 여부']
+admin_docs text [note: '행정서류']
+admin_docs_delivered boolean [default: false, note: '행정서류 전달여부']
+remarks text [note: '비고']
+group_chat_status varchar [note: '개설전/완료']
+payment_confirmed boolean [default: false]
+photo_sent boolean [default: false]
+report_sent boolean [default: false]
+event_check_status smallint [not null, default: 1, note: '행사체크 단계 1~4']
+pre_notice_sent boolean [not null, default: false, note: '사전안내 발송 여부(1주일전)']
+teacher_name varchar [note: '담당 선생님 성함 예: 3학년 부장 홍길동']
+admin_contact varchar [note: '계약담당 행정실 연락처']
+instructor_waiting_room varchar [note: '강사대기실 예: 2층 2학년 학년연구실']
+has_elevator boolean [note: '엘리베이터 유무']
+floor_map_url varchar [note: '학교 배치도 파일 URL']
+group_chat_link varchar
+created_at timestamp [not null, default: `now()`]
+
 }
 
 <!-- Table event_schedules {
@@ -385,127 +347,126 @@ Table events {
 
 // 행사 담당자
 Table event_admins {
-  event_id  uuid [ref: > events.id]
-  admin_id  uuid [ref: > admins.id]
+event_id uuid [ref: > events.id]
+admin_id uuid [ref: > admins.id]
 
-  indexes {
-    (event_id, admin_id) [pk]
-  }
+indexes {
+(event_id, admin_id) [pk]
+}
 }
 
 // ── 행사 로우데이터 (교시별 수업 단위) ────────
 
 Table event_rows {
-  id                    uuid    [pk, default: `gen_random_uuid()`]
-  event_id              uuid    [ref: > events.id]
-  mentor_id         uuid    [ref: > mentors.id]
-  start_time            timestamp [note: '시작 일시(날짜+시각)']
-  end_time              timestamp [note: '종료 일시(날짜+시각)']
-  occupation_program_unit_id uuid    [ref: > occupation_program_unit.id]
-  lecture_fee_payer_id  uuid    [ref: > mentors.id, note: '강의료 입금자']
-  material_fee_payer_id uuid    [ref: > mentors.id, note: '재료비 입금자']
-  classroom             varchar [note: '강의실 예: 1-1반']
-  instructor_waiting_room varchar [note: '강사대기실 예: 2층 2학년 학년연구실']
-  preparing             boolean [default: false]
-  attendance            boolean [default: false]
-  lecture_fee           integer
-  lecture_fee_after_tax integer [note: '세후 강의료']
-  headcount             integer [note: '인원수']
-  session_headcount     integer [note: '차시별 인원수']
-  remarks               text
-  criminal_background_check varchar [note: '회보서 파일 URL']
-  school_request_response text [note: '학교 요청사항 답변']
-  target varchar [note: '대상 예 : 1학년, 2학년, 3학년']
+id uuid [pk, default: `gen_random_uuid()`]
+event_id uuid [ref: > events.id]
+mentor_id uuid [ref: > mentors.id]
+start_time timestamp [note: '시작 일시(날짜+시각)']
+end_time timestamp [note: '종료 일시(날짜+시각)']
+occupation_program_unit_id uuid [ref: > occupation_program_unit.id]
+lecture_fee_payer_id uuid [ref: > mentors.id, note: '강의료 입금자']
+material_fee_payer_id uuid [ref: > mentors.id, note: '재료비 입금자']
+classroom varchar [note: '강의실 예: 1-1반']
+instructor_waiting_room varchar [note: '강사대기실 예: 2층 2학년 학년연구실']
+preparing boolean [default: false]
+attendance boolean [default: false]
+lecture_fee integer
+lecture_fee_after_tax integer [note: '세후 강의료']
+headcount integer [note: '인원수']
+session_headcount integer [note: '차시별 인원수']
+remarks text
+criminal_background_check varchar [note: '회보서 파일 URL']
+school_request_response text [note: '학교 요청사항 답변']
+target varchar [note: '대상 예 : 1학년, 2학년, 3학년']
 
 }
 
 // ── 행사 사진 ──────────────────────────────
 
 Table event_photos {
-  id         uuid      [pk, default: `gen_random_uuid()`]
-  event_rows_id   uuid      [ref: > event_rows.id]
-  url        varchar   [not null]
-  created_at timestamp [not null, default: `now()`]
+id uuid [pk, default: `gen_random_uuid()`]
+event_rows_id uuid [ref: > event_rows.id]
+url varchar [not null]
+created_at timestamp [not null, default: `now()`]
 }
 
 // ── 관리 / 운영 ────────────────────────────
 
 enum task_type {
-  "강사섭외"
-  "준비물준비"
-  "견적서제작"
+"강사섭외"
+"준비물준비"
+"견적서제작"
 }
 
 Table tasks {
-  id         uuid      [pk, default: `gen_random_uuid()`]
-  admin_id   uuid      [ref: > admins.id]
-  event_id   uuid      [ref: > events.id]
-  task_type  task_type [not null]
-  is_done    boolean   [not null, default: false]
-  created_at timestamp [not null, default: `now()`]
+id uuid [pk, default: `gen_random_uuid()`]
+admin_id uuid [ref: > admins.id]
+event_id uuid [ref: > events.id]
+task_type task_type [not null]
+is_done boolean [not null, default: false]
+created_at timestamp [not null, default: `now()`]
 }
 
 enum request_type{
-  "멘토가입요청"
-  "회원정보수정요청"
+"멘토가입요청"
+"회원정보수정요청"
 }
 
 Table mentor_requests {
-  id           uuid      [pk, default: `gen_random_uuid()`]
-  instructor_id uuid     [ref: > mentors.id]
-  request_type  request_type   [not null]
-  requested_at timestamp [not null, default: `now()`]
+id uuid [pk, default: `gen_random_uuid()`]
+instructor_id uuid [ref: > mentors.id]
+request_type request_type [not null]
+requested_at timestamp [not null, default: `now()`]
 }
 
 // ── 콘텐츠 ────────────────────────────────
 
 // 공지사항
 Table announcements {
-  id         uuid      [pk, default: `gen_random_uuid()`]
-  title      varchar   [not null]
-  content    text      [not null]
-  created_at timestamp [not null, default: `now()`]
+id uuid [pk, default: `gen_random_uuid()`]
+title varchar [not null]
+content text [not null]
+created_at timestamp [not null, default: `now()`]
 }
 
 // 배너
 Table banners {
-  id            uuid      [pk, default: `gen_random_uuid()`]
-  display_order integer   [not null, note: '표시 순서']
-  link_url      varchar
-  image_url  varchar  [note: 'Supabase Storage URL']
-  created_at    timestamp [not null, default: `now()`]
+id uuid [pk, default: `gen_random_uuid()`]
+display_order integer [not null, note: '표시 순서']
+link_url varchar
+image_url varchar [note: 'Supabase Storage URL']
+created_at timestamp [not null, default: `now()`]
 }
 
 // 이용약관
 Table terms {
-  id             uuid      [pk, default: `gen_random_uuid()`]
-  service_terms  text      [not null]
-  privacy_policy text      [not null]
-  effective_at   timestamp [not null]
+id uuid [pk, default: `gen_random_uuid()`]
+service_terms text [not null]
+privacy_policy text [not null]
+effective_at timestamp [not null]
 }
 
 // 회사소개
 Table company_info {
-  id           uuid      [pk, default: `gen_random_uuid()`]
-  content_html text      [not null]
-  updated_at   timestamp [not null, default: `now()`]
+id uuid [pk, default: `gen_random_uuid()`]
+content_html text [not null]
+updated_at timestamp [not null, default: `now()`]
 }
-
 
 ## 기술 스택
 
-| 항목 | 기술 |
-|---|---|
-| Framework | Next.js (App Router) |
-| Language | TypeScript |
-| Database | Supabase (PostgreSQL) |
+| 항목          | 기술                                           |
+| ------------- | ---------------------------------------------- |
+| Framework     | Next.js (App Router)                           |
+| Language      | TypeScript                                     |
+| Database      | Supabase (PostgreSQL)                          |
 | DB 클라이언트 | Supabase Client (`@supabase/supabase-js`) 주력 |
-| 스타일링 | Tailwind CSS |
-| 폼 관리 | React Hook Form |
-| 유효성 검사 | Zod |
-| 상태 관리 | Zustand |
-| 테이블 | TanStack Table |
-| 배포 | Vercel |
+| 스타일링      | Tailwind CSS                                   |
+| 폼 관리       | React Hook Form                                |
+| 유효성 검사   | Zod                                            |
+| 상태 관리     | Zustand                                        |
+| 테이블        | TanStack Table                                 |
+| 배포          | Vercel                                         |
 
 ---
 
@@ -542,22 +503,25 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ## 인증 및 권한
 
 ### 로그인 주체
+
 - **관리자(admins)** — 현재 웹(관리자 웹)에서 로그인
 - **멘토(mentors)** — 별도 강사 웹에서 회원가입 및 로그인 (현재 웹에서는 관리자가 관리만 함)
 
 ### 관리자 역할 (admins 테이블)
-| 컬럼 | 설명 |
-|---|---|
-| `is_super` | 슈퍼관리자. 다른 관리자 승인 권한 보유 |
+
+| 컬럼               | 설명                                                |
+| ------------------ | --------------------------------------------------- |
+| `is_super`         | 슈퍼관리자. 다른 관리자 승인 권한 보유              |
 | `is_authenticated` | 승인된 관리자 여부. `is_super`인 관리자만 변경 가능 |
-| `is_sales` | 영업담당자 여부 |
-| `is_comm` | 소통담당자 여부 |
+| `is_sales`         | 영업담당자 여부                                     |
+| `is_comm`          | 소통담당자 여부                                     |
 
 - 역할은 동시에 보유 가능하다.
 - `is_authenticated`가 `false`인 관리자는 로그인 후 접근이 제한된다.
 - `is_authenticated` 승인은 `is_super = true`인 관리자만 가능하다.
 
 ### 멘토 정보 수정
+
 - 멘토는 직접 정보를 수정할 수 없다.
 - 멘토가 수정 요청(`mentor_requests`)을 제출하면 관리자가 처리한다.
 
@@ -566,6 +530,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ## 비즈니스 로직 핵심 규칙
 
 ### 재고 차감
+
 - `event_rows`에 row가 생성되고 `headcount`(인원수) 값이 입력되면 `headcount × qty_per_person`만큼 **키트재고(`kit`)**가 차감된다. (`session_headcount`는 차시별 인원수 기록용으로 저장만 되며 재고 계산에는 사용하지 않는다.)
 - 키트재고는 수업 나갈 때 미리 세팅(포장)해두는 재고를 의미한다. 행사가 등록되면 강사가 이 세팅된 키트재고를 들고 나가는 것이므로 총재고(`total`)가 아닌 키트재고에서 차감한다.
 - 재고는 `supply_logs` 테이블에 로그를 남기는 방식으로 관리한다.
@@ -575,19 +540,23 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 - 해당 프로그램 유닛에 `supplies` 레지스트리(재고 등록)가 없으면 차감 로직은 조용히 스킵된다.
 
 ### 준비물 관리 경고 상태
+
 - **키트 재고 상태**: 현재 키트재고(`kit`)가 `supplies.kit_threshold`("키트재고 경고 기준값") 미만이면 위험.
 - **일 최대 수용 상태**: `supplies.max_daily_stock`("일 최대 수용 재고")는 하루에 소화 가능한 상한선(캐파) 개념. 아직 끝나지 않은(예정 또는 진행 중) 행사의 `event_rows` 중 해당 프로그램 유닛의 `headcount`가 `max_daily_stock`을 초과하는 건이 하나라도 있으면 위험. (재고 수량이 아니라 등록된 행사의 인원수 기준으로 판단하며, 이미 종료된 행사는 제외한다.)
 - 두 상태 모두 기준값(`kit_threshold`/`max_daily_stock`)이 비어있으면 상태를 표시하지 않는다.
 
 ### 행사 체크 상태 (event_check_status)
+
 - `smallint` 타입으로 1~4 값만 허용한다.
 - 각 단계의 의미는 추후 확정 예정이다.
 
 ### 강사료/재료비 입금자
+
 - 기본값은 `mentor_occupation_programs` 테이블의 `lecture_fee_payer_id`, `material_fee_payer_id`에서 가져온다.
 - `event_rows`에 값이 있으면 오버라이드한다. 없으면(`null`) 기본값을 사용한다.
 
 ### 여유재고 계산
+
 ```
 여유재고(free) = 총재고(total) - 키트재고(kit)
 ```
@@ -597,6 +566,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ## 코딩 컨벤션
 
 ### 네이밍
+
 - 컴포넌트 — PascalCase (`EventTable.tsx`)
 - 함수/변수 — camelCase (`fetchEvents`)
 - 타입/인터페이스 — PascalCase (`EventRow`)
@@ -604,26 +574,32 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 - DB 컬럼명 — snake_case (Supabase 기본)
 
 ### 컴포넌트
+
 - 함수형 컴포넌트만 사용한다.
 - `export default`는 페이지 컴포넌트에만 사용하고, 나머지는 named export를 사용한다.
 
 ### 폼
+
 - 모든 폼은 React Hook Form + Zod 조합으로 작성한다.
 - Zod 스키마는 `/lib/validations/` 디렉토리에 도메인별로 분리하여 관리한다.
 
 ### 타입
+
 - Supabase 테이블 타입은 Supabase CLI로 자동 생성하여 `/types/supabase.ts`에서 관리한다.
 - 추가 커스텀 타입은 `/types/` 디렉토리에 도메인별로 분리한다.
 
 ### 상태관리
+
 - 서버 데이터(DB 조회)는 Supabase Client로 직접 패치한다.
 - 전역 클라이언트 상태(로그인 정보, UI 상태 등)는 Zustand로 관리한다.
 - Zustand 스토어는 `/lib/store/` 디렉토리에 도메인별로 분리한다.
 
 ### 주석
+
 - 주석은 한글로 작성한다.
 
 ### 커밋 메시지
+
 - 커밋 메시지는 한글로 작성한다.
 
 ---
@@ -647,8 +623,8 @@ institutions → events → event_rows ← mentors
 - `event_check_status` 1~4 단계별 의미 정의
 - 도메인 확정 후 Vercel 환경변수 업데이트
 
-
 ## 디비 테이블 생성 쿼리문 작성시 RLS 쿼리도 같이 작성
 
 ## 피드백 가능
+
 - 요청에 수정사항이 있거나 피드백 사항이 있으면 제안해주기

@@ -40,6 +40,7 @@ export interface OccupationProgramUnitData {
   description: string | null
   is_delivery_available: boolean
   school_level: string | null
+  syllabus: string | null
   created_at: string
 }
 
@@ -53,6 +54,7 @@ export interface UnitFormPayload {
   description: string | null
   isDeliveryAvailable: boolean
   schoolLevel: string | null
+  syllabus: string | null
 }
 
 // ── 행사 구분 (event_categories) ────────────────────────────────────
@@ -309,7 +311,7 @@ export async function getUnitsByOccupationProgramId(
   const { data, error } = await supabase
     .from('occupation_program_unit')
     .select(
-      'id, occupation_programs_id, title, mentor_material_cost, dreampia_material_cost, prep_by, school_request_note, final_product_available, description, is_delivery_available, school_level, created_at'
+      'id, occupation_programs_id, title, mentor_material_cost, dreampia_material_cost, prep_by, school_request_note, final_product_available, description, is_delivery_available, school_level, syllabus, created_at'
     )
     .eq('occupation_programs_id', occupationProgramId)
     .order('created_at')
@@ -333,6 +335,7 @@ export async function createUnit(
     description: payload.description,
     is_delivery_available: payload.isDeliveryAvailable,
     school_level: payload.schoolLevel,
+    syllabus: payload.syllabus,
   })
   if (error) throw new Error(error.message)
   revalidatePath('/programs')
@@ -352,6 +355,7 @@ export async function updateUnit(id: string, payload: UnitFormPayload): Promise<
       description: payload.description,
       is_delivery_available: payload.isDeliveryAvailable,
       school_level: payload.schoolLevel,
+      syllabus: payload.syllabus,
     })
     .eq('id', id)
   if (error) throw new Error(error.message)

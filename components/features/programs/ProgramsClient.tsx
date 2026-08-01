@@ -391,9 +391,10 @@ export function ProgramsClient({ initialEventCategories, initialFields }: Props)
         </p>
       )}
 
-      {unitPopup.open && (
+      {unitPopup.open && selectedProgramId && (
         <UnitFormPopup
           initial={unitPopup.unit}
+          occupationProgramId={selectedProgramId}
           onClose={() => setUnitPopup({ open: false, unit: null })}
           onSubmit={handleSubmitUnit}
         />
