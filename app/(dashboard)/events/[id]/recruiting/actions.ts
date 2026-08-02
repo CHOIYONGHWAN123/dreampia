@@ -17,7 +17,9 @@ export type RecruitingEventRow = {
   activeInvitation: {
     id: string
     isAllApprovalRequired: boolean
+    isAuto: boolean
   } | null
+  exhausted: boolean
 }
 
 export type CandidateMentor = {
@@ -38,6 +40,7 @@ export type InvitationMentorSummary = {
 export type InvitationSummary = {
   id: string
   isAllApprovalRequired: boolean
+  isAuto: boolean
   status: string
   expiresAt: string
   eventRowIds: string[]
@@ -138,20 +141,40 @@ export async function getRecruitingData(eventId: string): Promise<RecruitingData
   const { data: invitationsData } = invitationIds.length > 0
     ? await supabase
         .from('invitations')
-        .select('id, status, is_all_approval_required, expires_at')
+        .select('id, status, is_all_approval_required, is_auto, expires_at')
         .in('id', invitationIds)
-    : { data: [] as { id: string; status: string; is_all_approval_required: boolean; expires_at: string }[] }
+    : {
+        data: [] as {
+          id: string
+          status: string
+          is_all_approval_required: boolean
+          is_auto: boolean
+          expires_at: string
+        }[],
+      }
   const invitationMeta = new Map((invitationsData ?? []).map((inv) => [inv.id, inv]))
 
   // event_row_id -> 진행중(발송중)인 invitation
-  const activeInvitationByRow = new Map<string, { id: string; isAllApprovalRequired: boolean }>()
+  const activeInvitationByRow = new Map<string, { id: string; isAllApprovalRequired: boolean; isAuto: boolean }>()
+  // event_row_id -> 자동섭외 후보소진 여부(발송중인 초대가 없을 때만 의미 있음)
+  const exhaustedRowIds = new Set<string>()
   for (const [rowId, invIds] of invitationIdsByRow) {
+    let foundActive = false
     for (const invId of invIds) {
       const inv = invitationMeta.get(invId)
-      if (inv && inv.status === '발송중') {
-        activeInvitationByRow.set(rowId, { id: inv.id, isAllApprovalRequired: inv.is_all_approval_required })
+      if (!inv) continue
+      if (inv.status === '발송중') {
+        activeInvitationByRow.set(rowId, {
+          id: inv.id,
+          isAllApprovalRequired: inv.is_all_approval_required,
+          isAuto: inv.is_auto,
+        })
+        foundActive = true
         break
       }
+    }
+    if (!foundActive && [...invIds].some((id) => invitationMeta.get(id)?.status === '후보소진')) {
+      exhaustedRowIds.add(rowId)
     }
   }
 
@@ -186,6 +209,7 @@ export async function getRecruitingData(eventId: string): Promise<RecruitingData
     return {
       id,
       isAllApprovalRequired: meta.is_all_approval_required,
+      isAuto: meta.is_auto,
       status: meta.status,
       expiresAt: meta.expires_at,
       eventRowIds: [...(eventRowIdsByInvitation.get(id) ?? [])],
@@ -209,6 +233,7 @@ export async function getRecruitingData(eventId: string): Promise<RecruitingData
       mentorId: r.mentor_id,
       mentorName: r.mentor_id ? mentorMap.get(r.mentor_id)?.name ?? null : null,
       activeInvitation: r.mentor_id ? null : activeInvitationByRow.get(r.id) ?? null,
+      exhausted: !r.mentor_id && !activeInvitationByRow.has(r.id) && exhaustedRowIds.has(r.id),
     }
   })
 
@@ -280,6 +305,54 @@ export async function createInvitation(input: {
   // TODO: 초대된 멘토에게 푸시 알림 발송 (추후 구현)
 
   revalidatePath(`/events/${input.eventId}/recruiting`)
+}
+
+// 자동 섭외: 가능한(등록+시간충돌없음+활동가능) 멘토 중 점수 1등에게만 발송하고,
+// 거절/무응답(1시간) 시 DB 쪽(create_auto_invitation → advance_auto_invitation/
+// decline_invitation/expire_stale_invitations)에서 알아서 다음 등수로 넘어간다.
+// 관리자 앱은 시작만 시키고, 이후 진행은 전부 DB에서 처리된다(거절은 강사 앱에서
+// 일어나므로 이 admin 앱 코드가 관여할 수 없다).
+export async function createAutoInvitation(
+  eventId: string,
+  eventRowIds: string[],
+  isAllApprovalRequired: boolean
+): Promise<void> {
+  if (eventRowIds.length === 0) throw new Error('선택된 일정이 없습니다.')
+
+  const supabase = await createServerSupabaseClient()
+
+  // 모든수락은 한 명의 강사가 선택된 일정을 전부 수락해야 하므로, 선택한 일정끼리
+  // 시간이 겹치면 애초에 어떤 강사도 해당할 수 없다 - createInvitation과 동일한 사전 검증.
+  if (isAllApprovalRequired) {
+    const { data: selectedRows, error: rowsCheckErr } = await supabase
+      .from('event_rows')
+      .select('id, start_time, end_time')
+      .in('id', eventRowIds)
+    if (rowsCheckErr) throw new Error(rowsCheckErr.message)
+
+    const rows = (selectedRows ?? []).map((r) => ({
+      start: r.start_time ? new Date(r.start_time).getTime() : null,
+      end: r.end_time ? new Date(r.end_time).getTime() : null,
+    }))
+    for (let i = 0; i < rows.length; i++) {
+      for (let j = i + 1; j < rows.length; j++) {
+        const a = rows[i]
+        const b = rows[j]
+        if (a.start === null || a.end === null || b.start === null || b.end === null) continue
+        if (a.start < b.end && a.end > b.start) {
+          throw new Error('선택한 일정끼리 시간이 겹쳐 모든수락으로 초대할 수 없습니다.')
+        }
+      }
+    }
+  }
+
+  const { error } = await supabase.rpc('create_auto_invitation', {
+    p_event_row_ids: eventRowIds,
+    p_is_all_approval_required: isAllApprovalRequired,
+  })
+  if (error) throw new Error(error.message)
+
+  revalidatePath(`/events/${eventId}/recruiting`)
 }
 
 // 관리자가 배정을 취소한다. 멘토 자기취소(cancel_event_row_assignment RPC)와 같은 패턴으로

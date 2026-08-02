@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { createInvitation, cancelAssignment } from '@/app/(dashboard)/events/[id]/recruiting/actions'
+import { createInvitation, createAutoInvitation, cancelAssignment } from '@/app/(dashboard)/events/[id]/recruiting/actions'
 import type {
   RecruitingEventRow,
   CandidateMentor,
@@ -45,13 +45,33 @@ const INVITE_TYPE_LABEL: Record<InviteType, string> = {
 
 const badgeCls = 'inline-block px-2 py-0.5 rounded text-xs whitespace-nowrap'
 
-function invitationBadge(status: string, isAllApprovalRequired: boolean) {
+function hasTimeConflict(rows: RecruitingEventRow[]): boolean {
+  for (let i = 0; i < rows.length; i++) {
+    for (let j = i + 1; j < rows.length; j++) {
+      const a = rows[i]
+      const b = rows[j]
+      if (!a.startTime || !a.endTime || !b.startTime || !b.endTime) continue
+      const aStart = new Date(a.startTime).getTime()
+      const aEnd = new Date(a.endTime).getTime()
+      const bStart = new Date(b.startTime).getTime()
+      const bEnd = new Date(b.endTime).getTime()
+      if (aStart < bEnd && aEnd > bStart) return true
+    }
+  }
+  return false
+}
+
+function invitationBadge(status: string, isAllApprovalRequired: boolean, isAuto: boolean) {
+  const typeLabel = INVITE_TYPE_LABEL[isAllApprovalRequired ? 'all' : 'partial']
   if (status === '발송중') {
     return (
       <span className={`${badgeCls} bg-blue-50 text-blue-600`}>
-        초대중 ({INVITE_TYPE_LABEL[isAllApprovalRequired ? 'all' : 'partial']})
+        {isAuto ? '자동섭외중' : '초대중'} ({typeLabel})
       </span>
     )
+  }
+  if (status === '후보소진') {
+    return <span className={`${badgeCls} bg-red-50 text-red-600`}>자동후보소진 ({typeLabel})</span>
   }
   return <span className={`${badgeCls} bg-gray-100 text-gray-500`}>{status}</span>
 }
@@ -72,13 +92,26 @@ export function EventRecruitingClient({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isCanceling, startCancelTransition] = useTransition()
-  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set())
+  const selectableRows = rows.filter((r) => !r.mentorId && !r.activeInvitation)
+  // 페이지 진입 시 섭외 가능한 일정 전부를 기본으로 선택해둔다.
+  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(
+    () => new Set(selectableRows.map((r) => r.id))
+  )
   const [pendingType, setPendingType] = useState<InviteType | null>(null)
   const [selectedMentorIds, setSelectedMentorIds] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const [cancelingRowId, setCancelingRowId] = useState<string | null>(null)
+  const [isAutoPending, startAutoTransition] = useTransition()
+  const [autoError, setAutoError] = useState<string | null>(null)
+  const [groupSameUnit, setGroupSameUnit] = useState(true)
 
-  const selectableRows = rows.filter((r) => !r.mentorId && !r.activeInvitation)
+  const allSelectableChecked =
+    selectableRows.length > 0 && selectableRows.every((r) => selectedRowIds.has(r.id))
+  const someSelectableChecked = selectableRows.some((r) => selectedRowIds.has(r.id))
+
+  const toggleAllRows = () => {
+    setSelectedRowIds(allSelectableChecked ? new Set() : new Set(selectableRows.map((r) => r.id)))
+  }
 
   const toggleRow = (id: string) => {
     setSelectedRowIds((prev) => {
@@ -93,21 +126,7 @@ export function EventRecruitingClient({
 
   // 모든수락은 한 명의 강사가 선택된 일정을 전부 수락해야 하므로, 선택한 일정끼리
   // 시간이 겹치면 애초에 어떤 강사도 전부 수락할 수 없다.
-  const timeConflictAmongSelected = useMemo(() => {
-    for (let i = 0; i < selectedRows.length; i++) {
-      for (let j = i + 1; j < selectedRows.length; j++) {
-        const a = selectedRows[i]
-        const b = selectedRows[j]
-        if (!a.startTime || !a.endTime || !b.startTime || !b.endTime) continue
-        const aStart = new Date(a.startTime).getTime()
-        const aEnd = new Date(a.endTime).getTime()
-        const bStart = new Date(b.startTime).getTime()
-        const bEnd = new Date(b.endTime).getTime()
-        if (aStart < bEnd && aEnd > bStart) return true
-      }
-    }
-    return false
-  }, [selectedRows])
+  const timeConflictAmongSelected = useMemo(() => hasTimeConflict(selectedRows), [selectedRows])
 
   // 모든수락: 선택된 모든 유닛에 등록된(교집합) 멘토만 후보. 부분수락: 선택된 유닛 중 하나라도 등록된(합집합) 멘토.
   const eligibleMentors = useMemo(() => {
@@ -171,6 +190,45 @@ export function EventRecruitingClient({
     })
   }
 
+  // groupSameUnit이 켜져 있으면 선택된 일정을 프로그램 유닛(unitId) 기준으로 묶어서,
+  // 같은 유닛이 2개 이상이고(=같은 강사가 연속 진행할 대상이 있고) 서로 시간이 겹치지
+  // 않는 묶음은 모두수락 초대 1건으로 자동 발송한다. 묶이지 않는(유닛이 하나뿐이거나
+  // 시간이 겹치는) 나머지 일정은 전부 모아서 부분수락 초대 1건으로 보낸다.
+  const handleAutoInvite = () => {
+    setAutoError(null)
+    startAutoTransition(async () => {
+      try {
+        if (!groupSameUnit) {
+          await createAutoInvitation(eventId, [...selectedRowIds], false)
+        } else {
+          const byUnit = new Map<string, RecruitingEventRow[]>()
+          for (const r of selectedRows) {
+            const key = r.unitId ?? `__row_${r.id}`
+            const list = byUnit.get(key) ?? []
+            list.push(r)
+            byUnit.set(key, list)
+          }
+
+          const partialRowIds: string[] = []
+          for (const group of byUnit.values()) {
+            if (group.length > 1 && !hasTimeConflict(group)) {
+              await createAutoInvitation(eventId, group.map((r) => r.id), true)
+            } else {
+              partialRowIds.push(...group.map((r) => r.id))
+            }
+          }
+          if (partialRowIds.length > 0) {
+            await createAutoInvitation(eventId, partialRowIds, false)
+          }
+        }
+        setSelectedRowIds(new Set())
+        router.refresh()
+      } catch (e) {
+        setAutoError(e instanceof Error ? e.message : '자동 섭외 시작에 실패했습니다.')
+      }
+    })
+  }
+
   const handleCancelAssignment = (rowId: string, mentorName: string | null) => {
     if (!confirm(`${mentorName ?? '해당 강사'}의 배정을 취소하시겠습니까?`)) return
     setCancelingRowId(rowId)
@@ -197,7 +255,18 @@ export function EventRecruitingClient({
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-amber-50 border-b border-gray-200">
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-10" />
+              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-10">
+                <input
+                  type="checkbox"
+                  checked={allSelectableChecked}
+                  ref={(el) => {
+                    if (el) el.indeterminate = !allSelectableChecked && someSelectableChecked
+                  }}
+                  disabled={selectableRows.length === 0}
+                  onChange={toggleAllRows}
+                  className="disabled:opacity-30"
+                />
+              </th>
               <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20">일자</th>
               <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20">시작</th>
               <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20">종료</th>
@@ -235,7 +304,9 @@ export function EventRecruitingClient({
                       {r.mentorId ? (
                         <span className={`${badgeCls} bg-green-50 text-green-700`}>{r.mentorName} (배정 완료)</span>
                       ) : r.activeInvitation ? (
-                        invitationBadge('발송중', r.activeInvitation.isAllApprovalRequired)
+                        invitationBadge('발송중', r.activeInvitation.isAllApprovalRequired, r.activeInvitation.isAuto)
+                      ) : r.exhausted ? (
+                        <span className="text-xs text-red-500">미배정 (자동후보소진)</span>
                       ) : (
                         <span className="text-xs text-gray-400">미배정</span>
                       )}
@@ -273,20 +344,46 @@ export function EventRecruitingClient({
             <span className="text-sm text-gray-600">{selectedRowIds.size}개 선택됨</span>
             <button
               type="button"
-              disabled={selectedRowIds.size === 0}
-              onClick={() => openPicker('partial')}
-              className="px-3 py-1.5 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-40 transition-colors"
+              disabled={selectedRowIds.size === 0 || isAutoPending}
+              onClick={handleAutoInvite}
+              className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-40 transition-colors"
             >
-              부분수락으로 초대
+              {isAutoPending ? '섭외 시작 중...' : '자동 섭외 시작'}
             </button>
-            <button
-              type="button"
-              disabled={selectedRowIds.size === 0}
-              onClick={() => openPicker('all')}
-              className="px-3 py-1.5 text-xs bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-40 transition-colors"
-            >
-              모든수락으로 초대
-            </button>
+          </div>
+          <label className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={groupSameUnit}
+              onChange={(e) => setGroupSameUnit(e.target.checked)}
+            />
+            같은 프로그램(유닛) 일정은 묶어서 모두수락으로 발송 (끄면 전부 부분수락으로 발송)
+          </label>
+          {autoError && <p className="mt-2 text-xs text-red-500">{autoError}</p>}
+          <p className="mt-2 text-xs text-gray-400">
+            가능한(등록+시간충돌없음+활동가능) 멘토 중 최고점수인 멘토 전원에게 동시 발송되고, 먼저 수락하는 사람이 배정됩니다. 전원이 거절/무응답(24시간)하면 다음 등수로 자동으로 넘어갑니다.
+          </p>
+
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-500 mb-2">직접 강사를 선택해서 보내려면:</p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                disabled={selectedRowIds.size === 0}
+                onClick={() => openPicker('partial')}
+                className="px-3 py-1.5 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-40 transition-colors"
+              >
+                부분수락으로 초대
+              </button>
+              <button
+                type="button"
+                disabled={selectedRowIds.size === 0}
+                onClick={() => openPicker('all')}
+                className="px-3 py-1.5 text-xs bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-40 transition-colors"
+              >
+                모든수락으로 초대
+              </button>
+            </div>
           </div>
 
           {pendingType && (
@@ -362,7 +459,7 @@ export function EventRecruitingClient({
             {invitations.map((inv) => (
               <div key={inv.id} className="border border-gray-200 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-2">
-                  {invitationBadge(inv.status, inv.isAllApprovalRequired)}
+                  {invitationBadge(inv.status, inv.isAllApprovalRequired, inv.isAuto)}
                   <span className="text-xs text-gray-400">일정 {inv.eventRowIds.length}건</span>
                   <span className="text-xs text-gray-400">
                     만료: {new Date(inv.expiresAt).toLocaleString('ko-KR')}

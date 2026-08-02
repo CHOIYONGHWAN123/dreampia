@@ -805,6 +805,7 @@ export type Database = {
           expires_at: string
           id: string
           is_all_approval_required: boolean
+          is_auto: boolean
           status: Database["public"]["Enums"]["invitation_status"]
         }
         Insert: {
@@ -813,6 +814,7 @@ export type Database = {
           expires_at?: string
           id?: string
           is_all_approval_required?: boolean
+          is_auto?: boolean
           status?: Database["public"]["Enums"]["invitation_status"]
         }
         Update: {
@@ -821,6 +823,7 @@ export type Database = {
           expires_at?: string
           id?: string
           is_all_approval_required?: boolean
+          is_auto?: boolean
           status?: Database["public"]["Enums"]["invitation_status"]
         }
         Relationships: [
@@ -911,7 +914,7 @@ export type Database = {
           mentor_unique_code: string
           name: string
           phone: string | null
-          score: number | null
+          score: number
           terms_agreed_at: string | null
           terms_version_id: string | null
           user_id: string | null
@@ -934,7 +937,7 @@ export type Database = {
           mentor_unique_code?: string
           name: string
           phone?: string | null
-          score?: number | null
+          score?: number
           terms_agreed_at?: string | null
           terms_version_id?: string | null
           user_id?: string | null
@@ -957,7 +960,7 @@ export type Database = {
           mentor_unique_code?: string
           name?: string
           phone?: string | null
-          score?: number | null
+          score?: number
           terms_agreed_at?: string | null
           terms_version_id?: string | null
           user_id?: string | null
@@ -1332,6 +1335,10 @@ export type Database = {
         Args: { p_event_row_id: string; p_invitation_mentor_id: string }
         Returns: undefined
       }
+      create_auto_invitation: {
+        Args: { p_event_row_ids: string[]; p_is_all_approval_required: boolean }
+        Returns: string
+      }
       decline_invitation: {
         Args: { p_invitation_mentor_id: string }
         Returns: undefined
@@ -1381,7 +1388,7 @@ export type Database = {
         | "특수학교"
         | "문화센터"
       invitation_mentor_status: "대기" | "수락" | "거절" | "마감" | "만료"
-      invitation_status: "발송중" | "마감" | "만료" | "취소"
+      invitation_status: "발송중" | "마감" | "만료" | "취소" | "후보소진"
       lesson_category: "직업체험" | "문화예술체험" | "진로박람회"
       prep_by: "강사" | "드림피아" | "모두가능"
       recruit_status: "섭외대기" | "섭외진행중" | "섭외완료"
@@ -1573,7 +1580,7 @@ export const Constants = {
         "문화센터",
       ],
       invitation_mentor_status: ["대기", "수락", "거절", "마감", "만료"],
-      invitation_status: ["발송중", "마감", "만료", "취소"],
+      invitation_status: ["발송중", "마감", "만료", "취소", "후보소진"],
       lesson_category: ["직업체험", "문화예술체험", "진로박람회"],
       prep_by: ["강사", "드림피아", "모두가능"],
       recruit_status: ["섭외대기", "섭외진행중", "섭외완료"],
