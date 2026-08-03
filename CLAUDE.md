@@ -285,6 +285,7 @@ enum contract_status{
 Table events {
 id uuid [pk, default: `gen_random_uuid()`]
 institution_id uuid [ref: > institutions.id]
+event_category_id uuid [ref: > event_categories.id, note: '행사 구분']
 occupation_program_id uuid [ref: > occupation_programs.id]
 sales_admin_id uuid [ref: > admins.id, note: '영업담당자']
 comm_admin_id uuid [ref: > admins.id, note: '소통담당자']

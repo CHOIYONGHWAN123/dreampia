@@ -61,8 +61,10 @@ const fieldInputCls =
   'w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-gray-500'
 
 // 검색 또는 분야 > 직종 > 프로그램 > 프로그램 유닛 드릴다운으로 occupation_program_unit을 찾아 추가하는 섹션.
+// 행사구분은 행사 등록 폼 상단에서 한 번만 선택하므로, 여기서는 그 값을 eventCategoryId prop으로
+// 전달받아 분야 목록을 필터링하는 데만 사용한다(이 섹션 안에서 다시 선택하지 않는다).
 export function EventProgramUnitSection({
-  eventCategories,
+  eventCategoryId,
   fields,
   occupations,
   programs,
@@ -73,7 +75,7 @@ export function EventProgramUnitSection({
   defaultStartTime,
   defaultEndTime,
 }: {
-  eventCategories: EventCategoryOption[]
+  eventCategoryId: string | null
   fields: FieldOption[]
   occupations: OccupationOption[]
   programs: ProgramOption[]
@@ -85,7 +87,6 @@ export function EventProgramUnitSection({
   defaultEndTime?: string
 }) {
   const [search, setSearch] = useState('')
-  const [eventCategoryId, setEventCategoryId] = useState('')
   const [fieldId, setFieldId] = useState('')
   const [occupationId, setOccupationId] = useState('')
   const [programId, setProgramId] = useState('')
@@ -119,7 +120,7 @@ export function EventProgramUnitSection({
   }, [units, search])
 
   const filteredFields = useMemo(
-    () => fields.filter((f) => f.event_category_id === eventCategoryId),
+    () => (eventCategoryId ? fields.filter((f) => f.event_category_id === eventCategoryId) : []),
     [fields, eventCategoryId]
   )
   const filteredOccupations = useMemo(
@@ -237,26 +238,15 @@ export function EventProgramUnitSection({
         )}
       </div>
 
-      <div className="text-xs text-gray-400">또는 행사구분 &gt; 분야 &gt; 직종 &gt; 프로그램 &gt; 프로그램 유닛 순으로 선택</div>
+      <div className="text-xs text-gray-400">
+        또는 분야 &gt; 직종 &gt; 프로그램 &gt; 프로그램 유닛 순으로 선택
+        {!eventCategoryId && (
+          <span className="text-red-400"> (상단에서 행사구분을 먼저 선택해주세요)</span>
+        )}
+      </div>
 
       {/* 드릴다운 */}
       <div className="flex items-center gap-2">
-        <select
-          className={`${selCls} flex-1`}
-          value={eventCategoryId}
-          onChange={(e) => {
-            setEventCategoryId(e.target.value)
-            setFieldId('')
-            setOccupationId('')
-            setProgramId('')
-            setUnitId('')
-          }}
-        >
-          <option value="">행사구분</option>
-          {eventCategories.map((ec) => (
-            <option key={ec.id} value={ec.id}>{ec.name}</option>
-          ))}
-        </select>
         <select
           className={`${selCls} flex-1`}
           value={fieldId}

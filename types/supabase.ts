@@ -347,6 +347,7 @@ export type Database = {
             | Database["public"]["Enums"]["crime_check_status"]
             | null
           estimate_file_url: string | null
+          event_category_id: string | null
           event_check_status: number
           event_end_at: string | null
           event_start_at: string | null
@@ -414,6 +415,7 @@ export type Database = {
             | Database["public"]["Enums"]["crime_check_status"]
             | null
           estimate_file_url?: string | null
+          event_category_id?: string | null
           event_check_status?: number
           event_end_at?: string | null
           event_start_at?: string | null
@@ -483,6 +485,7 @@ export type Database = {
             | Database["public"]["Enums"]["crime_check_status"]
             | null
           estimate_file_url?: string | null
+          event_category_id?: string | null
           event_check_status?: number
           event_end_at?: string | null
           event_start_at?: string | null
@@ -534,6 +537,13 @@ export type Database = {
             columns: ["comm_admin_id"]
             isOneToOne: false
             referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_event_category_id_fkey"
+            columns: ["event_category_id"]
+            isOneToOne: false
+            referencedRelation: "event_categories"
             referencedColumns: ["id"]
           },
           {

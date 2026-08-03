@@ -125,6 +125,7 @@ function buildDefaultValues(
     reception_date: initialEvent.created_at.split('T')[0],
     name: initialEvent.name,
     institution_id: initialEvent.institution_id,
+    event_category_id: initialEvent.event_category_id,
     event_start_at_date: start.date,
     event_start_at_time: start.time,
     event_end_at_date: end.date,
@@ -269,6 +270,7 @@ export function EventForm({
         reception_date: data.reception_date,
         name: data.name,
         institution_id: data.institution_id,
+        event_category_id: data.event_category_id,
         event_start_at: eventStartAt,
         event_end_at: eventEndAt,
         target_grade: data.target_grade,
@@ -370,6 +372,19 @@ export function EventForm({
             </div>
           </div>
 
+          {/* 행사구분 */}
+          <div className={rowCls}>
+            <label className={labelCls}>행사구분</label>
+            <select
+              {...register('event_category_id', { setValueAs: (v) => v || null })}
+              className={selectCls}
+            >
+              <option value="">선택</option>
+              {eventCategories.map((ec) => (
+                <option key={ec.id} value={ec.id}>{ec.name}</option>
+              ))}
+            </select>
+          </div>
 
           {/* 학교/기관명 */}
           <div className={rowCls}>
@@ -658,7 +673,7 @@ export function EventForm({
 
       <div className="mt-8">
         <EventProgramUnitSection
-          eventCategories={eventCategories}
+          eventCategoryId={watch('event_category_id') ?? null}
           fields={fields}
           occupations={occupations}
           programs={programs}

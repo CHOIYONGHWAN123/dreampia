@@ -79,12 +79,13 @@ export type EventProgramSelectData = {
 }
 
 const EVENT_DETAIL_COLUMNS =
-  'id, name, institution_id, created_at, event_start_at, event_end_at, target_grade, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, student_rotation, notice, prep_note, memo, contact_name, contact_email, contact_phone, teacher_name, inflow_source, institution_type, sales_admin_id, budget, estimate_file_url, comm_admin_id'
+  'id, name, institution_id, event_category_id, created_at, event_start_at, event_end_at, target_grade, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, student_rotation, notice, prep_note, memo, contact_name, contact_email, contact_phone, teacher_name, inflow_source, institution_type, sales_admin_id, budget, estimate_file_url, comm_admin_id'
 
 export type EventDetailData = {
   id: string
   name: string
   institution_id: string | null
+  event_category_id: string | null
   created_at: string
   event_start_at: string | null
   event_end_at: string | null
@@ -191,6 +192,7 @@ export async function createEvent(data: {
   reception_date?: string
   name: string
   institution_id?: string | null
+  event_category_id?: string | null
   event_start_at?: string | null
   event_end_at?: string | null
   target_grade?: string | null
@@ -221,6 +223,7 @@ export async function createEvent(data: {
   const payload: Record<string, unknown> = {
     name: data.name,
     institution_id: data.institution_id || null,
+    event_category_id: data.event_category_id || null,
     event_start_at: data.event_start_at || null,
     event_end_at: data.event_end_at || null,
     target_grade: data.target_grade || null,
@@ -328,6 +331,7 @@ export async function updateEvent(
     reception_date?: string
     name: string
     institution_id?: string | null
+    event_category_id?: string | null
     event_start_at?: string | null
     event_end_at?: string | null
     target_grade?: string | null
@@ -359,6 +363,7 @@ export async function updateEvent(
   const payload: Record<string, unknown> = {
     name: data.name,
     institution_id: data.institution_id || null,
+    event_category_id: data.event_category_id || null,
     event_start_at: data.event_start_at || null,
     event_end_at: data.event_end_at || null,
     target_grade: data.target_grade || null,

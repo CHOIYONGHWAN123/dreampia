@@ -16,6 +16,7 @@ export const eventSchema = z.object({
   reception_date: z.string().optional(),
   name: z.string().min(1, '행사명을 입력해주세요'),
   institution_id: nullableString,
+  event_category_id: nullableString,
   event_start_at_date: z.string().optional(),
   event_start_at_time: z.string().optional(),
   event_end_at_date: z.string().optional(),
