@@ -1199,38 +1199,6 @@ export type Database = {
           },
         ]
       }
-      tasks: {
-        Row: {
-          created_at: string
-          event_id: string | null
-          id: string
-          is_done: boolean
-          task_type: Database["public"]["Enums"]["task_type"]
-        }
-        Insert: {
-          created_at?: string
-          event_id?: string | null
-          id?: string
-          is_done?: boolean
-          task_type: Database["public"]["Enums"]["task_type"]
-        }
-        Update: {
-          created_at?: string
-          event_id?: string | null
-          id?: string
-          is_done?: boolean
-          task_type?: Database["public"]["Enums"]["task_type"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       teachers: {
         Row: {
           created_at: string
@@ -1286,6 +1254,45 @@ export type Database = {
           service_terms?: string
         }
         Relationships: []
+      }
+      work_logs: {
+        Row: {
+          admin_id: string
+          created_at: string
+          event_id: string | null
+          id: string
+          task_type: Database["public"]["Enums"]["task_type"]
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          task_type: Database["public"]["Enums"]["task_type"]
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          task_type?: Database["public"]["Enums"]["task_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

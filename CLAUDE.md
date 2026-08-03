@@ -410,12 +410,12 @@ enum task_type {
 "보고서 전달"
 }
 
-// 나의 할일
-Table tasks {
+// 업무 로그 (나의 할일 - 관리자가 행사에 대해 어떤 작업을 했는지 기록)
+Table work_logs {
 id uuid [pk, default: `gen_random_uuid()`]
+admin_id uuid [ref: > admins.id, not null, note: '작업한 관리자']
 event_id uuid [ref: > events.id]
 task_type task_type [not null]
-is_done boolean [not null, default: false]
 created_at timestamp [not null, default: `now()`]
 }
 

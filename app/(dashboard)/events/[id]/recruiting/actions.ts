@@ -309,6 +309,13 @@ export async function createInvitation(input: {
     .eq('id', input.eventId)
   if (statusErr) throw new Error(statusErr.message)
 
+  if (user) {
+    const { error: logErr } = await supabase
+      .from('work_logs')
+      .insert({ admin_id: user.id, event_id: input.eventId, task_type: '강사 섭외' })
+    if (logErr) throw new Error(logErr.message)
+  }
+
   // TODO: 초대된 멘토에게 푸시 알림 발송 (추후 구현)
 
   revalidatePath(`/events/${input.eventId}/recruiting`)
@@ -366,6 +373,16 @@ export async function createAutoInvitation(
     .update({ recruit_status: '섭외진행중' })
     .eq('id', eventId)
   if (statusErr) throw new Error(statusErr.message)
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (user) {
+    const { error: logErr } = await supabase
+      .from('work_logs')
+      .insert({ admin_id: user.id, event_id: eventId, task_type: '강사 섭외' })
+    if (logErr) throw new Error(logErr.message)
+  }
 
   revalidatePath(`/events/${eventId}/recruiting`)
   revalidatePath('/my-tasks/recruiting')
