@@ -1,0 +1,1 @@
+alter table public.events rename column school_request_delivered to institution_request_delivered;

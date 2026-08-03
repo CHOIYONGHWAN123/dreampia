@@ -18,7 +18,7 @@ type EventUpdateData = {
   contract_status?: string | null
   contract_delivered?: boolean | null
   event_check_status?: number | null
-  school_request_delivered?: boolean | null
+  institution_request_delivered?: boolean | null
   admin_docs_delivered?: boolean | null
   payment_confirmed?: boolean | null
   photo_sent?: boolean | null

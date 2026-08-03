@@ -385,7 +385,7 @@ export type Database = {
           report_sent: boolean | null
           requested_dates: string[] | null
           sales_admin_id: string | null
-          school_request_delivered: boolean | null
+          institution_request_delivered: boolean | null
           start_recruit_at: string | null
           student_rotation: string | null
           supplies_status: Database["public"]["Enums"]["supplies_status"] | null
@@ -454,7 +454,7 @@ export type Database = {
           report_sent?: boolean | null
           requested_dates?: string[] | null
           sales_admin_id?: string | null
-          school_request_delivered?: boolean | null
+          institution_request_delivered?: boolean | null
           start_recruit_at?: string | null
           student_rotation?: string | null
           supplies_status?:
@@ -525,7 +525,7 @@ export type Database = {
           report_sent?: boolean | null
           requested_dates?: string[] | null
           sales_admin_id?: string | null
-          school_request_delivered?: boolean | null
+          institution_request_delivered?: boolean | null
           start_recruit_at?: string | null
           student_rotation?: string | null
           supplies_status?:

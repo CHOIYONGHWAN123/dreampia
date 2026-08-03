@@ -322,7 +322,7 @@ recruit_status recruit_status [note: '섭외대기/섭외진행중/섭외완료'
 institution_request_status recruit_status [note: '예정/전달/회신']
 start_recruit_at timestamp [note: '강사 섭외 시작일']  
  recruit_delivered boolean [default: false, note: '강사섭외 전달 여부']
-school_request_delivered boolean [default: false, note:'학교요청사항 전달 여부']
+institution_request_delivered boolean [default: false, note:'기관요청사항 전달 여부']
 admin_docs text [note: '행정서류']
 admin_docs_delivered boolean [default: false, note: '행정서류 전달여부']
 remarks text [note: '비고']
@@ -438,7 +438,7 @@ Table announcements {
 id uuid [pk, default: `gen_random_uuid()`]
 title varchar [not null]
 content text [not null]
-created_at timestamp [not null, default: `now()`]
+created_at [not null, default: `now()`]
 }
 
 // 배너

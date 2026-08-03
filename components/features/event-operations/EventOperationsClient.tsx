@@ -37,7 +37,7 @@ export type EventOperationRow = {
   commAdminName: string | null
   recruitStatus: string | null
   recruitDelivered: boolean | null
-  schoolRequestDelivered: boolean | null
+  institutionRequestDelivered: boolean | null
   crimeCheckMethod: string | null
   crimeCheckNotified: boolean | null
   crimeCheckStatus: string | null
@@ -930,10 +930,10 @@ export function EventOperationsClient({
                     {/* 학교요청 전달여부 */}
                     <td className={td}>
                       <BoolSelect
-                        value={row.schoolRequestDelivered}
+                        value={row.institutionRequestDelivered}
                         trueLabel="완료"
                         falseLabel="예정"
-                        onSave={(v) => updateEventField(row.id, { school_request_delivered: v })}
+                        onSave={(v) => updateEventField(row.id, { institution_request_delivered: v })}
                       />
                     </td>
 

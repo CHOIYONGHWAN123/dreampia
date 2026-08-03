@@ -35,7 +35,7 @@ export default async function EventOperationsPage({
 
   const { data: events } = await supabase
     .from('events')
-    .select(`id, name, event_start_at, event_end_at, target_grade, budget, contract_type, contract_status, contract_delivered, event_check_status, supplies_status, pre_notice_sent, recruit_status, recruit_delivered, start_recruit_at, school_request_delivered, crime_check_method, crime_check_notified, crime_check_status, admin_docs_delivered, estimate_file_url, teacher_name, remarks, group_chat_link, inflow_source, payment_confirmed, photo_sent, report_sent, field_admin_ids, comm_admin_id, sales_admin_id, institution_id`)
+    .select(`id, name, event_start_at, event_end_at, target_grade, budget, contract_type, contract_status, contract_delivered, event_check_status, supplies_status, pre_notice_sent, recruit_status, recruit_delivered, start_recruit_at, institution_request_delivered, crime_check_method, crime_check_notified, crime_check_status, admin_docs_delivered, estimate_file_url, teacher_name, remarks, group_chat_link, inflow_source, payment_confirmed, photo_sent, report_sent, field_admin_ids, comm_admin_id, sales_admin_id, institution_id`)
     .gte('event_end_at', startOfMonth)
     .lte('event_end_at', endOfMonth)
     .order('event_end_at', { ascending: true })
@@ -136,7 +136,7 @@ export default async function EventOperationsPage({
       commAdminName: e.comm_admin_id ? (adminMap.get(e.comm_admin_id) ?? null) : null,
       recruitStatus: e.recruit_status,
       recruitDelivered: e.recruit_delivered,
-      schoolRequestDelivered: e.school_request_delivered,
+      institutionRequestDelivered: e.institution_request_delivered,
       crimeCheckMethod: e.crime_check_method,
       crimeCheckNotified: e.crime_check_notified,
       crimeCheckStatus: e.crime_check_status,
