@@ -12,6 +12,7 @@ const menus: MenuItem[] = [
     label: '나의 할일',
     children: [
       { href: '/my-tasks/recruiting', label: '강사 섭외' },
+      { href: '/my-tasks/estimate', label: '견적서 제작' },
       { href: '/my-tasks/supplies', label: '준비물 준비' },
       { href: '/my-tasks/recruit-delivery', label: '강사 섭외 전달' },
       { href: '/my-tasks/institution-request', label: '기관 요청사항 전달' },
