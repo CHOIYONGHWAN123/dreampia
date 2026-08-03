@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { deleteEvent } from "@/app/(dashboard)/events/actions";
@@ -67,21 +67,13 @@ export function InstitutionDetailClient({
   events: Event[];
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const supabase = createClient();
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [localEvents, setLocalEvents] = useState<Event[]>(events);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  // 나의 할일 > 준비물 준비의 "준비하기" 버튼에서 ?highlightEventId=로 들어온 행사는
-  // recruit_status가 아직 섭외대기라 "진행" 표에 안 잡히더라도 강제로 포함시켜서
-  // 준비물 준비 셀을 하이라이트해 보여줄 수 있게 한다.
-  const highlightEventId = searchParams.get("highlightEventId");
   const inProgressEvents = localEvents.filter(
-    (e) =>
-      e.recruit_status === "섭외진행중" ||
-      e.recruit_status === "섭외완료" ||
-      e.id === highlightEventId,
+    (e) => e.recruit_status === "섭외진행중" || e.recruit_status === "섭외완료",
   );
 
   const patchEvent = (eventId: string, patch: Partial<Event>) => {
@@ -426,13 +418,7 @@ export function InstitutionDetailClient({
                     </td>
 
                     {/* 준비물 준비 */}
-                    <td
-                      className={`px-3 py-2.5 text-center ${
-                        event.id === highlightEventId
-                          ? "bg-yellow-100 ring-2 ring-inset ring-yellow-400"
-                          : ""
-                      }`}
-                    >
+                    <td className="px-3 py-2.5 text-center">
                       <select
                         value={event.supplies_status ?? "체크 전"}
                         onChange={(e) =>
