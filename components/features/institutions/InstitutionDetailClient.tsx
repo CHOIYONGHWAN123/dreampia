@@ -1,117 +1,122 @@
-'use client'
+"use client";
 
-import { useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { createClient } from '@/lib/supabase'
-import { deleteEvent } from '@/app/(dashboard)/events/actions'
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase";
+import { deleteEvent } from "@/app/(dashboard)/events/actions";
 
 type Institution = {
-  id: string
-  name: string
-  address: string | null
-}
+  id: string;
+  name: string;
+  address: string | null;
+};
 
 type Event = {
-  id: string
-  name: string
-  memo: string | null
-  teacher_name: string | null
-  recruit_status: string | null
-  event_start_at: string | null
-  event_end_at: string | null
-  start_recruit_at: string | null
-  recruit_delivered: boolean | null
-  institution_request_status: string | null
-  estimate_file_url: string | null
-  admin_docs_delivered: boolean | null
-  contract_status: string | null
-}
+  id: string;
+  name: string;
+  memo: string | null;
+  teacher_name: string | null;
+  recruit_status: string | null;
+  event_start_at: string | null;
+  event_end_at: string | null;
+  start_recruit_at: string | null;
+  recruit_delivered: boolean | null;
+  institution_request_status: string | null;
+  estimate_file_url: string | null;
+  admin_docs_delivered: boolean | null;
+  contract_status: string | null;
+};
 
-const DISABLED_BTN = 'px-3 py-1 text-xs border border-gray-200 rounded text-gray-300 cursor-not-allowed whitespace-nowrap'
-const SELECT_CLS = 'border border-gray-300 rounded px-2 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400'
+const DISABLED_BTN =
+  "px-3 py-1 text-xs border border-gray-200 rounded text-gray-300 cursor-not-allowed whitespace-nowrap";
+const SELECT_CLS =
+  "border border-gray-300 rounded px-2 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400";
 
 function formatDateTime(dt: string | null) {
-  if (!dt) return '-'
-  return new Date(dt).toLocaleDateString('ko-KR', { year: '2-digit', month: 'numeric', day: 'numeric' })
+  if (!dt) return "-";
+  return new Date(dt).toLocaleDateString("ko-KR", {
+    year: "2-digit",
+    month: "numeric",
+    day: "numeric",
+  });
 }
 
-function getEventStatus(event: Event): '진행중' | '종료' {
-  if (event.event_end_at && new Date(event.event_end_at) < new Date()) return '종료'
-  return '진행중'
+function getEventStatus(event: Event): "진행중" | "종료" {
+  if (event.event_end_at && new Date(event.event_end_at) < new Date())
+    return "종료";
+  return "진행중";
 }
 
 export function InstitutionDetailClient({
   institution,
   events,
 }: {
-  institution: Institution
-  events: Event[]
+  institution: Institution;
+  events: Event[];
 }) {
-  const router = useRouter()
-  const supabase = createClient()
-  const [startingId, setStartingId] = useState<string | null>(null)
-  const [uploadingId, setUploadingId] = useState<string | null>(null)
-  const [localEvents, setLocalEvents] = useState<Event[]>(events)
-  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const router = useRouter();
+  const supabase = createClient();
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [localEvents, setLocalEvents] = useState<Event[]>(events);
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const pendingEvents = localEvents.filter(
-    (e) => e.recruit_status === '섭외대기' || e.recruit_status === null
-  )
   const inProgressEvents = localEvents.filter(
-    (e) => e.recruit_status === '섭외진행중' || e.recruit_status === '섭외완료'
-  )
+    (e) => e.recruit_status === "섭외진행중" || e.recruit_status === "섭외완료",
+  );
 
   const patchEvent = (eventId: string, patch: Partial<Event>) => {
-    setLocalEvents((prev) => prev.map((e) => (e.id === eventId ? { ...e, ...patch } : e)))
-  }
+    setLocalEvents((prev) =>
+      prev.map((e) => (e.id === eventId ? { ...e, ...patch } : e)),
+    );
+  };
 
-  const handleStartRecruit = async (eventId: string) => {
-    setStartingId(eventId)
-    const now = new Date().toISOString()
+  const handleUpdateField = async (
+    eventId: string,
+    field: string,
+    value: boolean | string | null,
+  ) => {
     const { error } = await supabase
-      .from('events')
-      .update({ recruit_status: '섭외진행중', start_recruit_at: now })
-      .eq('id', eventId)
-    if (!error) patchEvent(eventId, { recruit_status: '섭외진행중', start_recruit_at: now })
-    setStartingId(null)
-  }
-
-  const handleUpdateField = async (eventId: string, field: string, value: boolean | string | null) => {
-    const { error } = await supabase.from('events').update({ [field]: value }).eq('id', eventId)
-    if (!error) patchEvent(eventId, { [field]: value } as Partial<Event>)
-  }
+      .from("events")
+      .update({ [field]: value })
+      .eq("id", eventId);
+    if (!error) patchEvent(eventId, { [field]: value } as Partial<Event>);
+  };
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (!confirm('이 행사를 삭제하시겠습니까?')) return
+    if (!confirm("이 행사를 삭제하시겠습니까?")) return;
     try {
-      await deleteEvent(eventId)
-      setLocalEvents((prev) => prev.filter((e) => e.id !== eventId))
+      await deleteEvent(eventId);
+      setLocalEvents((prev) => prev.filter((e) => e.id !== eventId));
     } catch (e) {
-      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+      alert(e instanceof Error ? e.message : "삭제에 실패했습니다.");
     }
-  }
+  };
 
   const handleEstimateUpload = async (eventId: string, file: File) => {
-    setUploadingId(eventId)
-    const ext = file.name.split('.').pop()
-    const path = `estimates/${eventId}.${ext}`
+    setUploadingId(eventId);
+    const ext = file.name.split(".").pop();
+    const path = `estimates/${eventId}.${ext}`;
     const { error: uploadError } = await supabase.storage
-      .from('files')
-      .upload(path, file, { upsert: true })
+      .from("files")
+      .upload(path, file, { upsert: true });
 
     if (!uploadError) {
-      const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
-      await handleUpdateField(eventId, 'estimate_file_url', urlData.publicUrl)
+      const { data: urlData } = supabase.storage
+        .from("files")
+        .getPublicUrl(path);
+      await handleUpdateField(eventId, "estimate_file_url", urlData.publicUrl);
     }
-    setUploadingId(null)
-  }
+    setUploadingId(null);
+  };
 
   return (
     <div className="p-8">
       {/* 헤더 */}
       <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">학교별 행사 관리 페이지</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          기관별 행사 관리 페이지
+        </h1>
         <button
           type="button"
           className="px-4 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors"
@@ -126,12 +131,18 @@ export function InstitutionDetailClient({
         <table className="w-full text-sm">
           <tbody>
             <tr className="border-b border-gray-100">
-              <td className="px-4 py-2.5 text-gray-500 bg-gray-50 w-20 font-medium">기관명</td>
+              <td className="px-4 py-2.5 text-gray-500 bg-gray-50 w-20 font-medium">
+                기관명
+              </td>
               <td className="px-4 py-2.5 text-gray-800">{institution.name}</td>
             </tr>
             <tr>
-              <td className="px-4 py-2.5 text-gray-500 bg-gray-50 font-medium">주소</td>
-              <td className="px-4 py-2.5 text-gray-800">{institution.address ?? '~'}</td>
+              <td className="px-4 py-2.5 text-gray-500 bg-gray-50 font-medium">
+                주소
+              </td>
+              <td className="px-4 py-2.5 text-gray-800">
+                {institution.address ?? "~"}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -141,15 +152,21 @@ export function InstitutionDetailClient({
       <div className="mb-8">
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-700">등록된 행사</span>
+            <span className="text-sm font-semibold text-gray-700">
+              등록된 행사
+            </span>
             {localEvents.length > 0 && (
-              <span className="text-xs font-bold text-gray-400">{localEvents.length}</span>
+              <span className="text-xs font-bold text-gray-400">
+                {localEvents.length}
+              </span>
             )}
           </div>
           <button
             type="button"
             className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
-            onClick={() => router.push(`/events/new?institutionId=${institution.id}`)}
+            onClick={() =>
+              router.push(`/events/new?institutionId=${institution.id}`)
+            }
           >
             행사 등록
           </button>
@@ -159,47 +176,69 @@ export function InstitutionDetailClient({
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-12">no</th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-20">상태</th>
-                <th className="px-4 py-2.5 text-left font-medium text-gray-700">행사명</th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">시작일시</th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">종료일시</th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-36">담당선생님</th>
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-12">
+                  no
+                </th>
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-20">
+                  상태
+                </th>
+                <th className="px-4 py-2.5 text-left font-medium text-gray-700">
+                  행사명
+                </th>
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">
+                  시작일시
+                </th>
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">
+                  종료일시
+                </th>
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-36">
+                  담당선생님
+                </th>
                 <th className="px-4 py-2.5 w-16" />
               </tr>
             </thead>
             <tbody>
               {localEvents.length > 0 ? (
                 localEvents.map((event, index) => {
-                  const status = getEventStatus(event)
+                  const status = getEventStatus(event);
                   return (
                     <tr
                       key={event.id}
                       className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 cursor-pointer"
                       onClick={() => router.push(`/events/${event.id}`)}
                     >
-                      <td className="px-4 py-2.5 text-center text-gray-500">{index + 1}</td>
+                      <td className="px-4 py-2.5 text-center text-gray-500">
+                        {index + 1}
+                      </td>
                       <td className="px-4 py-2.5 text-center">
                         <span
                           className={
-                            status === '진행중'
-                              ? 'inline-block px-2 py-0.5 text-xs font-medium rounded bg-blue-50 text-blue-600'
-                              : 'inline-block px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-500'
+                            status === "진행중"
+                              ? "inline-block px-2 py-0.5 text-xs font-medium rounded bg-blue-50 text-blue-600"
+                              : "inline-block px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-500"
                           }
                         >
                           [{status}]
                         </span>
                       </td>
-                      <td className="px-4 py-2.5 text-gray-800">{event.name}</td>
-                      <td className="px-4 py-2.5 text-center text-gray-600">{formatDateTime(event.event_start_at)}</td>
-                      <td className="px-4 py-2.5 text-center text-gray-600">{formatDateTime(event.event_end_at)}</td>
-                      <td className="px-4 py-2.5 text-center text-gray-600">{event.teacher_name ?? '-'}</td>
+                      <td className="px-4 py-2.5 text-gray-800">
+                        {event.name}
+                      </td>
+                      <td className="px-4 py-2.5 text-center text-gray-600">
+                        {formatDateTime(event.event_start_at)}
+                      </td>
+                      <td className="px-4 py-2.5 text-center text-gray-600">
+                        {formatDateTime(event.event_end_at)}
+                      </td>
+                      <td className="px-4 py-2.5 text-center text-gray-600">
+                        {event.teacher_name ?? "-"}
+                      </td>
                       <td className="px-4 py-2.5 text-center">
                         <button
                           type="button"
                           onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteEvent(event.id)
+                            e.stopPropagation();
+                            handleDeleteEvent(event.id);
                           }}
                           className="text-xs text-red-400 hover:text-red-600"
                         >
@@ -207,7 +246,7 @@ export function InstitutionDetailClient({
                         </button>
                       </td>
                     </tr>
-                  )
+                  );
                 })
               ) : (
                 <tr>
@@ -221,126 +260,147 @@ export function InstitutionDetailClient({
         </div>
       </div>
 
-      {/* 섭외 대기 */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-sm font-semibold text-gray-700">섭외 대기</span>
-          {pendingEvents.length > 0 && (
-            <span className="text-xs font-bold text-red-500">{pendingEvents.length}</span>
-          )}
-        </div>
-
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-amber-50 border-b border-gray-200">
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-12">no</th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">시작일시</th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">종료일시</th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700">행사명</th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700">메모</th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-36">담당선생님</th>
-                <th className="px-4 py-2.5 w-28" />
-              </tr>
-            </thead>
-            <tbody>
-              {pendingEvents.length > 0 ? (
-                pendingEvents.map((event, index) => (
-                  <tr key={event.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
-                    <td className="px-4 py-2.5 text-center text-gray-600">{index + 1}</td>
-                    <td className="px-4 py-2.5 text-center text-gray-800">{formatDateTime(event.event_start_at)}</td>
-                    <td className="px-4 py-2.5 text-center text-gray-800">{formatDateTime(event.event_end_at)}</td>
-                    <td className="px-4 py-2.5 text-gray-800">
-                      <Link
-                        href={`/events/${event.id}/recruiting`}
-                        className="underline underline-offset-2 hover:text-gray-600 transition-colors"
-                      >
-                        {event.name}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-2.5 text-gray-600">{event.memo ?? '-'}</td>
-                    <td className="px-4 py-2.5 text-center text-gray-800">{event.teacher_name ?? '-'}</td>
-                    <td className="px-4 py-2.5 text-center">
-                      <button
-                        type="button"
-                        disabled={startingId === event.id}
-                        className="px-3 py-1 text-xs bg-gray-900 text-white rounded hover:bg-gray-700 transition-colors disabled:opacity-50 whitespace-nowrap"
-                        onClick={() => handleStartRecruit(event.id)}
-                      >
-                        {startingId === event.id ? '처리중...' : '섭외 시작'}
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="py-10 text-center text-gray-400">
-                    섭외 대기 중인 행사가 없습니다.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       {/* 진행 */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-sm font-semibold text-gray-700">진행</span>
           {inProgressEvents.length > 0 && (
-            <span className="text-xs font-bold text-red-500">{inProgressEvents.length}</span>
+            <span className="text-xs font-bold text-red-500">
+              {inProgressEvents.length}
+            </span>
           )}
         </div>
 
         <div className="border border-gray-200 rounded-lg overflow-x-auto">
-          <table className="text-sm" style={{ minWidth: '1600px' }}>
+          <table className="text-sm" style={{ minWidth: "1600px" }}>
             <thead>
               <tr className="bg-amber-50 border-b border-gray-200">
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-12">no</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">시작일시</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">종료일시</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-36">행사명</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32">담당선생님</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">강사 섭외 현황</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">섭외 현황<br />페이지</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">강사섭외일자</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">강사 섭외<br />전달 여부</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">학교요청사항<br />다운</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">학교요청사항</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32">성범조 조회서<br />등록 알림</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">견적서</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">행정서류<br />다운받기</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">행정서류<br />전달</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">계약 현황</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">공지사항<br />알림보내기</th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-16">삭제</th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-12">
+                  no
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">
+                  시작일시
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">
+                  종료일시
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-36">
+                  행사명
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32">
+                  담당선생님
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                  강사 섭외 현황
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">
+                  섭외 현황
+                  <br />
+                  페이지
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                  강사섭외일자
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                  강사 섭외
+                  <br />
+                  전달 여부
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                  학교요청사항
+                  <br />
+                  다운
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                  학교요청사항
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32">
+                  성범조 조회서
+                  <br />
+                  등록 알림
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">
+                  견적서
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                  행정서류
+                  <br />
+                  다운받기
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                  행정서류
+                  <br />
+                  전달
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                  계약 현황
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                  공지사항
+                  <br />
+                  알림보내기
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-16">
+                  삭제
+                </th>
               </tr>
             </thead>
             <tbody>
               {inProgressEvents.length > 0 ? (
                 inProgressEvents.map((event, index) => (
-                  <tr key={event.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
-                    <td className="px-3 py-2.5 text-center text-gray-600">{index + 1}</td>
-                    <td className="px-3 py-2.5 text-center text-gray-800">{formatDateTime(event.event_start_at)}</td>
-                    <td className="px-3 py-2.5 text-center text-gray-800">{formatDateTime(event.event_end_at)}</td>
+                  <tr
+                    key={event.id}
+                    className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50"
+                  >
+                    <td className="px-3 py-2.5 text-center text-gray-600">
+                      {index + 1}
+                    </td>
+                    <td className="px-3 py-2.5 text-center text-gray-800">
+                      {formatDateTime(event.event_start_at)}
+                    </td>
+                    <td className="px-3 py-2.5 text-center text-gray-800">
+                      {formatDateTime(event.event_end_at)}
+                    </td>
                     <td className="px-3 py-2.5 text-gray-800">{event.name}</td>
-                    <td className="px-3 py-2.5 text-center text-gray-800">{event.teacher_name ?? '-'}</td>
-                    <td className="px-3 py-2.5 text-center text-gray-800">{event.recruit_status ?? '-'}</td>
+                    <td className="px-3 py-2.5 text-center text-gray-800">
+                      {event.teacher_name ?? "-"}
+                    </td>
+                    <td className="px-3 py-2.5 text-center text-gray-800">
+                      {event.recruit_status ? (
+                        <Link
+                          href={`/events/${event.id}/recruiting`}
+                          className="underline underline-offset-2 hover:text-gray-600 transition-colors"
+                        >
+                          {event.recruit_status}
+                        </Link>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
 
                     {/* 섭외 현황 페이지 - 비활성화 */}
                     <td className="px-3 py-2.5 text-center">
-                      <button type="button" disabled className={DISABLED_BTN}>보기</button>
+                      <button type="button" disabled className={DISABLED_BTN}>
+                        보기
+                      </button>
                     </td>
 
                     {/* 강사섭외일자 */}
-                    <td className="px-3 py-2.5 text-center text-gray-800">{formatDateTime(event.start_recruit_at)}</td>
+                    <td className="px-3 py-2.5 text-center text-gray-800">
+                      {formatDateTime(event.start_recruit_at)}
+                    </td>
 
                     {/* 강사 섭외 전달 여부 */}
                     <td className="px-3 py-2.5 text-center">
                       <select
-                        value={event.recruit_delivered ? 'true' : 'false'}
-                        onChange={(e) => handleUpdateField(event.id, 'recruit_delivered', e.target.value === 'true')}
+                        value={event.recruit_delivered ? "true" : "false"}
+                        onChange={(e) =>
+                          handleUpdateField(
+                            event.id,
+                            "recruit_delivered",
+                            e.target.value === "true",
+                          )
+                        }
                         className={SELECT_CLS}
                       >
                         <option value="false">예정</option>
@@ -350,14 +410,22 @@ export function InstitutionDetailClient({
 
                     {/* 학교요청사항 다운 - 비활성화 */}
                     <td className="px-3 py-2.5 text-center">
-                      <button type="button" disabled className={DISABLED_BTN}>다운</button>
+                      <button type="button" disabled className={DISABLED_BTN}>
+                        다운
+                      </button>
                     </td>
 
                     {/* 학교요청사항 */}
                     <td className="px-3 py-2.5 text-center">
                       <select
-                        value={event.institution_request_status ?? '예정'}
-                        onChange={(e) => handleUpdateField(event.id, 'institution_request_status', e.target.value)}
+                        value={event.institution_request_status ?? "예정"}
+                        onChange={(e) =>
+                          handleUpdateField(
+                            event.id,
+                            "institution_request_status",
+                            e.target.value,
+                          )
+                        }
                         className={SELECT_CLS}
                       >
                         <option value="예정">예정</option>
@@ -368,7 +436,9 @@ export function InstitutionDetailClient({
 
                     {/* 성범조 조회서 등록 알림 - 비활성화 */}
                     <td className="px-3 py-2.5 text-center">
-                      <button type="button" disabled className={DISABLED_BTN}>알림보내기</button>
+                      <button type="button" disabled className={DISABLED_BTN}>
+                        알림보내기
+                      </button>
                     </td>
 
                     {/* 견적서 파일 업로드 */}
@@ -376,12 +446,14 @@ export function InstitutionDetailClient({
                       <input
                         type="file"
                         className="hidden"
-                        ref={(el) => { fileInputRefs.current[event.id] = el }}
+                        ref={(el) => {
+                          fileInputRefs.current[event.id] = el;
+                        }}
                         accept=".pdf,.hwp,.xlsx,.xls,.doc,.docx"
                         onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) handleEstimateUpload(event.id, file)
-                          e.target.value = ''
+                          const file = e.target.files?.[0];
+                          if (file) handleEstimateUpload(event.id, file);
+                          e.target.value = "";
                         }}
                       />
                       <button
@@ -390,20 +462,32 @@ export function InstitutionDetailClient({
                         className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-50"
                         onClick={() => fileInputRefs.current[event.id]?.click()}
                       >
-                        {uploadingId === event.id ? '업로드중...' : event.estimate_file_url ? '재업로드' : '업로드'}
+                        {uploadingId === event.id
+                          ? "업로드중..."
+                          : event.estimate_file_url
+                            ? "재업로드"
+                            : "업로드"}
                       </button>
                     </td>
 
                     {/* 행정서류 다운받기 - 비활성화 */}
                     <td className="px-3 py-2.5 text-center">
-                      <button type="button" disabled className={DISABLED_BTN}>다운받기</button>
+                      <button type="button" disabled className={DISABLED_BTN}>
+                        다운받기
+                      </button>
                     </td>
 
                     {/* 행정서류 전달 */}
                     <td className="px-3 py-2.5 text-center">
                       <select
-                        value={event.admin_docs_delivered ? 'true' : 'false'}
-                        onChange={(e) => handleUpdateField(event.id, 'admin_docs_delivered', e.target.value === 'true')}
+                        value={event.admin_docs_delivered ? "true" : "false"}
+                        onChange={(e) =>
+                          handleUpdateField(
+                            event.id,
+                            "admin_docs_delivered",
+                            e.target.value === "true",
+                          )
+                        }
                         className={SELECT_CLS}
                       >
                         <option value="false">예정</option>
@@ -412,11 +496,15 @@ export function InstitutionDetailClient({
                     </td>
 
                     {/* 계약 현황 */}
-                    <td className="px-3 py-2.5 text-center text-gray-800">{event.contract_status ?? '-'}</td>
+                    <td className="px-3 py-2.5 text-center text-gray-800">
+                      {event.contract_status ?? "-"}
+                    </td>
 
                     {/* 공지사항 알림보내기 - 비활성화 */}
                     <td className="px-3 py-2.5 text-center">
-                      <button type="button" disabled className={DISABLED_BTN}>알림보내기</button>
+                      <button type="button" disabled className={DISABLED_BTN}>
+                        알림보내기
+                      </button>
                     </td>
 
                     {/* 삭제 */}
@@ -443,5 +531,5 @@ export function InstitutionDetailClient({
         </div>
       </div>
     </div>
-  )
+  );
 }
