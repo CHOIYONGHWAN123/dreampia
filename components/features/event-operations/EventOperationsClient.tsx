@@ -29,6 +29,7 @@ export type EventOperationRow = {
   budget: number | null
   contractType: string | null
   contractStatus: string | null
+  contractDelivered: boolean | null
   eventCheckStatus: number
   suppliesStatus: string | null
   preNoticeSent: boolean
@@ -750,6 +751,7 @@ export function EventOperationsClient({
               <th className={th} style={{ width: 80 }}>예산</th>
               <th className={th} style={{ width: 100 }}>계약종류</th>
               <th className={th} style={{ width: 130 }}>계약현황</th>
+              <th className={th} style={{ width: 90 }}>계약<br />전달여부</th>
               <th className={th} style={{ width: 80 }}>행사체크</th>
               <th className={th} style={{ width: 80 }}>준비물</th>
               <th className={th} style={{ width: 72 }}>행사안내<br />(1주일전)</th>
@@ -854,6 +856,16 @@ export function EventOperationsClient({
                         value={row.contractStatus}
                         options={CONTRACT_STATUS_OPTIONS}
                         onSave={(v) => updateEventField(row.id, { contract_status: v })}
+                      />
+                    </td>
+
+                    {/* 계약 전달여부 */}
+                    <td className={td}>
+                      <BoolSelect
+                        value={row.contractDelivered}
+                        trueLabel="완료"
+                        falseLabel="예정"
+                        onSave={(v) => updateEventField(row.id, { contract_delivered: v })}
                       />
                     </td>
 

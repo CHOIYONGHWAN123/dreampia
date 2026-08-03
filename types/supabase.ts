@@ -335,6 +335,7 @@ export type Database = {
           contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
+          contract_delivered: boolean
           contract_status: Database["public"]["Enums"]["contract_status"] | null
           contract_type: Database["public"]["Enums"]["contract_type"] | null
           created_at: string
@@ -401,6 +402,7 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
+          contract_delivered?: boolean
           contract_status?:
             | Database["public"]["Enums"]["contract_status"]
             | null
@@ -471,6 +473,7 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
+          contract_delivered?: boolean
           contract_status?:
             | Database["public"]["Enums"]["contract_status"]
             | null

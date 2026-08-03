@@ -16,6 +16,7 @@ export async function updateCrimeCheckNotified(eventId: string) {
 type EventUpdateData = {
   contract_type?: string | null
   contract_status?: string | null
+  contract_delivered?: boolean | null
   event_check_status?: number | null
   school_request_delivered?: boolean | null
   admin_docs_delivered?: boolean | null

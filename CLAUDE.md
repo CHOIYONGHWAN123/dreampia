@@ -316,6 +316,7 @@ estimate_file_url varchar [note: '견적서 파일 URL']
 recruit_start_date date
 comm_content text [note: '소통 내용']
 contract_status contract_status
+contract_delivered boolean [not null, default: false, note: '계약서 전달 여부']
 supplies_status supplies_status [note: '체크전/재고이상무/준비완료 등']
 recruit_status recruit_status [note: '섭외대기/섭외진행중/섭외완료']
 institution_request_status recruit_status [note: '예정/전달/회신']
@@ -338,7 +339,6 @@ has_elevator boolean [note: '엘리베이터 유무']
 floor_map_url varchar [note: '학교 배치도 파일 URL']
 group_chat_link varchar
 created_at timestamp [not null, default: `now()`]
-
 }
 
 <!-- Table event_schedules {
