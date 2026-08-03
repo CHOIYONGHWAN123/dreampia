@@ -10,6 +10,12 @@ export type RecruitingRow = {
   eventEndAt: string | null
   salesAdminName: string | null
   commAdminName: string | null
+  recruitStatus: string | null
+}
+
+const RECRUIT_STATUS_LABEL: Record<string, string> = {
+  섭외대기: '섭외 대기',
+  섭외진행중: '섭외 진행중',
 }
 
 function fmtDate(iso: string | null) {
@@ -42,7 +48,8 @@ export function RecruitingClient({ rows }: { rows: RecruitingRow[] }) {
               <th className="px-4 py-2.5 text-center font-medium text-gray-700">기관명</th>
               <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">영업담당자</th>
               <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">소통담당자</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-24">섭외</th>
+              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">상태</th>
+              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-32">섭외</th>
             </tr>
           </thead>
           <tbody>
@@ -63,20 +70,22 @@ export function RecruitingClient({ rows }: { rows: RecruitingRow[] }) {
                   </td>
                   <td className="px-4 py-2.5 text-center text-gray-800">{row.salesAdminName ?? '-'}</td>
                   <td className="px-4 py-2.5 text-center text-gray-800">{row.commAdminName ?? '-'}</td>
+                  <td className="px-4 py-2.5 text-center text-gray-800">
+                    {row.recruitStatus ? RECRUIT_STATUS_LABEL[row.recruitStatus] ?? row.recruitStatus : '-'}
+                  </td>
                   <td className="px-4 py-2.5 text-center">
-                    <button
-                      type="button"
-                      disabled
-                      className="px-3 py-1 text-xs border border-gray-200 rounded text-gray-400 bg-gray-50 cursor-not-allowed"
+                    <Link
+                      href={`/events/${row.id}/recruiting`}
+                      className="inline-block px-3 py-1 text-xs border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap"
                     >
-                      시작
-                    </button>
+                      섭외 페이지로 이동
+                    </Link>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="py-16 text-center text-gray-400">
+                <td colSpan={7} className="py-16 text-center text-gray-400">
                   등록된 행사가 없습니다.
                 </td>
               </tr>

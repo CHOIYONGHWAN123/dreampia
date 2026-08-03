@@ -302,9 +302,17 @@ export async function createInvitation(input: {
     .insert(input.mentorIds.map((mentor_id) => ({ invitation_id: invitation.id, mentor_id, notified_at: now })))
   if (mentorsErr) throw new Error(mentorsErr.message)
 
+  // 수동으로든 자동으로든 섭외를 시작했으니 이 행사는 더 이상 "섭외대기"가 아니다.
+  const { error: statusErr } = await supabase
+    .from('events')
+    .update({ recruit_status: '섭외진행중' })
+    .eq('id', input.eventId)
+  if (statusErr) throw new Error(statusErr.message)
+
   // TODO: 초대된 멘토에게 푸시 알림 발송 (추후 구현)
 
   revalidatePath(`/events/${input.eventId}/recruiting`)
+  revalidatePath('/my-tasks/recruiting')
 }
 
 // 자동 섭외: 가능한(등록+시간충돌없음+활동가능) 멘토 중 점수 1등에게만 발송하고,
@@ -352,7 +360,15 @@ export async function createAutoInvitation(
   })
   if (error) throw new Error(error.message)
 
+  // 자동 섭외를 시작했으니 이 행사는 더 이상 "섭외대기"가 아니다.
+  const { error: statusErr } = await supabase
+    .from('events')
+    .update({ recruit_status: '섭외진행중' })
+    .eq('id', eventId)
+  if (statusErr) throw new Error(statusErr.message)
+
   revalidatePath(`/events/${eventId}/recruiting`)
+  revalidatePath('/my-tasks/recruiting')
 }
 
 // 관리자가 실수로 시작한 진행 중인 초대를 취소한다. invitations는 이미 '취소' 상태값이
