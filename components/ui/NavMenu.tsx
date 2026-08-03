@@ -20,6 +20,7 @@ const menus: MenuItem[] = [
       { href: '/my-tasks/contract-delivery', label: '계약 전달' },
       { href: '/my-tasks/pre-notice', label: '행사 안내' },
       { href: '/my-tasks/photo-delivery', label: '행사 사진 전달' },
+      { href: '/my-tasks/report-delivery', label: '보고서 전달' },
     ],
   },
   { href: '/counter', label: '카운터 관리' },
