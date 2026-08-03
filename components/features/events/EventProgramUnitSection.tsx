@@ -380,140 +380,136 @@ export function EventProgramUnitSection({
         </div>
       )}
 
-      {/* 추가된 프로그램 목록 */}
-      <div className="space-y-2">
-        {value.length === 0 ? (
-          <p className="text-xs text-gray-400">추가된 프로그램이 없습니다.</p>
-        ) : (
-          value.map((v) => {
-            const lectureFeeAfterTax = calcLectureFeeAfterTax(v.lectureFee)
-            const candidateMentors = mentorsByUnit[v.unitId] ?? []
-            return (
-              <div key={v.key} className="border border-gray-200 rounded p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="font-medium text-gray-800 text-sm">{v.title}</span>
-                    <span className="text-xs text-gray-400 ml-2">
-                      {v.fieldName} &gt; {v.occupationName} &gt; {v.programName}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeUnit(v.key)}
-                    className="text-xs text-red-400 hover:text-red-600"
-                  >
-                    삭제
-                  </button>
-                </div>
-
-                <div>
-                  <label className="text-xs text-gray-500 mb-0.5 block">강사 배정</label>
-                  {(() => {
-                    const assignedMentor = v.mentorId
-                      ? candidateMentors.find((m) => m.id === v.mentorId)
-                      : undefined
-                    return (
-                      <p className="text-sm text-gray-600">
-                        {assignedMentor
-                          ? `${assignedMentor.name} (배정 완료)`
-                          : '미배정 (저장 후 강사 섭외 페이지에서 진행)'}
-                      </p>
-                    )
-                  })()}
-                </div>
-
-                <div className="grid grid-cols-4 gap-2">
-                  <div>
-                    <label className="text-xs text-gray-500 mb-0.5 block">시작 일시</label>
-                    <input
-                      type="datetime-local"
-                      value={v.startTime}
-                      onChange={(e) => updateUnit(v.key, { startTime: e.target.value })}
-                      className={fieldInputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 mb-0.5 block">종료 일시</label>
-                    <input
-                      type="datetime-local"
-                      value={v.endTime}
-                      onChange={(e) => updateUnit(v.key, { endTime: e.target.value })}
-                      className={fieldInputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 mb-0.5 block">강의실</label>
-                    <input
-                      type="text"
-                      value={v.classroom}
-                      onChange={(e) => updateUnit(v.key, { classroom: e.target.value })}
-                      placeholder="예: 1-1반"
-                      className={fieldInputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 mb-0.5 block">대상</label>
-                    <input
-                      type="text"
-                      value={v.target}
-                      onChange={(e) => updateUnit(v.key, { target: e.target.value })}
-                      placeholder="예: 1학년, 2학년, 3학년"
-                      className={fieldInputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 mb-0.5 block">강의료</label>
-                    <input
-                      type="number"
-                      value={v.lectureFee ?? ''}
-                      onChange={(e) =>
-                        updateUnit(v.key, { lectureFee: e.target.value === '' ? null : Number(e.target.value) })
-                      }
-                      min={0}
-                      className={fieldInputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 mb-0.5 block">강의료(세후)</label>
-                    <input
-                      type="text"
-                      value={lectureFeeAfterTax !== null ? lectureFeeAfterTax.toLocaleString() : ''}
-                      readOnly
-                      placeholder="자동 계산(3.3% 제외)"
-                      className={`${fieldInputCls} bg-gray-50 text-gray-500`}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 mb-0.5 block">인원수</label>
-                    <input
-                      type="number"
-                      value={v.headcount ?? ''}
-                      onChange={(e) =>
-                        updateUnit(v.key, { headcount: e.target.value === '' ? null : Number(e.target.value) })
-                      }
-                      min={0}
-                      className={fieldInputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 mb-0.5 block">차시별 인원수</label>
-                    <input
-                      type="number"
-                      value={v.sessionHeadcount ?? ''}
-                      onChange={(e) =>
-                        updateUnit(v.key, {
-                          sessionHeadcount: e.target.value === '' ? null : Number(e.target.value),
-                        })
-                      }
-                      min={0}
-                      className={fieldInputCls}
-                    />
-                  </div>
-                </div>
-              </div>
-            )
-          })
-        )}
+      {/* 추가된 프로그램 목록 - 엑셀 시트처럼 프로그램 1개당 1행 */}
+      <div className="border border-gray-200 rounded-lg overflow-x-auto">
+        <table className="text-sm border-collapse" style={{ minWidth: '1520px' }}>
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">프로그램</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-44 min-w-44">시작 일시</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-44 min-w-44">종료 일시</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">강의실</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36">대상</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">강의료</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">강의료(세후)</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">인원수</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">차시별 인원수</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-40 min-w-40">강사 배정</th>
+              <th className="px-2 py-2 w-16 min-w-16" />
+            </tr>
+          </thead>
+          <tbody>
+            {value.length === 0 ? (
+              <tr>
+                <td colSpan={11} className="py-6 text-center text-xs text-gray-400">
+                  추가된 프로그램이 없습니다.
+                </td>
+              </tr>
+            ) : (
+              value.map((v) => {
+                const lectureFeeAfterTax = calcLectureFeeAfterTax(v.lectureFee)
+                const candidateMentors = mentorsByUnit[v.unitId] ?? []
+                const assignedMentor = v.mentorId
+                  ? candidateMentors.find((m) => m.id === v.mentorId)
+                  : undefined
+                return (
+                  <tr key={v.key} className="border-b border-gray-100 last:border-b-0">
+                    <td className="px-2 py-1.5 align-top">
+                      <div className="font-medium text-gray-800">{v.title}</div>
+                      <div className="text-xs text-gray-400">
+                        {v.fieldName} &gt; {v.occupationName} &gt; {v.programName}
+                      </div>
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="datetime-local"
+                        value={v.startTime}
+                        onChange={(e) => updateUnit(v.key, { startTime: e.target.value })}
+                        className={fieldInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="datetime-local"
+                        value={v.endTime}
+                        onChange={(e) => updateUnit(v.key, { endTime: e.target.value })}
+                        className={fieldInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="text"
+                        value={v.classroom}
+                        onChange={(e) => updateUnit(v.key, { classroom: e.target.value })}
+                        placeholder="예: 1-1반"
+                        className={fieldInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="text"
+                        value={v.target}
+                        onChange={(e) => updateUnit(v.key, { target: e.target.value })}
+                        placeholder="1학년"
+                        className={fieldInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="number"
+                        value={v.lectureFee ?? ''}
+                        onChange={(e) =>
+                          updateUnit(v.key, { lectureFee: e.target.value === '' ? null : Number(e.target.value) })
+                        }
+                        min={0}
+                        className={fieldInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-gray-500">
+                      {lectureFeeAfterTax !== null ? lectureFeeAfterTax.toLocaleString() : '-'}
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="number"
+                        value={v.headcount ?? ''}
+                        onChange={(e) =>
+                          updateUnit(v.key, { headcount: e.target.value === '' ? null : Number(e.target.value) })
+                        }
+                        min={0}
+                        className={fieldInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="number"
+                        value={v.sessionHeadcount ?? ''}
+                        onChange={(e) =>
+                          updateUnit(v.key, {
+                            sessionHeadcount: e.target.value === '' ? null : Number(e.target.value),
+                          })
+                        }
+                        min={0}
+                        className={fieldInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {assignedMentor ? assignedMentor.name : '미배정'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center">
+                      <button
+                        type="button"
+                        onClick={() => removeUnit(v.key)}
+                        className="text-xs text-red-400 hover:text-red-600"
+                      >
+                        삭제
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   )
