@@ -17,6 +17,7 @@ const menus: MenuItem[] = [
       { href: '/my-tasks/recruit-delivery', label: '강사 섭외 전달' },
       { href: '/my-tasks/institution-request', label: '기관 요청사항 전달' },
       { href: '/my-tasks/admin-docs', label: '행정서류 전달' },
+      { href: '/my-tasks/contract-delivery', label: '계약 전달' },
     ],
   },
   { href: '/counter', label: '카운터 관리' },
