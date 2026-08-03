@@ -2,7 +2,12 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { createInvitation, createAutoInvitation, cancelAssignment } from '@/app/(dashboard)/events/[id]/recruiting/actions'
+import {
+  createInvitation,
+  createAutoInvitation,
+  cancelInvitation,
+  cancelAssignment,
+} from '@/app/(dashboard)/events/[id]/recruiting/actions'
 import type {
   RecruitingEventRow,
   CandidateMentor,
@@ -61,6 +66,8 @@ function hasTimeConflict(rows: RecruitingEventRow[]): boolean {
   return false
 }
 
+type ManualGroup = { key: string; rowIds: string[] }
+
 function invitationBadge(status: string, isAllApprovalRequired: boolean, isAuto: boolean) {
   const typeLabel = INVITE_TYPE_LABEL[isAllApprovalRequired ? 'all' : 'partial']
   if (status === '발송중') {
@@ -101,9 +108,15 @@ export function EventRecruitingClient({
   const [selectedMentorIds, setSelectedMentorIds] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const [cancelingRowId, setCancelingRowId] = useState<string | null>(null)
+  const [isCancelingInvitation, startCancelInvitationTransition] = useTransition()
+  const [cancelingInvitationId, setCancelingInvitationId] = useState<string | null>(null)
   const [isAutoPending, startAutoTransition] = useTransition()
   const [autoError, setAutoError] = useState<string | null>(null)
   const [groupSameUnit, setGroupSameUnit] = useState(true)
+  // 프로그램(유닛)이 서로 달라도 관리자가 임의로 "같은 강사가 진행" 묶음을 만들 수 있게 한다.
+  // groupSameUnit(같은 유닛 자동 묶음)과 달리, 이건 관리자가 명시적으로 지정한 묶음이라
+  // 자동 섭외 시작 시 항상 최우선으로 모두수락 1건으로 발송된다.
+  const [manualGroups, setManualGroups] = useState<ManualGroup[]>([])
 
   const allSelectableChecked =
     selectableRows.length > 0 && selectableRows.every((r) => selectedRowIds.has(r.id))
@@ -127,6 +140,39 @@ export function EventRecruitingClient({
   // 모든수락은 한 명의 강사가 선택된 일정을 전부 수락해야 하므로, 선택한 일정끼리
   // 시간이 겹치면 애초에 어떤 강사도 전부 수락할 수 없다.
   const timeConflictAmongSelected = useMemo(() => hasTimeConflict(selectedRows), [selectedRows])
+
+  // 일정 id -> 소속된 묶음 번호(0부터). 표에 "묶음N" 배지를 보여주는 데 사용.
+  const rowGroupIndex = useMemo(() => {
+    const map = new Map<string, number>()
+    manualGroups.forEach((g, idx) => {
+      g.rowIds.forEach((id) => map.set(id, idx))
+    })
+    return map
+  }, [manualGroups])
+
+  // 현재 체크된 일정 중 아직 어떤 묶음에도 속하지 않은 것들을 묶어 새 묶음을 만든다.
+  // (이미 묶인 일정은 체크되어 있어도 제외 — 다른 묶음을 만들 때 실수로 섞이지 않도록)
+  const handleCreateGroup = () => {
+    const groupedIds = new Set(manualGroups.flatMap((g) => g.rowIds))
+    const candidateRows = selectedRows.filter((r) => !groupedIds.has(r.id))
+    if (candidateRows.length < 2) {
+      alert('이미 묶음에 포함된 일정을 제외하면 2건 미만이라 묶을 수 없습니다. 같은 강사가 진행할 일정만 2개 이상 체크한 뒤 눌러주세요.')
+      return
+    }
+    if (hasTimeConflict(candidateRows)) {
+      alert('선택한 일정끼리 시간이 겹쳐 같은 강사가 모두 수락할 수 없습니다.')
+      return
+    }
+    setManualGroups((prev) => [...prev, { key: crypto.randomUUID(), rowIds: candidateRows.map((r) => r.id) }])
+  }
+
+  const handleRemoveFromGroup = (rowId: string) => {
+    setManualGroups((prev) =>
+      prev
+        .map((g) => (g.rowIds.includes(rowId) ? { ...g, rowIds: g.rowIds.filter((id) => id !== rowId) } : g))
+        .filter((g) => g.rowIds.length >= 2)
+    )
+  }
 
   // 모든수락: 선택된 모든 유닛에 등록된(교집합) 멘토만 후보. 부분수락: 선택된 유닛 중 하나라도 등록된(합집합) 멘토.
   const eligibleMentors = useMemo(() => {
@@ -190,19 +236,36 @@ export function EventRecruitingClient({
     })
   }
 
-  // groupSameUnit이 켜져 있으면 선택된 일정을 프로그램 유닛(unitId) 기준으로 묶어서,
-  // 같은 유닛이 2개 이상이고(=같은 강사가 연속 진행할 대상이 있고) 서로 시간이 겹치지
-  // 않는 묶음은 모두수락 초대 1건으로 자동 발송한다. 묶이지 않는(유닛이 하나뿐이거나
-  // 시간이 겹치는) 나머지 일정은 전부 모아서 부분수락 초대 1건으로 보낸다.
+  // 1) 수동으로 묶은 묶음 중, 묶인 일정 전부가 현재 체크되어 있는 것만 모두수락 1건으로 발송한다
+  //    (묶음 자체는 프로그램이 달라도 상관없음 — 관리자가 "이 조합은 같은 강사"라고 지정한 것이므로).
+  // 2) 나머지 체크된 일정은 groupSameUnit이 켜져 있으면 같은 프로그램 유닛끼리 자동으로 묶어서
+  //    모두수락으로, 나머지는 부분수락으로 보낸다. 꺼져 있으면 전부 부분수락으로 보낸다.
   const handleAutoInvite = () => {
     setAutoError(null)
     startAutoTransition(async () => {
       try {
+        const usedRowIds = new Set<string>()
+
+        for (const group of manualGroups) {
+          const groupRows = group.rowIds
+            .map((id) => rows.find((r) => r.id === id))
+            .filter((r): r is RecruitingEventRow => !!r)
+          if (groupRows.length < 2) continue
+          if (!groupRows.every((r) => selectedRowIds.has(r.id))) continue
+          if (hasTimeConflict(groupRows)) continue
+          await createAutoInvitation(eventId, groupRows.map((r) => r.id), true)
+          groupRows.forEach((r) => usedRowIds.add(r.id))
+        }
+
+        const remainingSelected = selectedRows.filter((r) => !usedRowIds.has(r.id))
+
         if (!groupSameUnit) {
-          await createAutoInvitation(eventId, [...selectedRowIds], false)
+          if (remainingSelected.length > 0) {
+            await createAutoInvitation(eventId, remainingSelected.map((r) => r.id), false)
+          }
         } else {
           const byUnit = new Map<string, RecruitingEventRow[]>()
-          for (const r of selectedRows) {
+          for (const r of remainingSelected) {
             const key = r.unitId ?? `__row_${r.id}`
             const list = byUnit.get(key) ?? []
             list.push(r)
@@ -222,6 +285,7 @@ export function EventRecruitingClient({
           }
         }
         setSelectedRowIds(new Set())
+        setManualGroups([])
         router.refresh()
       } catch (e) {
         setAutoError(e instanceof Error ? e.message : '자동 섭외 시작에 실패했습니다.')
@@ -240,6 +304,26 @@ export function EventRecruitingClient({
         alert(e instanceof Error ? e.message : '배정 취소에 실패했습니다.')
       } finally {
         setCancelingRowId(null)
+      }
+    })
+  }
+
+  const handleCancelInvitation = (inv: InvitationSummary) => {
+    if (
+      !confirm(
+        `이 초대를 취소하시겠습니까? (일정 ${inv.eventRowIds.length}건, 응답 대기 중인 강사는 더 이상 수락할 수 없습니다)`
+      )
+    )
+      return
+    setCancelingInvitationId(inv.id)
+    startCancelInvitationTransition(async () => {
+      try {
+        await cancelInvitation(eventId, inv.id)
+        router.refresh()
+      } catch (e) {
+        alert(e instanceof Error ? e.message : '초대 취소에 실패했습니다.')
+      } finally {
+        setCancelingInvitationId(null)
       }
     })
   }
@@ -274,6 +358,7 @@ export function EventRecruitingClient({
               <th className="px-3 py-2.5 text-center font-medium text-gray-700">요청 직업군</th>
               <th className="px-3 py-2.5 text-center font-medium text-gray-700">프로그램</th>
               <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20">인원수</th>
+              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20">묶음</th>
               <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-40">배정 현황</th>
               <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">배정 취소</th>
             </tr>
@@ -300,6 +385,25 @@ export function EventRecruitingClient({
                     <td className="px-3 py-2.5 text-center text-gray-800">{r.occupationName}</td>
                     <td className="px-3 py-2.5 text-center text-gray-800">{r.unitTitle}</td>
                     <td className="px-3 py-2.5 text-center text-gray-800">{r.headcount ?? '-'}</td>
+                    <td className="px-3 py-2.5 text-center">
+                      {rowGroupIndex.has(r.id) ? (
+                        <span className="inline-flex items-center gap-1">
+                          <span className={`${badgeCls} bg-purple-50 text-purple-600`}>
+                            묶음{rowGroupIndex.get(r.id)! + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFromGroup(r.id)}
+                            title="묶음에서 제외"
+                            className="text-gray-300 hover:text-red-500 leading-none"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-300">-</span>
+                      )}
+                    </td>
                     <td className="px-3 py-2.5 text-center">
                       {r.mentorId ? (
                         <span className={`${badgeCls} bg-green-50 text-green-700`}>{r.mentorName} (배정 완료)</span>
@@ -328,7 +432,7 @@ export function EventRecruitingClient({
               })
             ) : (
               <tr>
-                <td colSpan={10} className="py-10 text-center text-gray-400">
+                <td colSpan={11} className="py-10 text-center text-gray-400">
                   등록된 프로그램 유닛이 없습니다.
                 </td>
               </tr>
@@ -350,14 +454,25 @@ export function EventRecruitingClient({
             >
               {isAutoPending ? '섭외 시작 중...' : '자동 섭외 시작'}
             </button>
+            <button
+              type="button"
+              disabled={selectedRowIds.size === 0}
+              onClick={handleCreateGroup}
+              className="px-3 py-1.5 text-xs border border-purple-300 text-purple-600 rounded hover:bg-purple-50 disabled:opacity-40 transition-colors"
+            >
+              선택한 일정 묶기
+            </button>
           </div>
+          <p className="mt-2 text-xs text-gray-400">
+            프로그램이 서로 달라도 같은 강사가 진행하길 원하는 일정끼리만 체크한 뒤 &quot;선택한 일정 묶기&quot;를 누르면, 자동 섭외 시작 시 그 묶음은 항상 모두수락 1건으로 발송됩니다(표의 &quot;묶음&quot; 열에서 확인·해제 가능).
+          </p>
           <label className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
             <input
               type="checkbox"
               checked={groupSameUnit}
               onChange={(e) => setGroupSameUnit(e.target.checked)}
             />
-            같은 프로그램(유닛) 일정은 묶어서 모두수락으로 발송 (끄면 전부 부분수락으로 발송)
+            묶이지 않은 일정 중 같은 프로그램(유닛)끼리는 자동으로 묶어서 모두수락으로 발송 (끄면 전부 부분수락으로 발송)
           </label>
           {autoError && <p className="mt-2 text-xs text-red-500">{autoError}</p>}
           <p className="mt-2 text-xs text-gray-400">
@@ -464,6 +579,16 @@ export function EventRecruitingClient({
                   <span className="text-xs text-gray-400">
                     만료: {new Date(inv.expiresAt).toLocaleString('ko-KR')}
                   </span>
+                  {inv.status === '발송중' && (
+                    <button
+                      type="button"
+                      onClick={() => handleCancelInvitation(inv)}
+                      disabled={isCancelingInvitation && cancelingInvitationId === inv.id}
+                      className="ml-auto px-2 py-0.5 text-xs border border-gray-300 rounded hover:bg-red-50 hover:border-red-300 hover:text-red-600 disabled:opacity-40 transition-colors"
+                    >
+                      {isCancelingInvitation && cancelingInvitationId === inv.id ? '취소 중...' : '초대 취소'}
+                    </button>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {inv.mentors.map((m) => (

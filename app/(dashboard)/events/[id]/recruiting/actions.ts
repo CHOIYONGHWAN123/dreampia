@@ -355,6 +355,31 @@ export async function createAutoInvitation(
   revalidatePath(`/events/${eventId}/recruiting`)
 }
 
+// 관리자가 실수로 시작한 진행 중인 초대를 취소한다. invitations는 이미 '취소' 상태값이
+// 있었지만(스키마상 예약만 되어 있고) 실제로 이 상태로 전환하는 경로가 없었다.
+// 아직 응답하지 않은(대기) invitation_mentors도 함께 마감 처리해 더 이상 수락/거절할
+// 수 없게 한다 — 이미 수락한 멘토가 있으면 그 초대는 애초에 '마감' 상태라 '발송중'
+// 조건에 걸리지 않으므로 잘못 취소될 일이 없다.
+export async function cancelInvitation(eventId: string, invitationId: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+
+  const { error: invErr } = await supabase
+    .from('invitations')
+    .update({ status: '취소' })
+    .eq('id', invitationId)
+    .eq('status', '발송중')
+  if (invErr) throw new Error(invErr.message)
+
+  const { error: mentorsErr } = await supabase
+    .from('invitation_mentors')
+    .update({ status: '마감', responded_at: new Date().toISOString() })
+    .eq('invitation_id', invitationId)
+    .eq('status', '대기')
+  if (mentorsErr) throw new Error(mentorsErr.message)
+
+  revalidatePath(`/events/${eventId}/recruiting`)
+}
+
 // 관리자가 배정을 취소한다. 멘토 자기취소(cancel_event_row_assignment RPC)와 같은 패턴으로
 // mentor_id/preparing/attendance만 초기화하고, 해당 배정의 근거가 된 초대(invitation_mentors)의
 // 수락 기록은 건드리지 않는다 — 초대 단위라 되돌리면 같은 초대로 받은 다른 일정 상태까지 꼬일 수 있다.
