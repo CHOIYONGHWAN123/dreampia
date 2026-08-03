@@ -10,7 +10,10 @@ const menus: MenuItem[] = [
   { href: '/dashboard', label: '대시보드' },
   {
     label: '나의 할일',
-    children: [{ href: '/my-tasks/recruiting', label: '강사 섭외' }],
+    children: [
+      { href: '/my-tasks/recruiting', label: '강사 섭외' },
+      { href: '/my-tasks/supplies', label: '준비물 준비' },
+    ],
   },
   { href: '/counter', label: '카운터 관리' },
   { href: '/company-info', label: '회사소개' },

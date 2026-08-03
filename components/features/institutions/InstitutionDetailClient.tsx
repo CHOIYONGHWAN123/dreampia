@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { deleteEvent } from "@/app/(dashboard)/events/actions";
@@ -26,12 +26,23 @@ type Event = {
   estimate_file_url: string | null;
   admin_docs_delivered: boolean | null;
   contract_status: string | null;
+  supplies_status: string | null;
 };
 
 const DISABLED_BTN =
   "px-3 py-1 text-xs border border-gray-200 rounded text-gray-300 cursor-not-allowed whitespace-nowrap";
 const SELECT_CLS =
   "border border-gray-300 rounded px-2 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400";
+const SUPPLIES_STATUS_OPTIONS = [
+  "준비 완료",
+  "체크 전",
+  "재고 이상무",
+  "재고 파악",
+  "주문 필요",
+  "택배 예정",
+  "택배 발송",
+  "회수 필요",
+];
 
 function formatDateTime(dt: string | null) {
   if (!dt) return "-";
@@ -56,13 +67,21 @@ export function InstitutionDetailClient({
   events: Event[];
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [localEvents, setLocalEvents] = useState<Event[]>(events);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
+  // 나의 할일 > 준비물 준비의 "준비하기" 버튼에서 ?highlightEventId=로 들어온 행사는
+  // recruit_status가 아직 섭외대기라 "진행" 표에 안 잡히더라도 강제로 포함시켜서
+  // 준비물 준비 셀을 하이라이트해 보여줄 수 있게 한다.
+  const highlightEventId = searchParams.get("highlightEventId");
   const inProgressEvents = localEvents.filter(
-    (e) => e.recruit_status === "섭외진행중" || e.recruit_status === "섭외완료",
+    (e) =>
+      e.recruit_status === "섭외진행중" ||
+      e.recruit_status === "섭외완료" ||
+      e.id === highlightEventId,
   );
 
   const patchEvent = (eventId: string, patch: Partial<Event>) => {
@@ -81,6 +100,21 @@ export function InstitutionDetailClient({
       .update({ [field]: value })
       .eq("id", eventId);
     if (!error) patchEvent(eventId, { [field]: value } as Partial<Event>);
+  };
+
+  // 준비물 준비 상태를 "준비 완료"로 바꾸면 work_logs에 로그를 남긴다.
+  const handleSuppliesStatusChange = async (eventId: string, value: string) => {
+    await handleUpdateField(eventId, "supplies_status", value);
+    if (value === "준비 완료") {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from("work_logs")
+          .insert({ admin_id: user.id, event_id: eventId, task_type: "준비물 준비" });
+      }
+    }
   };
 
   const handleDeleteEvent = async (eventId: string) => {
@@ -299,6 +333,9 @@ export function InstitutionDetailClient({
                   페이지
                 </th>
                 <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                  준비물 준비
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
                   강사섭외일자
                 </th>
                 <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
@@ -378,11 +415,37 @@ export function InstitutionDetailClient({
                       )}
                     </td>
 
-                    {/* 섭외 현황 페이지 - 비활성화 */}
+                    {/* 섭외 현황 페이지 */}
                     <td className="px-3 py-2.5 text-center">
-                      <button type="button" disabled className={DISABLED_BTN}>
+                      <Link
+                        href={`/events/${event.id}/recruiting`}
+                        className="inline-block px-3 py-1 text-xs border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap"
+                      >
                         보기
-                      </button>
+                      </Link>
+                    </td>
+
+                    {/* 준비물 준비 */}
+                    <td
+                      className={`px-3 py-2.5 text-center ${
+                        event.id === highlightEventId
+                          ? "bg-yellow-100 ring-2 ring-inset ring-yellow-400"
+                          : ""
+                      }`}
+                    >
+                      <select
+                        value={event.supplies_status ?? "체크 전"}
+                        onChange={(e) =>
+                          handleSuppliesStatusChange(event.id, e.target.value)
+                        }
+                        className={SELECT_CLS}
+                      >
+                        {SUPPLIES_STATUS_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
                     </td>
 
                     {/* 강사섭외일자 */}
@@ -521,7 +584,7 @@ export function InstitutionDetailClient({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={18} className="py-10 text-center text-gray-400">
+                  <td colSpan={19} className="py-10 text-center text-gray-400">
                     진행 중인 행사가 없습니다.
                   </td>
                 </tr>
