@@ -6,7 +6,7 @@ type MenuItem =
   | { href: string; label: string; children?: undefined }
   | { href?: undefined; label: string; children: { href: string; label: string }[] }
 
-const menus: MenuItem[] = [
+const BASE_MENUS: MenuItem[] = [
   { href: '/dashboard', label: '대시보드' },
   {
     label: '나의 할일',
@@ -42,8 +42,13 @@ function isMenuActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + '/')
 }
 
-export function NavMenu() {
+export function NavMenu({ isSuperAdmin = false }: { isSuperAdmin?: boolean }) {
   const pathname = usePathname()
+  // 관리자 승인/권한 변경은 슈퍼관리자만 다룰 수 있어서, 메뉴 자체도 슈퍼관리자에게만 보여준다
+  // (페이지 접근은 서버에서도 별도로 다시 확인한다).
+  const menus: MenuItem[] = isSuperAdmin
+    ? [...BASE_MENUS, { href: '/admins', label: '관리자 관리' }]
+    : BASE_MENUS
 
   return (
     <nav className="flex-1 p-3">

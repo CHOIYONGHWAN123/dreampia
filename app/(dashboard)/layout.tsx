@@ -29,7 +29,7 @@ export default async function DashboardLayout({
           <p className="font-bold text-gray-900">드림피아</p>
           <p className="text-xs text-gray-400 mt-0.5">관리자 시스템</p>
         </div>
-        <NavMenu />
+        <NavMenu isSuperAdmin={admin?.is_super ?? false} />
         <div className="p-4 border-t border-gray-100 space-y-2">
           <p className="text-sm font-medium text-gray-800">{admin?.name}</p>
           <p className="text-xs text-gray-400 truncate">{admin?.email}</p>
