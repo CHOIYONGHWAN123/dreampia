@@ -11,7 +11,7 @@ export default async function SuppliesPage() {
     supabase.from('occupation_program_unit').select('id, title, occupation_programs_id').order('title'),
     supabase.from('supplies').select('id, occupation_program_unit_id, qty_per_person, kit_threshold, max_daily_stock, is_consumable, memo'),
     supabase.from('supply_logs').select('supply_id, stock_type, delta'),
-    supabase.from('event_rows').select('occupation_program_unit_id, headcount, events(event_end_at)'),
+    supabase.from('event_rows').select('occupation_program_unit_id, headcount, events(event_start_at, event_end_at)'),
   ])
 
   const fieldMap = new Map((fieldsRes.data ?? []).map((f) => [f.id, f]))
@@ -31,16 +31,32 @@ export default async function SuppliesPage() {
 
   // 아직 끝나지 않은(예정 또는 진행 중) 행사의 event_rows 중 유닛별 최대 인원수 집계
   // → "일 최대 수용" 초과 위험 판단에 사용 (지나간 행사는 제외)
+  // 같은 조건(아직 끝나지 않은 행사)에서 유닛별 가장 임박한 행사 시작일시도 함께 집계해
+  // 목록 정렬(임박한 행사가 있는 유닛을 위로)에 사용한다.
   const now = Date.now()
   const maxActiveHeadcountByUnit = new Map<string, number>()
+  const nextEventStartByUnit = new Map<string, string>()
   for (const row of eventRowsRes.data ?? []) {
-    if (!row.occupation_program_unit_id || row.headcount == null) continue
+    if (!row.occupation_program_unit_id) continue
     const eventRef = row.events as unknown
-    const eventEndAt = (Array.isArray(eventRef) ? eventRef[0] : eventRef) as { event_end_at: string | null } | null
-    const isActive = !eventEndAt?.event_end_at || new Date(eventEndAt.event_end_at).getTime() >= now
+    const event = (Array.isArray(eventRef) ? eventRef[0] : eventRef) as {
+      event_start_at: string | null
+      event_end_at: string | null
+    } | null
+    const isActive = !event?.event_end_at || new Date(event.event_end_at).getTime() >= now
     if (!isActive) continue
-    const cur = maxActiveHeadcountByUnit.get(row.occupation_program_unit_id) ?? 0
-    if (row.headcount > cur) maxActiveHeadcountByUnit.set(row.occupation_program_unit_id, row.headcount)
+
+    if (row.headcount != null) {
+      const curHeadcount = maxActiveHeadcountByUnit.get(row.occupation_program_unit_id) ?? 0
+      if (row.headcount > curHeadcount) maxActiveHeadcountByUnit.set(row.occupation_program_unit_id, row.headcount)
+    }
+
+    if (event?.event_start_at) {
+      const curNext = nextEventStartByUnit.get(row.occupation_program_unit_id)
+      if (!curNext || event.event_start_at < curNext) {
+        nextEventStartByUnit.set(row.occupation_program_unit_id, event.event_start_at)
+      }
+    }
   }
 
   const units: UnitWithSupply[] = (unitsRes.data ?? []).map((u) => {
@@ -72,6 +88,7 @@ export default async function SuppliesPage() {
       totalStock: stock.total,
       kitStock: stock.kit,
       maxActiveHeadcount: maxActiveHeadcountByUnit.get(u.id) ?? 0,
+      nextEventStartAt: nextEventStartByUnit.get(u.id) ?? null,
     }
   })
 
