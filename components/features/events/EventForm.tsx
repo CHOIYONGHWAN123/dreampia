@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect, useRef, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
@@ -36,6 +36,10 @@ type Institution = {
   contact_name: string | null
   contact_email: string | null
   contact_phone: string | null
+  instructor_waiting_room: string | null
+  admin_contact: string | null
+  has_elevator: boolean | null
+  floor_map_url: string | null
   laptop_wifi_note: string | null
   crime_check_method: string | null
   crime_check_info: string | null
@@ -131,6 +135,10 @@ function buildDefaultValues(
     event_start_at_time: start.time,
     event_end_at_time: end.time,
     target_grade: initialEvent.target_grade,
+    instructor_waiting_room: initialEvent.instructor_waiting_room,
+    admin_contact: initialEvent.admin_contact,
+    has_elevator: initialEvent.has_elevator ?? undefined,
+    floor_map_url: initialEvent.floor_map_url ?? '',
     laptop_wifi_note: initialEvent.laptop_wifi_note,
     crime_check_method: initialEvent.crime_check_method as EventFormData['crime_check_method'],
     crime_check_info: initialEvent.crime_check_info,
@@ -188,6 +196,8 @@ export function EventForm({
   const [isPending, startTransition] = useTransition()
   const [isUploading, setIsUploading] = useState(false)
   const [estimateFile, setEstimateFile] = useState<File | null>(null)
+  const [floorMapFile, setFloorMapFile] = useState<File | null>(null)
+  const floorMapInputRef = useRef<HTMLInputElement>(null)
   const [programUnits, setProgramUnits] = useState<SelectedProgramUnit[]>(() =>
     buildInitialProgramUnits(initialEventRows, units, programs, occupations, fields)
   )
@@ -213,6 +223,10 @@ export function EventForm({
     setValue('contact_email', institution.contact_email || '')
     setValue('contact_phone', institution.contact_phone || '')
     if (institution.institution_type) setValue('institution_type', institution.institution_type as EventFormData['institution_type'])
+    if (institution.instructor_waiting_room) setValue('instructor_waiting_room', institution.instructor_waiting_room)
+    if (institution.admin_contact) setValue('admin_contact', institution.admin_contact)
+    if (institution.has_elevator !== null) setValue('has_elevator', institution.has_elevator ?? undefined)
+    if (institution.floor_map_url) setValue('floor_map_url', institution.floor_map_url)
     if (institution.laptop_wifi_note) setValue('laptop_wifi_note', institution.laptop_wifi_note)
     if (institution.crime_check_method) setValue('crime_check_method', institution.crime_check_method as EventFormData['crime_check_method'])
     if (institution.crime_check_info) setValue('crime_check_info', institution.crime_check_info)
@@ -233,6 +247,18 @@ export function EventForm({
     return path
   }
 
+  // 학교 배치도는 기관 정보의 배치도와 같은 성격(민감정보 아님)이라, institutions와 동일하게
+  // 공개 버킷 + 공개 URL로 저장한다(견적서처럼 signed URL 변환이 필요 없음).
+  async function uploadFloorMap(file: File): Promise<string> {
+    const supabase = createClient()
+    const ext = file.name.includes('.') ? file.name.split('.').pop() : ''
+    const path = `floor-maps/${eventId ?? Date.now()}-${Date.now()}${ext ? `.${ext}` : ''}`
+    const { error } = await supabase.storage.from('files').upload(path, file, { upsert: true })
+    if (error) throw new Error(error.message)
+    const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
+    return urlData.publicUrl
+  }
+
   const onSubmit = (data: EventFormData) => {
     startTransition(async () => {
       // 새 파일을 업로드하지 않으면 기존 견적서 경로를 그대로 유지한다.
@@ -245,6 +271,19 @@ export function EventForm({
           estimateFileUrl = await uploadEstimateFile(estimateFile)
         } catch (e) {
           alert('파일 업로드에 실패했습니다.')
+          setIsUploading(false)
+          return
+        }
+        setIsUploading(false)
+      }
+
+      let floorMapUrl = data.floor_map_url
+      if (floorMapFile) {
+        setIsUploading(true)
+        try {
+          floorMapUrl = await uploadFloorMap(floorMapFile)
+        } catch (e) {
+          alert('배치도 파일 업로드에 실패했습니다.')
           setIsUploading(false)
           return
         }
@@ -277,6 +316,10 @@ export function EventForm({
         event_start_at: eventStartAt,
         event_end_at: eventEndAt,
         target_grade: data.target_grade,
+        instructor_waiting_room: data.instructor_waiting_room,
+        admin_contact: data.admin_contact,
+        has_elevator: data.has_elevator,
+        floor_map_url: floorMapUrl,
         laptop_wifi_note: data.laptop_wifi_note,
         crime_check_method: data.crime_check_method,
         crime_check_info: data.crime_check_info,
@@ -432,6 +475,25 @@ export function EventForm({
             </tr>
 
             <tr>
+              <td className={cellLabelCls}>강사대기실</td>
+              <td className={cellValueCls}>
+                <input
+                  type="text"
+                  {...register('instructor_waiting_room')}
+                  placeholder="예: 2층 2학년 학년연구실"
+                  className={cellInputCls}
+                />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>계약담당 행정실 연락처</td>
+              <td className={cellValueCls}>
+                <input type="text" {...register('admin_contact')} placeholder="예: 051-123-4567" className={cellInputCls} />
+              </td>
+            </tr>
+
+            <tr>
               <td className={cellLabelCls}>노트북/와이파이</td>
               <td className={cellValueCls}>
                 <input type="text" {...register('laptop_wifi_note')} className={cellInputCls} />
@@ -476,6 +538,71 @@ export function EventForm({
               <td className={cellLabelCls}>주차 및 엘리베이터</td>
               <td className={cellValueCls}>
                 <input type="text" {...register('parking_note')} className={cellInputCls} />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>엘리베이터 유무</td>
+              <td className={cellValueCls}>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setValue('has_elevator', true)}
+                    className={`px-2.5 py-1 text-xs rounded border transition-colors ${
+                      watch('has_elevator') === true
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    있음
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setValue('has_elevator', false)}
+                    className={`px-2.5 py-1 text-xs rounded border transition-colors ${
+                      watch('has_elevator') === false
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    없음
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>학교 배치도</td>
+              <td className={cellValueCls}>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    ref={floorMapInputRef}
+                    className="hidden"
+                    accept=".pdf,.jpg,.jpeg,.png,.hwp"
+                    onChange={(e) => setFloorMapFile(e.target.files?.[0] ?? null)}
+                  />
+                  {watch('floor_map_url') && !floorMapFile && (
+                    <a
+                      href={watch('floor_map_url')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-500 underline whitespace-nowrap"
+                    >
+                      현재 파일 보기
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => floorMapInputRef.current?.click()}
+                    className="px-2.5 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
+                  >
+                    {watch('floor_map_url') || floorMapFile ? '재업로드' : '파일 선택'}
+                  </button>
+                  {floorMapFile && (
+                    <span className="text-xs text-gray-500 truncate max-w-40">{floorMapFile.name}</span>
+                  )}
+                </div>
               </td>
             </tr>
 

@@ -79,7 +79,7 @@ export type EventProgramSelectData = {
 }
 
 const EVENT_DETAIL_COLUMNS =
-  'id, name, institution_id, event_category_id, created_at, event_start_at, event_end_at, target_grade, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, student_rotation, notice, prep_note, memo, contact_name, contact_email, contact_phone, teacher_name, inflow_source, institution_type, sales_admin_id, budget, estimate_file_url, comm_admin_id'
+  'id, name, institution_id, event_category_id, created_at, event_start_at, event_end_at, target_grade, instructor_waiting_room, admin_contact, has_elevator, floor_map_url, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, student_rotation, notice, prep_note, memo, contact_name, contact_email, contact_phone, teacher_name, inflow_source, institution_type, sales_admin_id, budget, estimate_file_url, comm_admin_id'
 
 export type EventDetailData = {
   id: string
@@ -90,6 +90,10 @@ export type EventDetailData = {
   event_start_at: string | null
   event_end_at: string | null
   target_grade: string | null
+  instructor_waiting_room: string | null
+  admin_contact: string | null
+  has_elevator: boolean | null
+  floor_map_url: string | null
   laptop_wifi_note: string | null
   crime_check_method: string | null
   crime_check_info: string | null
@@ -197,6 +201,10 @@ export async function createEvent(data: {
   event_start_at?: string | null
   event_end_at?: string | null
   target_grade?: string | null
+  instructor_waiting_room?: string | null
+  admin_contact?: string | null
+  has_elevator?: boolean | null
+  floor_map_url?: string
   laptop_wifi_note?: string | null
   crime_check_method?: string | null
   crime_check_info?: string | null
@@ -228,6 +236,10 @@ export async function createEvent(data: {
     event_start_at: data.event_start_at || null,
     event_end_at: data.event_end_at || null,
     target_grade: data.target_grade || null,
+    instructor_waiting_room: data.instructor_waiting_room || null,
+    admin_contact: data.admin_contact || null,
+    has_elevator: data.has_elevator ?? null,
+    floor_map_url: data.floor_map_url || null,
     laptop_wifi_note: data.laptop_wifi_note || null,
     crime_check_method: data.crime_check_method || null,
     crime_check_info: data.crime_check_info || null,
@@ -336,6 +348,10 @@ export async function updateEvent(
     event_start_at?: string | null
     event_end_at?: string | null
     target_grade?: string | null
+    instructor_waiting_room?: string | null
+    admin_contact?: string | null
+    has_elevator?: boolean | null
+    floor_map_url?: string
     laptop_wifi_note?: string | null
     crime_check_method?: string | null
     crime_check_info?: string | null
@@ -368,6 +384,10 @@ export async function updateEvent(
     event_start_at: data.event_start_at || null,
     event_end_at: data.event_end_at || null,
     target_grade: data.target_grade || null,
+    instructor_waiting_room: data.instructor_waiting_room || null,
+    admin_contact: data.admin_contact || null,
+    has_elevator: data.has_elevator ?? null,
+    floor_map_url: data.floor_map_url || null,
     laptop_wifi_note: data.laptop_wifi_note || null,
     crime_check_method: data.crime_check_method || null,
     crime_check_info: data.crime_check_info || null,
