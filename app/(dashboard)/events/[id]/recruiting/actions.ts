@@ -388,6 +388,40 @@ export async function createAutoInvitation(
   revalidatePath('/my-tasks/recruiting')
 }
 
+export type BundlePlanGroup = {
+  eventRowIds: string[]
+  candidateCount: number
+}
+
+// "자동 섭외 시작" 전에 호출하는 묶음 미리보기. 선택된 일정을 실제 강사 등록 현황
+// 기준으로 묶어보고(전체 → 안 되면 한 명씩 줄여서), 묶음별 가능 강사 수를 반환한다.
+// 실제 발송은 하지 않는다 - 관리자가 확인 후 묶음별로 createAutoInvitation을 호출해야 한다.
+export async function previewAutoBundles(eventRowIds: string[]): Promise<BundlePlanGroup[]> {
+  if (eventRowIds.length === 0) return []
+
+  const supabase = await createServerSupabaseClient()
+  const { data, error } = await supabase.rpc('preview_auto_bundles', {
+    p_event_row_ids: eventRowIds,
+  })
+  if (error) throw new Error(error.message)
+
+  const byBundle = new Map<number, string[]>()
+  const countByBundle = new Map<number, number>()
+  for (const row of data ?? []) {
+    const list = byBundle.get(row.bundle_index) ?? []
+    list.push(row.event_row_id)
+    byBundle.set(row.bundle_index, list)
+    countByBundle.set(row.bundle_index, row.candidate_count)
+  }
+
+  return [...byBundle.keys()]
+    .sort((a, b) => a - b)
+    .map((idx) => ({
+      eventRowIds: byBundle.get(idx)!,
+      candidateCount: countByBundle.get(idx) ?? 0,
+    }))
+}
+
 // 관리자가 실수로 시작한 진행 중인 초대를 취소한다. invitations는 이미 '취소' 상태값이
 // 있었지만(스키마상 예약만 되어 있고) 실제로 이 상태로 전환하는 경로가 없었다.
 // 아직 응답하지 않은(대기) invitation_mentors도 함께 마감 처리해 더 이상 수락/거절할

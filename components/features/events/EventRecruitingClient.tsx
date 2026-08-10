@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import {
   createInvitation,
   createAutoInvitation,
+  previewAutoBundles,
   cancelInvitation,
   cancelAssignment,
 } from '@/app/(dashboard)/events/[id]/recruiting/actions'
@@ -12,6 +13,7 @@ import type {
   RecruitingEventRow,
   CandidateMentor,
   InvitationSummary,
+  BundlePlanGroup,
 } from '@/app/(dashboard)/events/[id]/recruiting/actions'
 
 type InviteType = 'partial' | 'all'
@@ -112,7 +114,9 @@ export function EventRecruitingClient({
   const [cancelingInvitationId, setCancelingInvitationId] = useState<string | null>(null)
   const [isAutoPending, startAutoTransition] = useTransition()
   const [autoError, setAutoError] = useState<string | null>(null)
-  const [groupSameUnit, setGroupSameUnit] = useState(true)
+  const [isPreviewPending, startPreviewTransition] = useTransition()
+  const [previewError, setPreviewError] = useState<string | null>(null)
+  const [autoPreview, setAutoPreview] = useState<{ manual: ManualGroup[]; planned: BundlePlanGroup[] } | null>(null)
   // 프로그램(유닛)이 서로 달라도 관리자가 임의로 "같은 강사가 진행" 묶음을 만들 수 있게 한다.
   // groupSameUnit(같은 유닛 자동 묶음)과 달리, 이건 관리자가 명시적으로 지정한 묶음이라
   // 자동 섭외 시작 시 항상 최우선으로 모두수락 1건으로 발송된다.
@@ -236,61 +240,68 @@ export function EventRecruitingClient({
     })
   }
 
-  // 1) 수동으로 묶은 묶음 중, 묶인 일정 전부가 현재 체크되어 있는 것만 모두수락 1건으로 발송한다
-  //    (묶음 자체는 프로그램이 달라도 상관없음 — 관리자가 "이 조합은 같은 강사"라고 지정한 것이므로).
-  // 2) 나머지 체크된 일정은 groupSameUnit이 켜져 있으면 같은 프로그램 유닛끼리 자동으로 묶어서
-  //    모두수락으로, 나머지는 부분수락으로 보낸다. 꺼져 있으면 전부 부분수락으로 보낸다.
-  const handleAutoInvite = () => {
+  // 1) 수동으로 묶은 묶음(관리자가 "이 조합은 같은 강사"라고 지정한 것) 중, 묶인 일정 전부가
+  //    현재 체크되어 있는 것만 그대로 확정 묶음으로 취급한다.
+  // 2) 나머지 체크된 일정은 DB에 등록된 강사-프로그램 등록 현황을 기준으로 실제 가능한 조합을
+  //    계산(preview_auto_bundles)해서 미리보기로 보여준다 - 전체가 가능하면 전체 묶음,
+  //    안 되면 한 명씩 줄여가며 가능한 조합을 찾는다. 아무것도 아직 발송하지 않는다.
+  const handleOpenPreview = () => {
+    setAutoError(null)
+    setPreviewError(null)
+    startPreviewTransition(async () => {
+      try {
+        const validManualGroups = manualGroups.filter((g) => {
+          const groupRows = g.rowIds
+            .map((id) => rows.find((r) => r.id === id))
+            .filter((r): r is RecruitingEventRow => !!r)
+          return (
+            groupRows.length >= 2 &&
+            groupRows.every((r) => selectedRowIds.has(r.id)) &&
+            !hasTimeConflict(groupRows)
+          )
+        })
+        const usedRowIds = new Set(validManualGroups.flatMap((g) => g.rowIds))
+        const remainingSelected = selectedRows.filter((r) => !usedRowIds.has(r.id))
+
+        const planned =
+          remainingSelected.length > 0
+            ? await previewAutoBundles(remainingSelected.map((r) => r.id))
+            : []
+
+        setAutoPreview({ manual: validManualGroups, planned })
+      } catch (e) {
+        setPreviewError(e instanceof Error ? e.message : '묶음 계획 계산에 실패했습니다.')
+      }
+    })
+  }
+
+  // 미리보기에서 확인한 묶음 그대로 실제 발송한다. 각 묶음은 그대로 createAutoInvitation
+  // 한 건씩이 되고, 이후 캐스케이드(거절/무응답 시 다음 후보, 모두수락 묶음 후보소진 시
+  // 더 작은 묶음으로 자동 재시도)는 전부 DB 쪽에서 알아서 처리된다.
+  const handleConfirmAutoInvite = () => {
+    if (!autoPreview) return
     setAutoError(null)
     startAutoTransition(async () => {
       try {
-        const usedRowIds = new Set<string>()
-
-        for (const group of manualGroups) {
-          const groupRows = group.rowIds
-            .map((id) => rows.find((r) => r.id === id))
-            .filter((r): r is RecruitingEventRow => !!r)
-          if (groupRows.length < 2) continue
-          if (!groupRows.every((r) => selectedRowIds.has(r.id))) continue
-          if (hasTimeConflict(groupRows)) continue
-          await createAutoInvitation(eventId, groupRows.map((r) => r.id), true)
-          groupRows.forEach((r) => usedRowIds.add(r.id))
+        for (const group of autoPreview.manual) {
+          await createAutoInvitation(eventId, group.rowIds, true)
         }
-
-        const remainingSelected = selectedRows.filter((r) => !usedRowIds.has(r.id))
-
-        if (!groupSameUnit) {
-          if (remainingSelected.length > 0) {
-            await createAutoInvitation(eventId, remainingSelected.map((r) => r.id), false)
-          }
-        } else {
-          const byUnit = new Map<string, RecruitingEventRow[]>()
-          for (const r of remainingSelected) {
-            const key = r.unitId ?? `__row_${r.id}`
-            const list = byUnit.get(key) ?? []
-            list.push(r)
-            byUnit.set(key, list)
-          }
-
-          const partialRowIds: string[] = []
-          for (const group of byUnit.values()) {
-            if (group.length > 1 && !hasTimeConflict(group)) {
-              await createAutoInvitation(eventId, group.map((r) => r.id), true)
-            } else {
-              partialRowIds.push(...group.map((r) => r.id))
-            }
-          }
-          if (partialRowIds.length > 0) {
-            await createAutoInvitation(eventId, partialRowIds, false)
-          }
+        for (const bundle of autoPreview.planned) {
+          await createAutoInvitation(eventId, bundle.eventRowIds, bundle.eventRowIds.length > 1)
         }
         setSelectedRowIds(new Set())
         setManualGroups([])
+        setAutoPreview(null)
         router.refresh()
       } catch (e) {
         setAutoError(e instanceof Error ? e.message : '자동 섭외 시작에 실패했습니다.')
       }
     })
+  }
+
+  const handleCancelPreview = () => {
+    setAutoPreview(null)
+    setPreviewError(null)
   }
 
   const handleCancelAssignment = (rowId: string, mentorName: string | null) => {
@@ -448,11 +459,11 @@ export function EventRecruitingClient({
             <span className="text-sm text-gray-600">{selectedRowIds.size}개 선택됨</span>
             <button
               type="button"
-              disabled={selectedRowIds.size === 0 || isAutoPending}
-              onClick={handleAutoInvite}
+              disabled={selectedRowIds.size === 0 || isPreviewPending}
+              onClick={handleOpenPreview}
               className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-40 transition-colors"
             >
-              {isAutoPending ? '섭외 시작 중...' : '자동 섭외 시작'}
+              {isPreviewPending ? '묶음 계산 중...' : '자동 섭외 시작'}
             </button>
             <button
               type="button"
@@ -466,18 +477,73 @@ export function EventRecruitingClient({
           <p className="mt-2 text-xs text-gray-400">
             프로그램이 서로 달라도 같은 강사가 진행하길 원하는 일정끼리만 체크한 뒤 &quot;선택한 일정 묶기&quot;를 누르면, 자동 섭외 시작 시 그 묶음은 항상 모두수락 1건으로 발송됩니다(표의 &quot;묶음&quot; 열에서 확인·해제 가능).
           </p>
-          <label className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={groupSameUnit}
-              onChange={(e) => setGroupSameUnit(e.target.checked)}
-            />
-            묶이지 않은 일정 중 같은 프로그램(유닛)끼리는 자동으로 묶어서 모두수락으로 발송 (끄면 전부 부분수락으로 발송)
-          </label>
+          {previewError && <p className="mt-2 text-xs text-red-500">{previewError}</p>}
           {autoError && <p className="mt-2 text-xs text-red-500">{autoError}</p>}
           <p className="mt-2 text-xs text-gray-400">
-            가능한(등록+시간충돌없음+활동가능) 멘토 중 최고점수인 멘토 전원에게 동시 발송되고, 먼저 수락하는 사람이 배정됩니다. 전원이 거절/무응답(24시간)하면 다음 등수로 자동으로 넘어갑니다.
+            묶이지 않은 나머지 일정은 강사 등록 현황을 기준으로 전체를 한 번에 소화할 수 있는 강사가 있는지 먼저 확인하고, 없으면 한 일정씩 줄여가며 실제로 가능한 조합을 찾아 &quot;자동 섭외 시작&quot; 클릭 시 미리보기로 보여줍니다. 가능한(등록+시간충돌없음+활동가능) 멘토 중 최고점수인 멘토 전원에게 동시 발송되고, 먼저 수락하는 사람이 배정됩니다. 전원이 거절/무응답(24시간)하면 다음 등수로, 모두수락 묶음이 후보소진되면 더 작은 묶음으로 자동으로 넘어갑니다.
           </p>
+
+          {autoPreview && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <p className="text-sm font-medium text-gray-700 mb-2">발송 전 확인</p>
+              <div className="space-y-1.5 mb-3">
+                {autoPreview.manual.map((g, i) => {
+                  const groupRows = g.rowIds
+                    .map((id) => rows.find((r) => r.id === id))
+                    .filter((r): r is RecruitingEventRow => !!r)
+                  return (
+                    <div key={g.key} className="flex items-center gap-2 text-xs border border-purple-100 bg-purple-50 rounded px-2 py-1.5">
+                      <span className="font-medium text-purple-700 whitespace-nowrap">묶음{i + 1} (직접 지정)</span>
+                      <span className="text-gray-600 flex-1">{groupRows.map((r) => r.unitTitle).join(' + ')}</span>
+                    </div>
+                  )
+                })}
+                {autoPreview.planned.map((bundle, i) => {
+                  const groupRows = bundle.eventRowIds
+                    .map((id) => rows.find((r) => r.id === id))
+                    .filter((r): r is RecruitingEventRow => !!r)
+                  const zeroCandidate = bundle.candidateCount === 0
+                  return (
+                    <div
+                      key={bundle.eventRowIds.join(',')}
+                      className={`flex items-center gap-2 text-xs border rounded px-2 py-1.5 ${
+                        zeroCandidate ? 'border-red-100 bg-red-50' : 'border-blue-100 bg-blue-50'
+                      }`}
+                    >
+                      <span className={`font-medium whitespace-nowrap ${zeroCandidate ? 'text-red-600' : 'text-blue-700'}`}>
+                        {autoPreview.manual.length + i + 1} ({bundle.eventRowIds.length > 1 ? '모든수락' : '부분수락'})
+                      </span>
+                      <span className="text-gray-600 flex-1">{groupRows.map((r) => r.unitTitle).join(' + ')}</span>
+                      <span className={`whitespace-nowrap ${zeroCandidate ? 'text-red-500' : 'text-gray-500'}`}>
+                        가능 강사 {bundle.candidateCount}명
+                      </span>
+                    </div>
+                  )
+                })}
+                {autoPreview.manual.length === 0 && autoPreview.planned.length === 0 && (
+                  <p className="text-xs text-gray-400">발송할 일정이 없습니다.</p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={isAutoPending || (autoPreview.manual.length === 0 && autoPreview.planned.length === 0)}
+                  onClick={handleConfirmAutoInvite}
+                  className="px-4 py-1.5 text-sm bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-40 transition-colors"
+                >
+                  {isAutoPending ? '발송 중...' : '발송'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelPreview}
+                  disabled={isAutoPending}
+                  className="px-4 py-1.5 text-sm border border-gray-300 rounded text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="mt-4 pt-4 border-t border-gray-100">
             <p className="text-xs text-gray-500 mb-2">직접 강사를 선택해서 보내려면:</p>

@@ -1374,6 +1374,10 @@ export type Database = {
         Args: { p_code: string }
         Returns: { id: string; name: string }[]
       }
+      preview_auto_bundles: {
+        Args: { p_event_row_ids: string[] }
+        Returns: { bundle_index: number; event_row_id: string; candidate_count: number }[]
+      }
       is_approved_admin: { Args: never; Returns: boolean }
       is_authenticated_admin: { Args: never; Returns: boolean }
       is_authenticated_admin_or_mentor: { Args: never; Returns: boolean }
