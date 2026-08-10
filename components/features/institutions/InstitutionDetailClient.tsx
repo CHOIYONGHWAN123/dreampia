@@ -210,25 +210,25 @@ export function InstitutionDetailClient({
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-12">
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-12 min-w-12">
                   no
                 </th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-20">
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-24 min-w-24">
                   상태
                 </th>
-                <th className="px-4 py-2.5 text-left font-medium text-gray-700">
+                <th className="px-4 py-2.5 text-left font-medium text-gray-700 min-w-32">
                   행사명
                 </th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
                   시작일시
                 </th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
                   종료일시
                 </th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-36">
+                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-36 min-w-36">
                   담당선생님
                 </th>
-                <th className="px-4 py-2.5 w-16" />
+                <th className="px-4 py-2.5 w-16 min-w-16" />
               </tr>
             </thead>
             <tbody>
@@ -306,78 +306,78 @@ export function InstitutionDetailClient({
         </div>
 
         <div className="border border-gray-200 rounded-lg overflow-x-auto">
-          <table className="text-sm" style={{ minWidth: "1600px" }}>
+          <table className="text-sm" style={{ minWidth: "2150px" }}>
             <thead>
               <tr className="bg-amber-50 border-b border-gray-200">
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-12">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-12 min-w-12">
                   no
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24 min-w-24">
                   시작일시
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24 min-w-24">
                   종료일시
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-36">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-36 min-w-36">
                   행사명
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32 min-w-32">
                   담당선생님
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
                   강사 섭외 현황
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24 min-w-24">
                   섭외 현황
                   <br />
                   페이지
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32 min-w-32">
                   준비물 준비
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32 min-w-32">
                   강사섭외일자
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
                   강사 섭외
                   <br />
                   전달 여부
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32 min-w-32">
                   학교요청사항
                   <br />
                   다운
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32 min-w-32">
                   학교요청사항
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-36 min-w-36">
                   성범조 조회서
                   <br />
                   등록 알림
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
                   견적서
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
                   행정서류
                   <br />
                   다운받기
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
                   행정서류
                   <br />
                   전달
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
                   계약 현황
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32 min-w-32">
                   공지사항
                   <br />
                   알림보내기
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-16">
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-16 min-w-16">
                   삭제
                 </th>
               </tr>
