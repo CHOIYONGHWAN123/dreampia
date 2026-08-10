@@ -20,6 +20,7 @@ export default async function InstitutionEditPage({ params }: { params: Promise<
       </div>
       <InstitutionForm
         id={data.id}
+        isDeleted={data.is_deleted}
         defaultValues={{
           name: data.name,
           address: data.address ?? '',

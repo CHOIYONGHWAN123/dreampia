@@ -102,6 +102,7 @@ crime_check_method crime_check_method [note: '회보서 or 동의서']
 crime_check_info text [note: '기관아이디/검증번호']
 indoor_shoes_note text [note: '실내화(내빈화) 위치']
 parking_note text [note: '주차 및 엘레베이터']
+is_deleted boolean [not null, default: false, note: '삭제 여부(소프트 삭제)']
 created_at timestamp [not null, default: `now()`]
 }
 

@@ -26,6 +26,7 @@ export default async function RecruitingPage() {
     supabase
       .from('institutions')
       .select('id, name')
+      .eq('is_deleted', false)
       .in('id', events.map((e) => e.institution_id).filter(Boolean) as string[]),
     supabase.from('admins').select('id, name'),
   ])
@@ -33,7 +34,10 @@ export default async function RecruitingPage() {
   const institutionMap = new Map((institutionsRes.data ?? []).map((i) => [i.id, i.name]))
   const adminMap = new Map((adminsRes.data ?? []).map((a) => [a.id, a.name]))
 
-  const rows: RecruitingRow[] = events.map((e, i) => ({
+  // 소속 기관이 삭제된 행사는 더 이상 할 일이 아니므로 목록에서 제외
+  const activeEvents = events.filter((e) => !e.institution_id || institutionMap.has(e.institution_id))
+
+  const rows: RecruitingRow[] = activeEvents.map((e, i) => ({
     no: i + 1,
     id: e.id,
     institutionName: e.institution_id ? (institutionMap.get(e.institution_id) ?? null) : null,

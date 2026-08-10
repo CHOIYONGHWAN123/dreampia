@@ -75,11 +75,14 @@ export default async function SupplyLogsPage({
       const institutionIds = [...new Set(events?.map((e) => e.institution_id).filter(Boolean) as string[])]
 
       const { data: institutionsData } = institutionIds.length > 0
-        ? await supabase.from('institutions').select('id, region1, region2, name').in('id', institutionIds)
+        ? await supabase.from('institutions').select('id, region1, region2, name, is_deleted').in('id', institutionIds)
         : { data: [] }
 
       const institutionById = new Map(
-        (institutionsData ?? []).map((i) => [i.id, { region1: i.region1, region2: i.region2, name: i.name }])
+        (institutionsData ?? []).map((i) => [
+          i.id,
+          { region1: i.region1, region2: i.region2, name: `${i.name}${i.is_deleted ? '(삭제됨)' : ''}` },
+        ])
       )
 
       // event_id → institution 맵 빌드

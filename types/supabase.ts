@@ -639,6 +639,7 @@ export type Database = {
             | Database["public"]["Enums"]["institution_type"]
             | null
           instructor_waiting_room: string | null
+          is_deleted: boolean
           laptop_wifi_note: string | null
           name: string
           parking_note: string | null
@@ -665,6 +666,7 @@ export type Database = {
             | Database["public"]["Enums"]["institution_type"]
             | null
           instructor_waiting_room?: string | null
+          is_deleted?: boolean
           laptop_wifi_note?: string | null
           name: string
           parking_note?: string | null
@@ -691,6 +693,7 @@ export type Database = {
             | Database["public"]["Enums"]["institution_type"]
             | null
           instructor_waiting_room?: string | null
+          is_deleted?: boolean
           laptop_wifi_note?: string | null
           name?: string
           parking_note?: string | null

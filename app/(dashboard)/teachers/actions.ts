@@ -27,8 +27,8 @@ export async function getTeachers(): Promise<TeacherRow[]> {
   const institutionIds = [...new Set(rows.map((r) => r.institution_id))]
 
   const { data: institutions } = institutionIds.length > 0
-    ? await supabase.from('institutions').select('id, name, region1, region2, address').in('id', institutionIds)
-    : { data: [] as { id: string; name: string; region1: string; region2: string | null; address: string | null }[] }
+    ? await supabase.from('institutions').select('id, name, region1, region2, address, is_deleted').in('id', institutionIds)
+    : { data: [] as { id: string; name: string; region1: string; region2: string | null; address: string | null; is_deleted: boolean }[] }
 
   const institutionMap = new Map((institutions ?? []).map((i) => [i.id, i]))
 
@@ -40,7 +40,7 @@ export async function getTeachers(): Promise<TeacherRow[]> {
       email: t.email,
       userId: t.user_id,
       institutionId: t.institution_id,
-      institutionName: inst?.name ?? '-',
+      institutionName: inst ? `${inst.name}${inst.is_deleted ? '(삭제됨)' : ''}` : '-',
       region1: inst?.region1 ?? '-',
       region2: inst?.region2 ?? null,
       address: inst?.address ?? null,
@@ -60,6 +60,7 @@ export async function getTeacherSelectData(): Promise<{ institutions: Institutio
   const { data } = await supabase
     .from('institutions')
     .select('id, name, region1, region2')
+    .eq('is_deleted', false)
     .order('name')
   return { institutions: data ?? [] }
 }
@@ -76,7 +77,7 @@ export async function getTeacher(id: string): Promise<TeacherRow | null> {
 
   const { data: institution } = await supabase
     .from('institutions')
-    .select('name, region1, region2, address')
+    .select('name, region1, region2, address, is_deleted')
     .eq('id', teacher.institution_id)
     .single()
 
@@ -86,7 +87,7 @@ export async function getTeacher(id: string): Promise<TeacherRow | null> {
     email: teacher.email,
     userId: teacher.user_id,
     institutionId: teacher.institution_id,
-    institutionName: institution?.name ?? '-',
+    institutionName: institution ? `${institution.name}${institution.is_deleted ? '(삭제됨)' : ''}` : '-',
     region1: institution?.region1 ?? '-',
     region2: institution?.region2 ?? null,
     address: institution?.address ?? null,

@@ -6,6 +6,7 @@ export default async function InstitutionsPage() {
   const { data } = await supabase
     .from('institutions')
     .select('*')
+    .order('is_deleted', { ascending: true })
     .order('created_at', { ascending: true })
 
   return <InstitutionsClient institutions={data || []} />

@@ -10,6 +10,7 @@ type Institution = {
   id: string;
   name: string;
   address: string | null;
+  is_deleted: boolean;
 };
 
 type Event = {
@@ -152,6 +153,12 @@ export function InstitutionDetailClient({
         </button>
       </div>
 
+      {institution.is_deleted && (
+        <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          삭제된 기관입니다. 기존 기록은 그대로 보존되어 있으며, 새 행사는 등록할 수 없습니다.
+        </div>
+      )}
+
       {/* 학교 기본 정보 */}
       <div className="border border-gray-200 rounded-lg overflow-hidden mb-8 w-80">
         <table className="w-full text-sm">
@@ -189,7 +196,8 @@ export function InstitutionDetailClient({
           </div>
           <button
             type="button"
-            className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
+            disabled={institution.is_deleted}
+            className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors whitespace-nowrap"
             onClick={() =>
               router.push(`/events/new?institutionId=${institution.id}`)
             }

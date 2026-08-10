@@ -42,6 +42,7 @@ type Institution = {
   indoor_shoes_note: string | null
   parking_note: string | null
   teacher_name: string | null
+  is_deleted?: boolean
 }
 
 type Admin = {
@@ -394,7 +395,10 @@ export function EventForm({
 
             <tr>
               <td className={cellLabelCls}>학교/기관명</td>
-              <td className={`${cellValueCls} bg-gray-50 text-gray-500`}>{institution?.name ?? '-'}</td>
+              <td className={`${cellValueCls} bg-gray-50 text-gray-500`}>
+                {institution?.name ?? '-'}
+                {institution?.is_deleted && <span className="ml-1 text-red-400">(삭제됨)</span>}
+              </td>
             </tr>
 
             <tr>

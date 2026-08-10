@@ -8,9 +8,8 @@ import { institutionSchema, type InstitutionFormData } from '@/lib/validations/i
 import {
   createInstitution,
   updateInstitution,
-  deleteInstitution,
-  deleteInstitutionWithEvents,
-  getInstitutionEventCount,
+  softDeleteInstitution,
+  restoreInstitution,
 } from '@/app/(dashboard)/institutions/actions'
 import { createClient } from '@/lib/supabase'
 
@@ -35,16 +34,18 @@ declare global {
 interface Props {
   id?: string
   defaultValues?: InstitutionFormData
+  isDeleted?: boolean
 }
 
 const inputCls = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-gray-500 transition-colors'
 const selectCls = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-gray-500 transition-colors bg-white text-gray-700'
 const labelCls = 'block text-sm font-medium text-gray-700 mb-1.5'
 
-export function InstitutionForm({ id, defaultValues }: Props) {
+export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDeleting] = useTransition()
+  const [isRestoring, startRestoring] = useTransition()
   const [isUploading, setIsUploading] = useState(false)
   const [floorMapFile, setFloorMapFile] = useState<File | null>(null)
   const floorMapInputRef = useRef<HTMLInputElement>(null)
@@ -96,21 +97,24 @@ export function InstitutionForm({ id, defaultValues }: Props) {
   }
 
   const handleDelete = () => {
+    if (!confirm('기관을 삭제하시겠습니까?\n(등록된 행사 등 기존 기록은 그대로 보존되며, 목록에서만 숨겨집니다)')) return
     startDeleting(async () => {
       try {
-        const eventCount = await getInstitutionEventCount(id!)
-
-        if (eventCount > 0) {
-          if (!confirm(`이 기관에 등록된 행사가 ${eventCount}건 있습니다.\n행사를 모두 삭제하고 기관을 삭제하시겠습니까?`)) return
-          await deleteInstitutionWithEvents(id!)
-        } else {
-          if (!confirm('기관을 삭제하시겠습니까?')) return
-          await deleteInstitution(id!)
-        }
-
+        await softDeleteInstitution(id!)
         router.push('/institutions')
       } catch (e) {
         alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+      }
+    })
+  }
+
+  const handleRestore = () => {
+    startRestoring(async () => {
+      try {
+        await restoreInstitution(id!)
+        router.refresh()
+      } catch (e) {
+        alert(e instanceof Error ? e.message : '복구에 실패했습니다.')
       }
     })
   }
@@ -159,6 +163,20 @@ export function InstitutionForm({ id, defaultValues }: Props) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 max-w-lg">
+      {isDeleted && (
+        <div className="flex items-center justify-between gap-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          <span>삭제된 기관입니다. 목록/선택 화면에는 더 이상 나타나지 않습니다.</span>
+          <button
+            type="button"
+            onClick={handleRestore}
+            disabled={isRestoring}
+            className="px-3 py-1 text-xs bg-white border border-red-300 rounded hover:bg-red-100 disabled:opacity-50 transition-colors whitespace-nowrap"
+          >
+            {isRestoring ? '복구 중...' : '복구'}
+          </button>
+        </div>
+      )}
+
       {/* 기관명 */}
       <div>
         <label className={labelCls}>기관명 <span className="text-red-500">*</span></label>
@@ -357,7 +375,7 @@ export function InstitutionForm({ id, defaultValues }: Props) {
 
       {/* 버튼 */}
       <div className="flex items-center justify-between pt-2">
-        {isEdit ? (
+        {isEdit && !isDeleted ? (
           <button
             type="button"
             onClick={handleDelete}

@@ -64,7 +64,7 @@ export default async function EventOperationsPage({
     sessionsRes,
     eventRowsRes,
   ] = await Promise.all([
-    supabase.from('institutions').select('id, region1, region2, institution_type, name')
+    supabase.from('institutions').select('id, region1, region2, institution_type, name, is_deleted')
       .in('id', events.map((e) => e.institution_id).filter(Boolean) as string[]),
     supabase.from('event_sessions').select('id, event_id, start_at, end_at, sort_order')
       .in('event_id', eventIds).order('sort_order'),
@@ -118,7 +118,7 @@ export default async function EventOperationsPage({
       region1: inst?.region1 ?? null,
       region2: inst?.region2 ?? null,
       category: inst?.institution_type ?? null,
-      institutionName: inst?.name ?? null,
+      institutionName: inst ? `${inst.name}${inst.is_deleted ? '(삭제됨)' : ''}` : null,
       fieldAdminIds: e.field_admin_ids ?? [],
       fieldAdminNames,
       eventStartAt: e.event_start_at,

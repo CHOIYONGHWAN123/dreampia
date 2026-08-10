@@ -13,8 +13,8 @@ export default async function CounterPage() {
   ] = await Promise.all([
     supabase.from('mentors').select('*', { count: 'exact', head: true }),
     supabase.from('events').select('*', { count: 'exact', head: true }).lt('event_end_at', now),
-    supabase.from('institutions').select('*', { count: 'exact', head: true }),
-    supabase.from('institutions').select('id, name, created_at').order('created_at', { ascending: false }).limit(50),
+    supabase.from('institutions').select('*', { count: 'exact', head: true }).eq('is_deleted', false),
+    supabase.from('institutions').select('id, name, created_at').eq('is_deleted', false).order('created_at', { ascending: false }).limit(50),
   ])
 
   return (

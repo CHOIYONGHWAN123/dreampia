@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { restoreInstitution } from '@/app/(dashboard)/institutions/actions'
 
 const INSTITUTION_TYPES = ['유치원', '초등', '중등', '고등', '기관', '특수학교', '문화센터']
 
@@ -13,14 +14,32 @@ type Institution = {
   address: string | null
   institution_type: string | null
   created_at: string
+  is_deleted: boolean
 }
 
 export function InstitutionsClient({ institutions }: { institutions: Institution[] }) {
   const router = useRouter()
+  const [, startRestoring] = useTransition()
+  const [restoringTargetId, setRestoringTargetId] = useState<string | null>(null)
   const [searchText, setSearchText] = useState('')
   const [filterRegion1, setFilterRegion1] = useState('')
   const [filterRegion2, setFilterRegion2] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
+  const [showDeleted, setShowDeleted] = useState(false)
+
+  const handleRestore = (id: string) => {
+    setRestoringTargetId(id)
+    startRestoring(async () => {
+      try {
+        await restoreInstitution(id)
+        router.refresh()
+      } catch (e) {
+        alert(e instanceof Error ? e.message : '복구에 실패했습니다.')
+      } finally {
+        setRestoringTargetId(null)
+      }
+    })
+  }
 
   const region1List = useMemo(
     () => [...new Set(institutions.map((i) => i.region1))].sort(),
@@ -34,13 +53,14 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
 
   const filtered = useMemo(() => {
     return institutions.filter((i) => {
+      if (!showDeleted && i.is_deleted) return false
       if (filterRegion1 && i.region1 !== filterRegion1) return false
       if (filterRegion2 && i.region2 !== filterRegion2) return false
       if (filterCategory && i.institution_type !== filterCategory) return false
       if (searchText && !i.name.includes(searchText)) return false
       return true
     })
-  }, [institutions, filterRegion1, filterRegion2, filterCategory, searchText])
+  }, [institutions, showDeleted, filterRegion1, filterRegion2, filterCategory, searchText])
 
   const handleRegion1Change = (value: string) => {
     setFilterRegion1(value)
@@ -103,6 +123,16 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
           placeholder="기관명 검색"
           className="border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400 w-56"
         />
+
+        <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={showDeleted}
+            onChange={(e) => setShowDeleted(e.target.checked)}
+            className="cursor-pointer"
+          />
+          삭제된 기관 보기
+        </label>
       </div>
 
       {/* 등록된 학교 수 */}
@@ -132,16 +162,32 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
                   <td className="px-4 py-2.5 text-center text-gray-800">{institution.region1}</td>
                   <td className="px-4 py-2.5 text-center text-gray-800">{institution.region2 ?? '-'}</td>
                   <td className="px-4 py-2.5 text-center text-gray-800">{institution.institution_type ?? '-'}</td>
-                  <td className="px-4 py-2.5 text-gray-800">{institution.name}</td>
+                  <td className="px-4 py-2.5 text-gray-800">
+                    {institution.name}
+                    {institution.is_deleted && (
+                      <span className="ml-1.5 text-xs text-red-400">(삭제됨)</span>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5 text-center" colSpan={3}>
                     <div className="flex items-center justify-center gap-1">
-                      <button
-                        type="button"
-                        className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
-                        onClick={() => router.push(`/institutions/${institution.id}/edit`)}
-                      >
-                        수정
-                      </button>
+                      {institution.is_deleted ? (
+                        <button
+                          type="button"
+                          disabled={restoringTargetId === institution.id}
+                          className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 transition-colors whitespace-nowrap"
+                          onClick={() => handleRestore(institution.id)}
+                        >
+                          {restoringTargetId === institution.id ? '복구 중...' : '복구'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
+                          onClick={() => router.push(`/institutions/${institution.id}/edit`)}
+                        >
+                          수정
+                        </button>
+                      )}
                       <button
                         type="button"
                         className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
