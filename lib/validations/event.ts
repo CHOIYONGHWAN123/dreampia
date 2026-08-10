@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const CRIME_CHECK_METHODS = ['회보서', '동의서'] as const
-export const STUDENT_ROTATIONS = ['1교시마다 변경', '2교시마다 변경'] as const
+export const STUDENT_ROTATIONS = ['없음', '1교시마다 변경', '2교시마다 변경'] as const
 export const INFLOW_SOURCES = [
   '팜플렛', '기존진행', '홈페이지', '블로그', '전화영업',
   '꿈길', '카카오톡채널', 'MOU', '입찰', '소개',

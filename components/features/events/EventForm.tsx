@@ -352,6 +352,7 @@ export function EventForm({
 
       <div className="grid grid-cols-2 gap-x-6 items-start">
         {/* ── 왼쪽 표 ── */}
+        <div className="min-w-0 overflow-x-auto">
         <table className={tableCls}>
           <tbody>
             <tr>
@@ -415,10 +416,10 @@ export function EventForm({
             <tr>
               <td className={cellLabelCls}>시작~종료 시간</td>
               <td className={cellValueCls}>
-                <div className="flex items-center gap-1.5">
-                  <input type="time" {...register('event_start_at_time')} className={`${cellInputCls} w-28 shrink-0`} />
+                <div className="grid grid-cols-[1fr_auto_1fr] gap-1 items-center">
+                  <input type="time" {...register('event_start_at_time')} className={`${cellInputCls} min-w-0`} />
                   <span className="text-gray-400 text-xs">~</span>
-                  <input type="time" {...register('event_end_at_time')} className={`${cellInputCls} w-28 shrink-0`} />
+                  <input type="time" {...register('event_end_at_time')} className={`${cellInputCls} min-w-0`} />
                 </div>
               </td>
             </tr>
@@ -527,8 +528,10 @@ export function EventForm({
             </tr>
           </tbody>
         </table>
+        </div>
 
         {/* ── 오른쪽 표 ── */}
+        <div className="min-w-0 overflow-x-auto">
         <table className={tableCls}>
           <tbody>
             {[
@@ -539,17 +542,17 @@ export function EventForm({
               <tr key={label}>
                 <td className={cellLabelCls}>{label}</td>
                 <td className={cellValueCls}>
-                  <div className="flex items-center gap-1.5">
+                  <div className="grid grid-cols-[1fr_auto_1fr] gap-1 items-center">
                     <input
                       type="time"
                       {...register(startKey as keyof EventFormData)}
-                      className={cellInputCls}
+                      className={`${cellInputCls} min-w-0`}
                     />
-                    <span className="text-gray-400 text-sm shrink-0">~</span>
+                    <span className="text-gray-400 text-sm">~</span>
                     <input
                       type="time"
                       {...register(endKey as keyof EventFormData)}
-                      className={cellInputCls}
+                      className={`${cellInputCls} min-w-0`}
                     />
                   </div>
                 </td>
@@ -689,6 +692,7 @@ export function EventForm({
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="mt-8">

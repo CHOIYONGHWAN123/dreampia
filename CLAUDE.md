@@ -233,6 +233,7 @@ enum crime_check_method {
 }
 
 enum student_rotation{
+"없음"
 "1교시마다 변경"
 "2교시마다 변경"
 }
