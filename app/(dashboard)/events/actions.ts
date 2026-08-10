@@ -144,7 +144,8 @@ export async function getEventDetail(id: string): Promise<{
       .select(
         'id, occupation_program_unit_id, start_time, end_time, classroom, target, lecture_fee, headcount, session_headcount, mentor_id'
       )
-      .eq('event_id', id),
+      .eq('event_id', id)
+      .order('start_time', { ascending: true, nullsFirst: false }),
   ])
   if (!event) return null
   return { event, schedules: schedules ?? [], eventRows: eventRows ?? [] }
