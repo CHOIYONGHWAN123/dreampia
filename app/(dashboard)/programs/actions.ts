@@ -89,8 +89,36 @@ export async function getEventCategoryChildCount(id: string): Promise<number> {
   return count ?? 0
 }
 
+// 이 행사구분을 사용 중인 행사(events.event_category_id) 건수. 행사는 실제 업무 기록이라
+// 하위 분야/직종/프로그램과 달리 절대 함께 삭제(cascade)하면 안 되므로, 이 값이 0보다
+// 크면 행사구분 자체를 삭제할 수 없게 막는다.
+export async function getEventCategoryEventCount(id: string): Promise<number> {
+  const supabase = await createServerSupabaseClient()
+  const { count } = await supabase
+    .from('events')
+    .select('id', { count: 'exact', head: true })
+    .eq('event_category_id', id)
+  return count ?? 0
+}
+
+async function assertEventCategoryNotInUse(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  id: string
+) {
+  const { count } = await supabase
+    .from('events')
+    .select('id', { count: 'exact', head: true })
+    .eq('event_category_id', id)
+  if ((count ?? 0) > 0) {
+    throw new Error(
+      `이 행사구분을 사용 중인 행사가 ${count}건 있어 삭제할 수 없습니다. 먼저 해당 행사들의 행사구분을 변경해주세요.`
+    )
+  }
+}
+
 export async function deleteEventCategory(id: string): Promise<void> {
   const supabase = await createServerSupabaseClient()
+  await assertEventCategoryNotInUse(supabase, id)
   const { error } = await supabase.from('event_categories').delete().eq('id', id)
   if (error) throw new Error(error.message)
   revalidatePath('/programs')
@@ -98,6 +126,7 @@ export async function deleteEventCategory(id: string): Promise<void> {
 
 export async function deleteEventCategoryCascade(id: string): Promise<void> {
   const supabase = await createServerSupabaseClient()
+  await assertEventCategoryNotInUse(supabase, id)
 
   const { data: fields } = await supabase.from('fields').select('id').eq('event_category_id', id)
   if (fields?.length) {

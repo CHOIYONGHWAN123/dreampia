@@ -8,6 +8,7 @@ import {
   deleteEventCategory,
   deleteEventCategoryCascade,
   getEventCategoryChildCount,
+  getEventCategoryEventCount,
   getFields,
   getOccupationsByFieldId,
   getOccupationProgramsByOccupationId,
@@ -128,6 +129,11 @@ export function ProgramsClient({ initialEventCategories, initialFields }: Props)
   const handleDeleteEventCategory = async (id: string) => {
     const categoryName = eventCategories.find((c) => c.id === id)?.name ?? ''
     try {
+      const eventCount = await getEventCategoryEventCount(id)
+      if (eventCount > 0) {
+        alert(`"${categoryName}" 행사구분을 사용 중인 행사가 ${eventCount}건 있어 삭제할 수 없습니다. 먼저 해당 행사들의 행사구분을 변경해주세요.`)
+        return
+      }
       const childCount = await getEventCategoryChildCount(id)
       if (childCount > 0) {
         if (!confirm(`"${categoryName}" 행사구분을 삭제하면 하위 분야 ${childCount}개와 관련 직종/프로그램/유닛이 모두 삭제됩니다.\n계속하시겠습니까?`)) return
