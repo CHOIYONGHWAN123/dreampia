@@ -127,9 +127,8 @@ function buildDefaultValues(
     name: initialEvent.name,
     institution_id: initialEvent.institution_id,
     event_category_id: initialEvent.event_category_id,
-    event_start_at_date: start.date,
+    event_date: start.date,
     event_start_at_time: start.time,
-    event_end_at_date: end.date,
     event_end_at_time: end.time,
     target_grade: initialEvent.target_grade,
     laptop_wifi_note: initialEvent.laptop_wifi_note,
@@ -256,8 +255,8 @@ export function EventForm({
         if (!date) return null
         return time ? `${date}T${time}:00` : `${date}T00:00:00`
       }
-      const eventStartAt = buildTimestamp(data.event_start_at_date, data.event_start_at_time)
-      const eventEndAt = buildTimestamp(data.event_end_at_date, data.event_end_at_time)
+      const eventStartAt = buildTimestamp(data.event_date, data.event_start_at_time)
+      const eventEndAt = buildTimestamp(data.event_date, data.event_end_at_time)
 
       const schedules = []
       if (data.schedule_1_start || data.schedule_1_end) {
@@ -407,20 +406,18 @@ export function EventForm({
             </tr>
 
             <tr>
-              <td className={cellLabelCls}>행사 시작 일시</td>
+              <td className={cellLabelCls}>일자</td>
               <td className={cellValueCls}>
-                <div className="flex gap-1.5">
-                  <input type="date" {...register('event_start_at_date')} className={cellInputCls} />
-                  <input type="time" {...register('event_start_at_time')} className={`${cellInputCls} w-28 shrink-0`} />
-                </div>
+                <input type="date" {...register('event_date')} className={cellInputCls} />
               </td>
             </tr>
 
             <tr>
-              <td className={cellLabelCls}>행사 종료 일시</td>
+              <td className={cellLabelCls}>시작~종료 시간</td>
               <td className={cellValueCls}>
-                <div className="flex gap-1.5">
-                  <input type="date" {...register('event_end_at_date')} className={cellInputCls} />
+                <div className="flex items-center gap-1.5">
+                  <input type="time" {...register('event_start_at_time')} className={`${cellInputCls} w-28 shrink-0`} />
+                  <span className="text-gray-400 text-xs">~</span>
                   <input type="time" {...register('event_end_at_time')} className={`${cellInputCls} w-28 shrink-0`} />
                 </div>
               </td>
@@ -705,11 +702,11 @@ export function EventForm({
           value={programUnits}
           onChange={setProgramUnits}
           defaultStartTime={(() => {
-            const d = watch('event_start_at_date'), t = watch('event_start_at_time')
+            const d = watch('event_date'), t = watch('event_start_at_time')
             return d && t ? `${d}T${t}` : d ? `${d}T00:00` : ''
           })()}
           defaultEndTime={(() => {
-            const d = watch('event_end_at_date'), t = watch('event_end_at_time')
+            const d = watch('event_date'), t = watch('event_end_at_time')
             return d && t ? `${d}T${t}` : d ? `${d}T00:00` : ''
           })()}
         />

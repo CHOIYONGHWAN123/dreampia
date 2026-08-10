@@ -60,6 +60,17 @@ const selCls =
 const fieldInputCls =
   'w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-gray-500'
 
+// startTime/endTime은 "YYYY-MM-DDTHH:mm" 형태로 그대로 저장하되, 입력은
+// 일자 하나 + 시작/종료 시간 두 개로 나눠 받기 위한 변환 헬퍼.
+function splitDateTime(value: string): { date: string; time: string } {
+  const [date, time] = value.split('T')
+  return { date: date ?? '', time: time ?? '' }
+}
+function joinDateTime(date: string, time: string): string {
+  if (!date) return ''
+  return `${date}T${time || '00:00'}`
+}
+
 // 검색 또는 분야 > 직종 > 프로그램 > 프로그램 유닛 드릴다운으로 occupation_program_unit을 찾아 추가하는 섹션.
 // 행사구분은 행사 등록 폼 상단에서 한 번만 선택하므로, 여기서는 그 값을 eventCategoryId prop으로
 // 전달받아 분야 목록을 필터링하는 데만 사용한다(이 섹션 안에서 다시 선택하지 않는다).
@@ -92,9 +103,10 @@ export function EventProgramUnitSection({
   const [programId, setProgramId] = useState('')
   const [unitId, setUnitId] = useState('')
 
-  // 일괄 적용 (대상 / 강의료 / 시작·종료 일시를 추가된 모든 행에 한 번에 반영)
+  // 일괄 적용 (대상 / 강의료 / 일자·시작·종료 시간을 추가된 모든 행에 한 번에 반영)
   const [bulkTarget, setBulkTarget] = useState('')
   const [bulkLectureFee, setBulkLectureFee] = useState<number | null>(null)
+  const [bulkDate, setBulkDate] = useState('')
   const [bulkStartTime, setBulkStartTime] = useState('')
   const [bulkEndTime, setBulkEndTime] = useState('')
 
@@ -185,14 +197,35 @@ export function EventProgramUnitSection({
   }
 
   const applyBulkTime = () => {
-    if (!bulkStartTime && !bulkEndTime) return
+    if (!bulkDate && !bulkStartTime && !bulkEndTime) return
     onChange(
-      value.map((v) => ({
-        ...v,
-        startTime: bulkStartTime || v.startTime,
-        endTime: bulkEndTime || v.endTime,
-      }))
+      value.map((v) => {
+        const st = splitDateTime(v.startTime)
+        const et = splitDateTime(v.endTime)
+        const date = bulkDate || st.date || et.date
+        return {
+          ...v,
+          startTime: joinDateTime(date, bulkStartTime || st.time),
+          endTime: joinDateTime(date, bulkEndTime || et.time),
+        }
+      })
     )
+  }
+
+  const updateRowDate = (v: SelectedProgramUnit, date: string) => {
+    const st = splitDateTime(v.startTime)
+    const et = splitDateTime(v.endTime)
+    updateUnit(v.key, { startTime: joinDateTime(date, st.time), endTime: joinDateTime(date, et.time) })
+  }
+  const updateRowStartTime = (v: SelectedProgramUnit, time: string) => {
+    const st = splitDateTime(v.startTime)
+    const date = st.date || splitDateTime(v.endTime).date
+    updateUnit(v.key, { startTime: joinDateTime(date, time) })
+  }
+  const updateRowEndTime = (v: SelectedProgramUnit, time: string) => {
+    const et = splitDateTime(v.endTime)
+    const date = et.date || splitDateTime(v.startTime).date
+    updateUnit(v.key, { endTime: joinDateTime(date, time) })
   }
 
   return (
@@ -321,14 +354,20 @@ export function EventProgramUnitSection({
           </p>
           <div className="flex items-center gap-2">
             <input
-              type="datetime-local"
+              type="date"
+              value={bulkDate}
+              onChange={(e) => setBulkDate(e.target.value)}
+              className={`${fieldInputCls} w-auto`}
+            />
+            <input
+              type="time"
               value={bulkStartTime}
               onChange={(e) => setBulkStartTime(e.target.value)}
               className={`${fieldInputCls} w-auto`}
             />
             <span className="text-xs text-gray-400">~</span>
             <input
-              type="datetime-local"
+              type="time"
               value={bulkEndTime}
               onChange={(e) => setBulkEndTime(e.target.value)}
               className={`${fieldInputCls} w-auto`}
@@ -336,7 +375,7 @@ export function EventProgramUnitSection({
             <button
               type="button"
               onClick={applyBulkTime}
-              disabled={!bulkStartTime && !bulkEndTime}
+              disabled={!bulkDate && !bulkStartTime && !bulkEndTime}
               className="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors whitespace-nowrap"
             >
               전체 적용
@@ -386,8 +425,9 @@ export function EventProgramUnitSection({
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">프로그램</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-44 min-w-44">시작 일시</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-44 min-w-44">종료 일시</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36">일자</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">시작 시간</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">종료 시간</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">강의실</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36">대상</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">강의료</th>
@@ -401,7 +441,7 @@ export function EventProgramUnitSection({
           <tbody>
             {value.length === 0 ? (
               <tr>
-                <td colSpan={11} className="py-6 text-center text-xs text-gray-400">
+                <td colSpan={12} className="py-6 text-center text-xs text-gray-400">
                   추가된 프로그램이 없습니다.
                 </td>
               </tr>
@@ -422,17 +462,25 @@ export function EventProgramUnitSection({
                     </td>
                     <td className="px-2 py-1.5">
                       <input
-                        type="datetime-local"
-                        value={v.startTime}
-                        onChange={(e) => updateUnit(v.key, { startTime: e.target.value })}
+                        type="date"
+                        value={splitDateTime(v.startTime).date || splitDateTime(v.endTime).date}
+                        onChange={(e) => updateRowDate(v, e.target.value)}
                         className={fieldInputCls}
                       />
                     </td>
                     <td className="px-2 py-1.5">
                       <input
-                        type="datetime-local"
-                        value={v.endTime}
-                        onChange={(e) => updateUnit(v.key, { endTime: e.target.value })}
+                        type="time"
+                        value={splitDateTime(v.startTime).time}
+                        onChange={(e) => updateRowStartTime(v, e.target.value)}
+                        className={fieldInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="time"
+                        value={splitDateTime(v.endTime).time}
+                        onChange={(e) => updateRowEndTime(v, e.target.value)}
                         className={fieldInputCls}
                       />
                     </td>
