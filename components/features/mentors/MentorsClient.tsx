@@ -15,6 +15,7 @@ import {
   updateMentorAgreementUrl,
   updateMopPptUrl,
   updateMopProfileUrl,
+  updateMopProgramScore,
   deleteMopById,
   addMentorOccupationProgram,
   getMentorEventCount,
@@ -76,6 +77,47 @@ function EditInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 text-center"
+    />
+  )
+}
+
+// 프로그램별 점수(program_score) - blur 시 즉시 저장. 강사 섭외 시 우선순위 판단에 사용 예정.
+function ProgramScoreCell({
+  value,
+  onSave,
+}: {
+  value: number
+  onSave: (score: number) => Promise<void>
+}) {
+  const [text, setText] = useState(String(value))
+  const [saving, setSaving] = useState(false)
+
+  const commit = async () => {
+    const n = Number(text)
+    if (!Number.isFinite(n)) {
+      setText(String(value))
+      return
+    }
+    if (n === value) return
+    setSaving(true)
+    try {
+      await onSave(n)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
+      setText(String(value))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <input
+      type="number"
+      value={text}
+      disabled={saving}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={commit}
+      className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-blue-300 disabled:opacity-50"
     />
   )
 }
@@ -375,6 +417,13 @@ function MentorRows({
     }))
   }
 
+  const handleProgramScoreSave = async (mopId: string, score: number) => {
+    await updateMopProgramScore(mopId, score)
+    setLocalPrograms((prev) =>
+      prev.map((p) => (p.mop_id === mopId ? { ...p, program_score: score } : p))
+    )
+  }
+
   const handleProfileUpload = async (mopId: string, file: File) => {
     setUploadingProfile((prev) => ({ ...prev, [mopId]: true }))
     try {
@@ -525,12 +574,12 @@ function MentorRows({
     </>
   )
 
-  // ── 프로그램 추가 버튼 행 (10개 program 컬럼에만 셀 필요) ─────────────
+  // ── 프로그램 추가 버튼 행 (11개 program 컬럼에만 셀 필요) ─────────────
 
   const addRow = (
     <tr key={`${mentor.id}-add`}>
       <td
-        colSpan={10}
+        colSpan={11}
         className="px-2 py-1 text-center border-b border-r border-dashed border-gray-200"
       >
         <button
@@ -553,7 +602,7 @@ function MentorRows({
         <tr className="hover:bg-gray-50 border-t-2 border-gray-300">
           <td className={`${td} font-semibold`} rowSpan={2}>{index + 1}</td>
           <td className={`${td} font-medium text-gray-800`} rowSpan={2}>{mentor.name}</td>
-          <td colSpan={10} className="px-2 py-1.5 text-center text-xs text-gray-300 border-b border-r border-gray-100">
+          <td colSpan={11} className="px-2 py-1.5 text-center text-xs text-gray-300 border-b border-r border-gray-100">
             등록된 프로그램 없음
           </td>
           {mentorInfoCells}
@@ -616,6 +665,13 @@ function MentorRows({
                 ✕
               </button>
             </div>
+          </td>
+          {/* 프로그램 점수 */}
+          <td className={td}>
+            <ProgramScoreCell
+              value={prog.program_score}
+              onSave={(score) => handleProgramScoreSave(prog.mop_id, score)}
+            />
           </td>
           {/* 재료비 */}
           <td className={td}>
@@ -681,6 +737,7 @@ const THEAD = [
   { label: '직종', w: 96 },
   { label: '교급', w: 56 },
   { label: '프로그램명', w: 128 },
+  { label: '프로그램 점수', w: 72 },
   { label: '강사 재료비', w: 80 },
   { label: '준비물 준비', w: 72 },
   { label: '강사료 입금자', w: 96 },

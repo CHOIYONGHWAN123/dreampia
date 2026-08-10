@@ -861,6 +861,7 @@ export type Database = {
           occupation_program_unit_id: string | null
           ppt_file_url: string | null
           profile_file_url: string | null
+          program_score: number
         }
         Insert: {
           id?: string
@@ -870,6 +871,7 @@ export type Database = {
           occupation_program_unit_id?: string | null
           ppt_file_url?: string | null
           profile_file_url?: string | null
+          program_score?: number
         }
         Update: {
           id?: string
@@ -879,6 +881,7 @@ export type Database = {
           occupation_program_unit_id?: string | null
           ppt_file_url?: string | null
           profile_file_url?: string | null
+          program_score?: number
         }
         Relationships: [
           {

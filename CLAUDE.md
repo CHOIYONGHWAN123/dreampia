@@ -164,6 +164,7 @@ lecture_fee_payer_id uuid [ref: > mentors.id, note: '강사료 입금자']
 material_fee_payer_id uuid [ref: > mentors.id, note: '재료비 입금자']
 ppt_file_url varchar [note: 'Supabase Storage URL']
 profile_file_url text [note: '프로필 파일 URL (hwp 또는 pdf)']
+program_score integer [not null, default: 100, note: '프로그램별 강사 점수. 강사 섭외 시 우선순위 판단에 사용 예정']
 
 indexes {
 (mentor_id, occupation_program_unit_id) [unique]
