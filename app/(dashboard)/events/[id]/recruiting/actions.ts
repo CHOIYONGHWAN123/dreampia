@@ -27,6 +27,8 @@ export type CandidateMentor = {
   name: string
   score: number | null
   belongsToName: string | null
+  isAvailable: boolean
+  isAuthenticated: boolean
 }
 
 export type InvitationMentorSummary = {
@@ -105,10 +107,25 @@ export async function getRecruitingData(eventId: string): Promise<RecruitingData
   const mentorIdsForCandidates = [...new Set((mopRes.data ?? []).map((m) => m.mentor_id))]
   const allMentorIds = [...new Set([...mentorIdsForCandidates, ...mentorIdsFromRows])]
   const { data: mentorsData } = allMentorIds.length > 0
-    ? await supabase.from('mentors').select('id, name, score, belongs_to').in('id', allMentorIds)
-    : { data: [] as { id: string; name: string; score: number | null; belongs_to: string | null }[] }
+    ? await supabase
+        .from('mentors')
+        .select('id, name, score, belongs_to, is_available, is_authenticated')
+        .in('id', allMentorIds)
+    : {
+        data: [] as {
+          id: string
+          name: string
+          score: number | null
+          belongs_to: string | null
+          is_available: boolean
+          is_authenticated: boolean
+        }[],
+      }
   const mentorMap = new Map((mentorsData ?? []).map((m) => [m.id, m]))
 
+  // 강의가능(is_available)이 꺼져있거나 미인증인 강사도 후보 목록엔 그대로 보여주되(등록은
+  // 되어 있다는 걸 알 수 있게), isAvailable/isAuthenticated 플래그를 같이 내려줘서 화면에서
+  // 비활성화 표시하고 실제로는 선택/초대하지 못하게 막는다.
   const mentorsByUnit: Record<string, CandidateMentor[]> = {}
   for (const row of mopRes.data ?? []) {
     if (!row.occupation_program_unit_id) continue
@@ -120,6 +137,8 @@ export async function getRecruitingData(eventId: string): Promise<RecruitingData
       name: mentor.name,
       score: mentor.score,
       belongsToName: mentor.belongs_to ? mentorMap.get(mentor.belongs_to)?.name ?? null : null,
+      isAvailable: mentor.is_available,
+      isAuthenticated: mentor.is_authenticated,
     })
     mentorsByUnit[row.occupation_program_unit_id] = list
   }

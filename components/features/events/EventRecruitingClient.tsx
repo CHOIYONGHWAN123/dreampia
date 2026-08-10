@@ -590,19 +590,35 @@ export function EventRecruitingClient({
                 </p>
               ) : (
                 <div className="space-y-1 max-h-56 overflow-y-auto border border-gray-100 rounded p-2">
-                  {eligibleMentors.map((m) => (
-                    <label key={m.id} className="flex items-center gap-2 px-1 py-1 text-sm hover:bg-gray-50 rounded cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedMentorIds.has(m.id)}
-                        onChange={() => toggleMentor(m.id)}
-                      />
-                      <span className="text-gray-800">{m.name}</span>
-                      <span className="text-xs text-gray-400">
-                        (점수: {m.score ?? '-'} / 소속: {m.belongsToName ?? '개인'})
-                      </span>
-                    </label>
-                  ))}
+                  {eligibleMentors.map((m) => {
+                    const disabledReason = !m.isAvailable
+                      ? '강의불가'
+                      : !m.isAuthenticated
+                        ? '미인증'
+                        : null
+                    return (
+                      <label
+                        key={m.id}
+                        className={`flex items-center gap-2 px-1 py-1 text-sm rounded ${
+                          disabledReason ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedMentorIds.has(m.id)}
+                          disabled={!!disabledReason}
+                          onChange={() => toggleMentor(m.id)}
+                        />
+                        <span className="text-gray-800">{m.name}</span>
+                        <span className="text-xs text-gray-400">
+                          (점수: {m.score ?? '-'} / 소속: {m.belongsToName ?? '개인'})
+                        </span>
+                        {disabledReason && (
+                          <span className="text-xs text-red-400 font-medium">({disabledReason})</span>
+                        )}
+                      </label>
+                    )
+                  })}
                 </div>
               )}
 
