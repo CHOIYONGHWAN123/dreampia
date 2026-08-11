@@ -46,7 +46,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
   const { data: event, error: eventError } = await supabase
     .from('events')
     .select(
-      'id, name, institution_id, event_start_at, event_end_at, teacher_name, admin_contact, instructor_waiting_room, laptop_wifi_note, crime_check_method, crime_check_info, parking_note, has_elevator, indoor_shoes_note, floor_map_url'
+      'id, name, institution_id, event_start_at, event_end_at, teacher_name, admin_contact, instructor_waiting_room, laptop_wifi_note, crime_check_method, crime_check_info, parking_note, has_elevator, indoor_shoes_note, floor_map_url, school_request_note'
     )
     .eq('id', eventId)
     .single()
@@ -74,17 +74,29 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
   const mentorIds = [...new Set((eventRows ?? []).map((r) => r.mentor_id).filter(Boolean))] as string[]
   const unitIds = [...new Set((eventRows ?? []).map((r) => r.occupation_program_unit_id).filter(Boolean))] as string[]
 
-  const [mentorsRes, unitsRes] = await Promise.all([
+  const [mentorsRes, unitsRes, mopRes] = await Promise.all([
     mentorIds.length
       ? supabase.from('mentors').select('id, name').in('id', mentorIds)
       : Promise.resolve({ data: [] as { id: string; name: string }[] }),
     unitIds.length
       ? supabase.from('occupation_program_unit').select('id, title, school_request_note').in('id', unitIds)
       : Promise.resolve({ data: [] as { id: string; title: string; school_request_note: string | null }[] }),
+    mentorIds.length && unitIds.length
+      ? supabase
+          .from('mentor_occupation_programs')
+          .select('mentor_id, occupation_program_unit_id, school_request_note')
+          .in('mentor_id', mentorIds)
+          .in('occupation_program_unit_id', unitIds)
+      : Promise.resolve({
+          data: [] as { mentor_id: string; occupation_program_unit_id: string; school_request_note: string | null }[],
+        }),
   ])
 
   const mentorMap = new Map((mentorsRes.data ?? []).map((m) => [m.id, m.name]))
   const unitMap = new Map((unitsRes.data ?? []).map((u) => [u.id, u]))
+  const mopNoteMap = new Map(
+    (mopRes.data ?? []).map((m) => [`${m.mentor_id}_${m.occupation_program_unit_id}`, m.school_request_note])
+  )
 
   // 기관 값을 기본값으로 하고, 행사에 값이 있으면 오버라이드
   const pick = <T,>(eventValue: T | null | undefined, institutionValue: T | null | undefined): T | null =>
@@ -183,6 +195,13 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
   const gridDataStartRow = r
   ;(eventRows ?? []).forEach((row, idx) => {
     const unit = row.occupation_program_unit_id ? unitMap.get(row.occupation_program_unit_id) : undefined
+    const mopNote =
+      row.mentor_id && row.occupation_program_unit_id
+        ? mopNoteMap.get(`${row.mentor_id}_${row.occupation_program_unit_id}`)
+        : null
+    const schoolRequestNote = [event.school_request_note, unit?.school_request_note, mopNote]
+      .filter((v): v is string => !!v)
+      .join('\n')
     const answerValues = idx === 0 ? ANSWER_EXAMPLES : ['', '', '', '', '']
     const values = [
       fmtDate(row.start_time),
@@ -191,7 +210,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
       row.classroom ?? '',
       row.mentor_id ? (mentorMap.get(row.mentor_id) ?? '') : '',
       unit?.title ?? '',
-      unit?.school_request_note ?? '',
+      schoolRequestNote,
       ...answerValues,
     ]
     values.forEach((v, i) => {

@@ -385,6 +385,7 @@ export type Database = {
           report_sent: boolean | null
           requested_dates: string[] | null
           sales_admin_id: string | null
+          school_request_note: string | null
           institution_request_delivered: boolean | null
           start_recruit_at: string | null
           student_rotation: string | null
@@ -454,6 +455,7 @@ export type Database = {
           report_sent?: boolean | null
           requested_dates?: string[] | null
           sales_admin_id?: string | null
+          school_request_note?: string | null
           institution_request_delivered?: boolean | null
           start_recruit_at?: string | null
           student_rotation?: string | null
@@ -525,6 +527,7 @@ export type Database = {
           report_sent?: boolean | null
           requested_dates?: string[] | null
           sales_admin_id?: string | null
+          school_request_note?: string | null
           institution_request_delivered?: boolean | null
           start_recruit_at?: string | null
           student_rotation?: string | null
@@ -862,6 +865,7 @@ export type Database = {
           ppt_file_url: string | null
           profile_file_url: string | null
           program_score: number
+          school_request_note: string | null
         }
         Insert: {
           id?: string
@@ -872,6 +876,7 @@ export type Database = {
           ppt_file_url?: string | null
           profile_file_url?: string | null
           program_score?: number
+          school_request_note?: string | null
         }
         Update: {
           id?: string
@@ -882,6 +887,7 @@ export type Database = {
           ppt_file_url?: string | null
           profile_file_url?: string | null
           program_score?: number
+          school_request_note?: string | null
         }
         Relationships: [
           {

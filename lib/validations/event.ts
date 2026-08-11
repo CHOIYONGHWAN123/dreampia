@@ -34,6 +34,7 @@ export const eventSchema = z.object({
   notice: nullableString,
   prep_note: nullableString,
   memo: nullableString,
+  school_request_note: nullableString,
   schedule_1_start: z.string().optional(),
   schedule_1_end: z.string().optional(),
   schedule_2_start: z.string().optional(),

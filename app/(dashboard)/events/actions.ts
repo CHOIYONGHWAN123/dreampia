@@ -79,7 +79,7 @@ export type EventProgramSelectData = {
 }
 
 const EVENT_DETAIL_COLUMNS =
-  'id, name, institution_id, event_category_id, created_at, event_start_at, event_end_at, target_grade, instructor_waiting_room, admin_contact, has_elevator, floor_map_url, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, student_rotation, notice, prep_note, memo, contact_name, contact_email, contact_phone, teacher_name, inflow_source, institution_type, sales_admin_id, budget, estimate_file_url, comm_admin_id'
+  'id, name, institution_id, event_category_id, created_at, event_start_at, event_end_at, target_grade, instructor_waiting_room, admin_contact, has_elevator, floor_map_url, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, student_rotation, notice, prep_note, memo, school_request_note, contact_name, contact_email, contact_phone, teacher_name, inflow_source, institution_type, sales_admin_id, budget, estimate_file_url, comm_admin_id'
 
 export type EventDetailData = {
   id: string
@@ -103,6 +103,7 @@ export type EventDetailData = {
   notice: string | null
   prep_note: string | null
   memo: string | null
+  school_request_note: string | null
   contact_name: string | null
   contact_email: string | null
   contact_phone: string | null
@@ -214,6 +215,7 @@ export async function createEvent(data: {
   notice?: string | null
   prep_note?: string | null
   memo?: string | null
+  school_request_note?: string | null
   contact_name?: string | null
   contact_email?: string | null
   contact_phone?: string | null
@@ -249,6 +251,7 @@ export async function createEvent(data: {
     notice: data.notice || null,
     prep_note: data.prep_note || null,
     memo: data.memo || null,
+    school_request_note: data.school_request_note || null,
     contact_name: data.contact_name || null,
     contact_email: data.contact_email || null,
     contact_phone: data.contact_phone || null,
@@ -361,6 +364,7 @@ export async function updateEvent(
     notice?: string | null
     prep_note?: string | null
     memo?: string | null
+    school_request_note?: string | null
     contact_name?: string | null
     contact_email?: string | null
     contact_phone?: string | null
@@ -397,6 +401,7 @@ export async function updateEvent(
     notice: data.notice || null,
     prep_note: data.prep_note || null,
     memo: data.memo || null,
+    school_request_note: data.school_request_note || null,
     contact_name: data.contact_name || null,
     contact_email: data.contact_email || null,
     contact_phone: data.contact_phone || null,

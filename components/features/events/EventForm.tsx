@@ -148,6 +148,7 @@ function buildDefaultValues(
     notice: initialEvent.notice,
     prep_note: initialEvent.prep_note,
     memo: initialEvent.memo,
+    school_request_note: initialEvent.school_request_note,
     schedule_1_start: s1?.start_time ?? '',
     schedule_1_end: s1?.end_time ?? '',
     schedule_2_start: s2?.start_time ?? '',
@@ -329,6 +330,7 @@ export function EventForm({
         notice: data.notice,
         prep_note: data.prep_note,
         memo: data.memo,
+        school_request_note: data.school_request_note,
         contact_name: data.contact_name,
         contact_email: data.contact_email,
         contact_phone: data.contact_phone,
@@ -375,6 +377,15 @@ export function EventForm({
       <div className="sticky top-0 z-10 bg-white flex items-center justify-between py-4 border-b border-gray-200 mb-8">
         <h1 className="text-2xl font-bold text-gray-900">{eventId ? '행사 수정' : '행사 등록'}</h1>
         <div className="flex gap-2">
+          {eventId && (
+            <button
+              type="button"
+              onClick={() => router.push(`/events/${eventId}/recruiting`)}
+              className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              강사 섭외 바로가기
+            </button>
+          )}
           <button
             type="button"
             onClick={() => router.back()}
@@ -649,6 +660,18 @@ export function EventForm({
                 <textarea
                   {...register('memo')}
                   rows={2}
+                  className={`${cellInputCls} resize-none`}
+                />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>학교요청사항(행사 전체)</td>
+              <td className={cellValueCls}>
+                <textarea
+                  {...register('school_request_note')}
+                  rows={2}
+                  placeholder="이 행사 전체에 공통으로 적용되는 학교 요청사항"
                   className={`${cellInputCls} resize-none`}
                 />
               </td>

@@ -13,6 +13,7 @@ export type MentorOccupationProgramRow = {
   material_fee_payer_id: string | null
   material_fee_payer_name: string | null
   program_score: number
+  school_request_note: string | null
   program_title: string
   school_level: string | null
   mentor_material_cost: number | null
@@ -73,7 +74,7 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
 
   const { data: mopRows } = await supabase
     .from('mentor_occupation_programs')
-    .select('id, mentor_id, occupation_program_unit_id, ppt_file_url, profile_file_url, lecture_fee_payer_id, material_fee_payer_id, program_score')
+    .select('id, mentor_id, occupation_program_unit_id, ppt_file_url, profile_file_url, lecture_fee_payer_id, material_fee_payer_id, program_score, school_request_note')
     .in('mentor_id', mentorIds)
 
   if (!mopRows?.length) {
@@ -161,6 +162,7 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
         material_fee_payer_id: r.material_fee_payer_id,
         material_fee_payer_name: r.material_fee_payer_id ? (feePayerMap.get(r.material_fee_payer_id) ?? null) : null,
         program_score: r.program_score,
+        school_request_note: r.school_request_note,
         program_title: unit?.title ?? '-',
         school_level: unit?.school_level ?? null,
         mentor_material_cost: unit?.mentor_material_cost ?? null,
@@ -266,6 +268,16 @@ export async function updateMopProgramScore(mopId: string, score: number): Promi
   revalidatePath('/mentors')
 }
 
+export async function updateMopSchoolRequestNote(mopId: string, note: string | null): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase
+    .from('mentor_occupation_programs')
+    .update({ school_request_note: note })
+    .eq('id', mopId)
+  if (error) throw new Error(error.message)
+  revalidatePath('/mentors')
+}
+
 export async function updateMopProfileUrl(mopId: string, url: string): Promise<void> {
   const supabase = await createServerSupabaseClient()
   const { error } = await supabase
@@ -306,7 +318,7 @@ export async function addMentorOccupationProgram(
       ppt_file_url: pptFileUrl ?? null,
       profile_file_url: profileFileUrl ?? null,
     })
-    .select('id, mentor_id, occupation_program_unit_id, ppt_file_url, profile_file_url, lecture_fee_payer_id, material_fee_payer_id, program_score')
+    .select('id, mentor_id, occupation_program_unit_id, ppt_file_url, profile_file_url, lecture_fee_payer_id, material_fee_payer_id, program_score, school_request_note')
     .single()
   if (error) throw new Error(error.message)
 
@@ -373,6 +385,7 @@ export async function addMentorOccupationProgram(
       ? (payerMap.get(mop.material_fee_payer_id) ?? null)
       : null,
     program_score: mop.program_score,
+    school_request_note: mop.school_request_note,
     program_title: unit?.title ?? '-',
     school_level: unit?.school_level ?? null,
     mentor_material_cost: unit?.mentor_material_cost ?? null,
