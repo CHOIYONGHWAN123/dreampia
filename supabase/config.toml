@@ -333,3 +333,9 @@ entrypoint = "./functions/mentor-find-id/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/mentor-find-id/*.html" ]
+
+[functions.generate-agreement-pdf]
+enabled = true
+verify_jwt = true
+import_map = "./functions/generate-agreement-pdf/deno.json"
+entrypoint = "./functions/generate-agreement-pdf/index.ts"
