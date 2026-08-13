@@ -306,7 +306,7 @@ export function InstitutionDetailClient({
         </div>
 
         <div className="border border-gray-200 rounded-lg overflow-x-auto">
-          <table className="text-sm" style={{ minWidth: "2150px" }}>
+          <table className="text-sm" style={{ minWidth: "2280px" }}>
             <thead>
               <tr className="bg-amber-50 border-b border-gray-200">
                 <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-12 min-w-12">
@@ -376,6 +376,11 @@ export function InstitutionDetailClient({
                   공지사항
                   <br />
                   알림보내기
+                </th>
+                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
+                  보고서
+                  <br />
+                  다운받기
                 </th>
                 <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-16 min-w-16">
                   삭제
@@ -564,6 +569,13 @@ export function InstitutionDetailClient({
                       </button>
                     </td>
 
+                    {/* 보고서 다운받기 - 비활성화 (보고서 양식 준비 전) */}
+                    <td className="px-3 py-2.5 text-center">
+                      <button type="button" disabled className={DISABLED_BTN}>
+                        다운받기
+                      </button>
+                    </td>
+
                     {/* 삭제 */}
                     <td className="px-3 py-2.5 text-center">
                       <button
@@ -578,7 +590,7 @@ export function InstitutionDetailClient({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={19} className="py-10 text-center text-gray-400">
+                  <td colSpan={20} className="py-10 text-center text-gray-400">
                     진행 중인 행사가 없습니다.
                   </td>
                 </tr>
