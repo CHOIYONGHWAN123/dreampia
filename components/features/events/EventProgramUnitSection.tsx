@@ -421,7 +421,7 @@ export function EventProgramUnitSection({
 
       {/* 추가된 프로그램 목록 - 엑셀 시트처럼 프로그램 1개당 1행 */}
       <div className="border border-gray-200 rounded-lg overflow-x-auto">
-        <table className="text-sm border-collapse" style={{ minWidth: '1520px' }}>
+        <table className="text-sm border-collapse" style={{ minWidth: '1400px' }}>
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">프로그램</th>
@@ -431,7 +431,6 @@ export function EventProgramUnitSection({
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">강의실</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36">대상</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">강의료</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">강의료(세후)</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">인원수</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">차시별 인원수</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-40 min-w-40">강사 배정</th>
@@ -441,13 +440,12 @@ export function EventProgramUnitSection({
           <tbody>
             {value.length === 0 ? (
               <tr>
-                <td colSpan={12} className="py-6 text-center text-xs text-gray-400">
+                <td colSpan={11} className="py-6 text-center text-xs text-gray-400">
                   추가된 프로그램이 없습니다.
                 </td>
               </tr>
             ) : (
               value.map((v) => {
-                const lectureFeeAfterTax = calcLectureFeeAfterTax(v.lectureFee)
                 const candidateMentors = mentorsByUnit[v.unitId] ?? []
                 const assignedMentor = v.mentorId
                   ? candidateMentors.find((m) => m.id === v.mentorId)
@@ -512,9 +510,6 @@ export function EventProgramUnitSection({
                         min={0}
                         className={fieldInputCls}
                       />
-                    </td>
-                    <td className="px-2 py-1.5 text-center text-gray-500">
-                      {lectureFeeAfterTax !== null ? lectureFeeAfterTax.toLocaleString() : '-'}
                     </td>
                     <td className="px-2 py-1.5">
                       <input
