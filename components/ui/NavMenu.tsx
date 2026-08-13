@@ -44,10 +44,10 @@ function isMenuActive(pathname: string, href: string) {
 
 export function NavMenu({ isSuperAdmin = false }: { isSuperAdmin?: boolean }) {
   const pathname = usePathname()
-  // 관리자 승인/권한 변경은 슈퍼관리자만 다룰 수 있어서, 메뉴 자체도 슈퍼관리자에게만 보여준다
-  // (페이지 접근은 서버에서도 별도로 다시 확인한다).
+  // 관리자 승인/권한 변경, 수익 데이터는 슈퍼관리자만 다룰 수 있어서, 메뉴 자체도
+  // 슈퍼관리자에게만 보여준다(페이지 접근은 서버에서도 별도로 다시 확인한다).
   const menus: MenuItem[] = isSuperAdmin
-    ? [...BASE_MENUS, { href: '/admins', label: '관리자 관리' }]
+    ? [...BASE_MENUS, { href: '/monthly-revenue', label: '월별 수익 관리' }, { href: '/admins', label: '관리자 관리' }]
     : BASE_MENUS
 
   return (
