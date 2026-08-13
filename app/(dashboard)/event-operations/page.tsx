@@ -13,32 +13,45 @@ export default async function EventOperationsPage({
 
   const supabase = await createServerSupabaseClient()
 
-  // 이용 가능한 월 목록 (탭용)
-  const { data: allDates } = await supabase
-    .from('events')
-    .select('event_end_at')
-    .not('event_end_at', 'is', null)
+  // 이용 가능한 월 목록 (탭용) — event_start_at~event_end_at 사이에 걸쳐있는 모든 달을 포함
+  const { data: allDates } = await supabase.from('events').select('event_start_at, event_end_at')
 
-  const availableMonths = [
-    ...new Map(
-      (allDates ?? []).map((e) => {
-        const d = new Date(e.event_end_at!)
-        const key = `${d.getFullYear()}-${d.getMonth() + 1}`
-        return [key, { year: d.getFullYear(), month: d.getMonth() + 1 }]
-      })
-    ).values(),
-  ].sort((a, b) => b.year - a.year || b.month - a.month)
+  const monthMap = new Map<string, { year: number; month: number }>()
+  for (const e of allDates ?? []) {
+    const start = e.event_start_at ? new Date(e.event_start_at) : e.event_end_at ? new Date(e.event_end_at) : null
+    const end = e.event_end_at ? new Date(e.event_end_at) : e.event_start_at ? new Date(e.event_start_at) : null
+    if (!start || !end) continue
 
-  // 해당 월의 이벤트 조회
+    let y = start.getFullYear()
+    let m = start.getMonth() + 1
+    const endY = end.getFullYear()
+    const endM = end.getMonth() + 1
+    // 잘못 입력된 날짜로 범위가 지나치게 커지는 것을 막기 위한 안전장치(최대 3년)
+    for (let i = 0; i < 36 && (y < endY || (y === endY && m <= endM)); i++) {
+      monthMap.set(`${y}-${m}`, { year: y, month: m })
+      m++
+      if (m > 12) {
+        m = 1
+        y++
+      }
+    }
+  }
+
+  const availableMonths = [...monthMap.values()].sort((a, b) => b.year - a.year || b.month - a.month)
+
+  // 해당 월의 이벤트 조회 — event_start_at~event_end_at 범위가 해당 월과 겹치는 행사를 모두 포함
   const startOfMonth = new Date(year, month - 1, 1).toISOString()
   const endOfMonth = new Date(year, month, 0, 23, 59, 59).toISOString()
 
   const { data: events } = await supabase
     .from('events')
     .select(`id, name, event_start_at, event_end_at, target_grade, budget, contract_type, contract_status, contract_delivered, event_check_status, supplies_status, pre_notice_sent, recruit_status, recruit_delivered, start_recruit_at, institution_request_delivered, crime_check_method, crime_check_notified, crime_check_status, admin_docs_delivered, estimate_file_url, teacher_name, remarks, group_chat_link, inflow_source, payment_confirmed, photo_sent, report_sent, field_admin_ids, comm_admin_id, sales_admin_id, institution_id`)
-    .gte('event_end_at', startOfMonth)
-    .lte('event_end_at', endOfMonth)
-    .order('event_end_at', { ascending: true })
+    .or(
+      `and(event_start_at.lte.${endOfMonth},event_end_at.gte.${startOfMonth}),` +
+        `and(event_start_at.lte.${endOfMonth},event_start_at.gte.${startOfMonth},event_end_at.is.null),` +
+        `and(event_end_at.lte.${endOfMonth},event_end_at.gte.${startOfMonth},event_start_at.is.null)`
+    )
+    .order('event_start_at', { ascending: true })
 
   // 전체 관리자 목록
   const { data: allAdmins } = await supabase.from('admins').select('id, name').order('name')
