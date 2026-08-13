@@ -1,22 +1,20 @@
-import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { redirect } from 'next/navigation'
+import { createServerSupabaseClient, getCurrentAdmin } from '@/lib/supabase-server'
 import { RecruitingClient, type RecruitingRow } from '@/components/features/my-tasks/RecruitingClient'
 
 export default async function RecruitingPage() {
   const supabase = await createServerSupabaseClient()
+  const { id: adminId, isSuper } = await getCurrentAdmin(supabase)
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  // 로그인한 관리자가 영업담당자 또는 소통담당자로 지정된, 아직 섭외가 끝나지 않은(대기/진행중) 행사만 표시.
-  const { data: events } = await supabase
+  // 영업담당자 또는 소통담당자로 지정된, 아직 섭외가 끝나지 않은(대기/진행중) 행사만 표시.
+  // 슈퍼관리자는 담당자 여부와 무관하게 전체 조회.
+  let eventsQuery = supabase
     .from('events')
     .select('id, institution_id, sales_admin_id, comm_admin_id, event_start_at, event_end_at, recruit_status')
     .in('recruit_status', ['섭외대기', '섭외진행중'])
-    .or(`sales_admin_id.eq.${user.id},comm_admin_id.eq.${user.id}`)
-    .order('event_start_at', { ascending: false, nullsFirst: false })
+  if (!isSuper) {
+    eventsQuery = eventsQuery.or(`sales_admin_id.eq.${adminId},comm_admin_id.eq.${adminId}`)
+  }
+  const { data: events } = await eventsQuery.order('event_start_at', { ascending: false, nullsFirst: false })
 
   if (!events || events.length === 0) {
     return <RecruitingClient rows={[]} />
