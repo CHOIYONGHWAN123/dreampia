@@ -8,6 +8,7 @@ import {
   previewAutoBundles,
   cancelInvitation,
   cancelAssignment,
+  assignMentorDirectly,
 } from '@/app/(dashboard)/events/[id]/recruiting/actions'
 import type {
   RecruitingEventRow,
@@ -110,6 +111,9 @@ export function EventRecruitingClient({
   const [selectedMentorIds, setSelectedMentorIds] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const [cancelingRowId, setCancelingRowId] = useState<string | null>(null)
+  const [isAssigning, startAssignTransition] = useTransition()
+  const [assigningRowId, setAssigningRowId] = useState<string | null>(null)
+  const [directAssignSelection, setDirectAssignSelection] = useState<Record<string, string>>({})
   const [isCancelingInvitation, startCancelInvitationTransition] = useTransition()
   const [cancelingInvitationId, setCancelingInvitationId] = useState<string | null>(null)
   const [isAutoPending, startAutoTransition] = useTransition()
@@ -304,6 +308,29 @@ export function EventRecruitingClient({
     setPreviewError(null)
   }
 
+  // 초대(수락 대기) 없이 관리자가 즉시 배정한다. 서버에서 시간충돌(±1시간)과 강사 상태를
+  // 검증하므로, 실패하면 그 사유를 그대로 alert로 보여준다.
+  const handleDirectAssign = (rowId: string) => {
+    const mentorId = directAssignSelection[rowId]
+    if (!mentorId) return
+    setAssigningRowId(rowId)
+    startAssignTransition(async () => {
+      try {
+        await assignMentorDirectly(eventId, rowId, mentorId)
+        setDirectAssignSelection((prev) => {
+          const next = { ...prev }
+          delete next[rowId]
+          return next
+        })
+        router.refresh()
+      } catch (e) {
+        alert(e instanceof Error ? e.message : '직접 배정에 실패했습니다.')
+      } finally {
+        setAssigningRowId(null)
+      }
+    })
+  }
+
   const handleCancelAssignment = (rowId: string, mentorName: string | null) => {
     if (!confirm(`${mentorName ?? '해당 강사'}의 배정을 취소하시겠습니까?`)) return
     setCancelingRowId(rowId)
@@ -346,8 +373,8 @@ export function EventRecruitingClient({
         <p className="mt-1 text-sm text-gray-500">{eventName}</p>
       </div>
 
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="border border-gray-200 rounded-lg overflow-x-auto">
+        <table className="text-sm" style={{ minWidth: '1500px' }}>
           <thead>
             <tr className="bg-amber-50 border-b border-gray-200">
               <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-10">
@@ -362,16 +389,17 @@ export function EventRecruitingClient({
                   className="disabled:opacity-30"
                 />
               </th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20">일자</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20">시작</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20">종료</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">대상</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700">요청 직업군</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700">프로그램</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20">인원수</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20">묶음</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-40">배정 현황</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">배정 취소</th>
+              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20 whitespace-nowrap">일자</th>
+              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20 whitespace-nowrap">시작</th>
+              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20 whitespace-nowrap">종료</th>
+              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24 whitespace-nowrap">대상</th>
+              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24 whitespace-nowrap">요청 직업군</th>
+              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 whitespace-nowrap">프로그램</th>
+              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20 whitespace-nowrap">인원수</th>
+              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20 whitespace-nowrap">묶음</th>
+              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-40 whitespace-nowrap">배정 현황</th>
+              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-40 whitespace-nowrap">직접 배정</th>
+              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24 whitespace-nowrap">배정 취소</th>
             </tr>
           </thead>
           <tbody>
@@ -427,6 +455,36 @@ export function EventRecruitingClient({
                       )}
                     </td>
                     <td className="px-3 py-2.5 text-center">
+                      {!r.mentorId && r.unitId && (
+                        <div className="flex items-center justify-center gap-1">
+                          <select
+                            value={directAssignSelection[r.id] ?? ''}
+                            onChange={(e) =>
+                              setDirectAssignSelection((prev) => ({ ...prev, [r.id]: e.target.value }))
+                            }
+                            className="border border-gray-300 rounded px-1 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 max-w-24"
+                          >
+                            <option value="">강사 선택</option>
+                            {(mentorsByUnit[r.unitId] ?? [])
+                              .filter((m) => m.isAvailable && m.isAuthenticated)
+                              .map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.name}
+                                </option>
+                              ))}
+                          </select>
+                          <button
+                            type="button"
+                            disabled={!directAssignSelection[r.id] || (isAssigning && assigningRowId === r.id)}
+                            onClick={() => handleDirectAssign(r.id)}
+                            className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-40 transition-colors whitespace-nowrap"
+                          >
+                            {isAssigning && assigningRowId === r.id ? '배정 중...' : '배정'}
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5 text-center">
                       {r.mentorId && (
                         <button
                           type="button"
@@ -443,7 +501,7 @@ export function EventRecruitingClient({
               })
             ) : (
               <tr>
-                <td colSpan={11} className="py-10 text-center text-gray-400">
+                <td colSpan={12} className="py-10 text-center text-gray-400">
                   등록된 프로그램 유닛이 없습니다.
                 </td>
               </tr>

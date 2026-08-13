@@ -477,5 +477,95 @@ export async function cancelAssignment(eventId: string, eventRowId: string): Pro
     .update({ mentor_id: null, preparing: false, attendance: false })
     .eq('id', eventRowId)
   if (error) throw new Error(error.message)
+  await syncRecruitStatusAfterAssignmentChange(supabase, eventId)
   revalidatePath(`/events/${eventId}/recruiting`)
+}
+
+// 일정이 전부 배정되면 '섭외완료'로, 취소 등으로 다시 미배정 일정이 생기면 '섭외완료'에서
+// '섭외진행중'으로 되돌린다. 직접배정/배정취소 양쪽에서 공통으로 사용.
+async function syncRecruitStatusAfterAssignmentChange(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  eventId: string
+): Promise<void> {
+  const { data: eventRows } = await supabase.from('event_rows').select('mentor_id').eq('event_id', eventId)
+  if (!eventRows || eventRows.length === 0) return
+
+  const { data: event } = await supabase.from('events').select('recruit_status').eq('id', eventId).single()
+  if (!event) return
+
+  const allAssigned = eventRows.every((r) => r.mentor_id)
+  if (allAssigned && event.recruit_status !== '섭외완료') {
+    await supabase.from('events').update({ recruit_status: '섭외완료' }).eq('id', eventId)
+  } else if (!allAssigned && event.recruit_status === '섭외완료') {
+    await supabase.from('events').update({ recruit_status: '섭외진행중' }).eq('id', eventId)
+  }
+}
+
+// 관리자가 초대(수락 대기) 절차 없이 즉시 특정 강사를 배정한다. 강사에게 별도 알림은
+// 가지 않으며(관리자 재량 배정), 자동섭외 후보 탐색과 동일하게 앞뒤 1시간 버퍼를 두고
+// 그 강사의 다른 배정과 시간이 겹치면 막는다. 이미 다른 강사가 배정된 일정이면 막는다
+// (동시에 다른 관리자가 배정했거나 그 사이 초대가 수락된 경우 대비).
+export async function assignMentorDirectly(eventId: string, eventRowId: string, mentorId: string): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+
+  const { data: targetRow, error: targetErr } = await supabase
+    .from('event_rows')
+    .select('id, start_time, end_time')
+    .eq('id', eventRowId)
+    .single()
+  if (targetErr || !targetRow) throw new Error('일정을 찾을 수 없습니다.')
+
+  const { data: mentor, error: mentorErr } = await supabase
+    .from('mentors')
+    .select('id, is_available, is_authenticated')
+    .eq('id', mentorId)
+    .single()
+  if (mentorErr || !mentor) throw new Error('강사를 찾을 수 없습니다.')
+  if (!mentor.is_available || !mentor.is_authenticated) {
+    throw new Error('강의 불가 또는 미인증 상태인 강사는 배정할 수 없습니다.')
+  }
+
+  if (targetRow.start_time && targetRow.end_time) {
+    const { data: otherRows, error: otherErr } = await supabase
+      .from('event_rows')
+      .select('start_time, end_time')
+      .eq('mentor_id', mentorId)
+      .neq('id', eventRowId)
+    if (otherErr) throw new Error(otherErr.message)
+
+    const BUFFER_MS = 60 * 60 * 1000
+    const targetStart = new Date(targetRow.start_time).getTime()
+    const targetEnd = new Date(targetRow.end_time).getTime()
+    const hasConflict = (otherRows ?? []).some((o) => {
+      if (!o.start_time || !o.end_time) return false
+      const otherStart = new Date(o.start_time).getTime()
+      const otherEnd = new Date(o.end_time).getTime()
+      return otherStart < targetEnd + BUFFER_MS && otherEnd > targetStart - BUFFER_MS
+    })
+    if (hasConflict) {
+      throw new Error('해당 강사는 앞뒤 1시간 이내에 다른 일정이 있어 배정할 수 없습니다.')
+    }
+  }
+
+  const { data: updated, error: updateErr } = await supabase
+    .from('event_rows')
+    .update({ mentor_id: mentorId })
+    .eq('id', eventRowId)
+    .is('mentor_id', null)
+    .select('id')
+    .maybeSingle()
+  if (updateErr) throw new Error(updateErr.message)
+  if (!updated) throw new Error('이미 다른 강사가 배정된 일정입니다.')
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (user) {
+    await supabase.from('work_logs').insert({ admin_id: user.id, event_id: eventId, task_type: '강사 섭외' })
+  }
+
+  await syncRecruitStatusAfterAssignmentChange(supabase, eventId)
+
+  revalidatePath(`/events/${eventId}/recruiting`)
+  revalidatePath('/my-tasks/recruiting')
 }
