@@ -7,8 +7,19 @@ export type EventCategoryOption = { id: string; name: string }
 export type FieldOption = { id: string; name: string; event_category_id: string | null }
 export type OccupationOption = { id: string; name: string; field_id: string | null }
 export type ProgramOption = { id: string; name: string; occupation_id: string | null }
-export type UnitOption = { id: string; title: string; occupation_programs_id: string | null }
-export type MentorOption = { id: string; name: string; score: number | null; belongsToName: string | null }
+export type UnitOption = {
+  id: string
+  title: string
+  occupation_programs_id: string | null
+  school_request_note: string | null
+}
+export type MentorOption = {
+  id: string
+  name: string
+  score: number | null
+  belongsToName: string | null
+  schoolRequestNote: string | null
+}
 
 export type SelectedProgramUnit = {
   key: string
@@ -18,6 +29,8 @@ export type SelectedProgramUnit = {
   fieldName: string
   occupationName: string
   programName: string
+  schoolRequestNote: string | null
+  schoolRequestResponse: string
   startTime: string
   endTime: string
   classroom: string
@@ -159,6 +172,8 @@ export function EventProgramUnitSection({
         unitId: unit.id,
         title: unit.title,
         ...buildPath(unit),
+        schoolRequestNote: unit.school_request_note,
+        schoolRequestResponse: '',
         startTime: defaultStartTime ?? '',
         endTime: defaultEndTime ?? '',
         classroom: '',
@@ -421,10 +436,12 @@ export function EventProgramUnitSection({
 
       {/* 추가된 프로그램 목록 - 엑셀 시트처럼 프로그램 1개당 1행 */}
       <div className="border border-gray-200 rounded-lg overflow-x-auto">
-        <table className="text-sm border-collapse" style={{ minWidth: '1400px' }}>
+        <table className="text-sm border-collapse" style={{ minWidth: '1850px' }}>
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">프로그램</th>
+              <th className="px-2 py-2 text-left font-medium text-gray-700 w-48 min-w-48">학교요청사항</th>
+              <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">학교요청사항 답변</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36">일자</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">시작 시간</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">종료 시간</th>
@@ -440,7 +457,7 @@ export function EventProgramUnitSection({
           <tbody>
             {value.length === 0 ? (
               <tr>
-                <td colSpan={11} className="py-6 text-center text-xs text-gray-400">
+                <td colSpan={13} className="py-6 text-center text-xs text-gray-400">
                   추가된 프로그램이 없습니다.
                 </td>
               </tr>
@@ -457,6 +474,24 @@ export function EventProgramUnitSection({
                       <div className="text-xs text-gray-400">
                         {v.fieldName} &gt; {v.occupationName} &gt; {v.programName}
                       </div>
+                    </td>
+                    <td className="px-2 py-1.5 align-top text-xs text-gray-600 whitespace-pre-wrap">
+                      {v.schoolRequestNote && <div>{v.schoolRequestNote}</div>}
+                      {assignedMentor?.schoolRequestNote && (
+                        <div className="text-gray-400">(강사) {assignedMentor.schoolRequestNote}</div>
+                      )}
+                      {!v.schoolRequestNote && !assignedMentor?.schoolRequestNote && (
+                        <span className="text-gray-300">-</span>
+                      )}
+                    </td>
+                    <td className="px-2 py-1.5 align-top">
+                      <textarea
+                        value={v.schoolRequestResponse}
+                        onChange={(e) => updateUnit(v.key, { schoolRequestResponse: e.target.value })}
+                        placeholder="학교(기관) 답변 기록"
+                        rows={2}
+                        className={`${fieldInputCls} resize-none`}
+                      />
                     </td>
                     <td className="px-2 py-1.5">
                       <input

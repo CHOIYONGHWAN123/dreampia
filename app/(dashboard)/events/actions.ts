@@ -60,6 +60,7 @@ type EventRowInput = {
   lecture_fee_after_tax?: number | null
   headcount?: number | null
   session_headcount?: number | null
+  school_request_response?: string | null
 }
 
 export type MentorOptionForUnit = {
@@ -67,6 +68,7 @@ export type MentorOptionForUnit = {
   name: string
   score: number | null
   belongsToName: string | null
+  schoolRequestNote: string | null
 }
 
 export type EventProgramSelectData = {
@@ -74,7 +76,7 @@ export type EventProgramSelectData = {
   fields: { id: string; name: string; event_category_id: string | null }[]
   occupations: { id: string; name: string; field_id: string | null }[]
   programs: { id: string; name: string; occupation_id: string | null }[]
-  units: { id: string; title: string; occupation_programs_id: string | null }[]
+  units: { id: string; title: string; occupation_programs_id: string | null; school_request_note: string | null }[]
   mentorsByUnit: Record<string, MentorOptionForUnit[]>
 }
 
@@ -133,6 +135,7 @@ export type EventRowDetailData = {
   headcount: number | null
   session_headcount: number | null
   mentor_id: string | null
+  school_request_response: string | null
 }
 
 export async function getEventDetail(id: string): Promise<{
@@ -147,7 +150,7 @@ export async function getEventDetail(id: string): Promise<{
     supabase
       .from('event_rows')
       .select(
-        'id, occupation_program_unit_id, start_time, end_time, classroom, target, lecture_fee, headcount, session_headcount, mentor_id'
+        'id, occupation_program_unit_id, start_time, end_time, classroom, target, lecture_fee, headcount, session_headcount, mentor_id, school_request_response'
       )
       .eq('event_id', id)
       .order('start_time', { ascending: true, nullsFirst: false }),
@@ -163,8 +166,8 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
     supabase.from('fields').select('id, name, event_category_id').order('name'),
     supabase.from('occupations').select('id, name, field_id').order('name'),
     supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
-    supabase.from('occupation_program_unit').select('id, title, occupation_programs_id').order('title'),
-    supabase.from('mentor_occupation_programs').select('mentor_id, occupation_program_unit_id'),
+    supabase.from('occupation_program_unit').select('id, title, occupation_programs_id, school_request_note').order('title'),
+    supabase.from('mentor_occupation_programs').select('mentor_id, occupation_program_unit_id, school_request_note'),
     supabase.from('mentors').select('id, name, score, belongs_to'),
   ])
 
@@ -180,6 +183,7 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
       name: mentor.name,
       score: mentor.score,
       belongsToName: mentor.belongs_to ? mentorMap.get(mentor.belongs_to)?.name ?? null : null,
+      schoolRequestNote: row.school_request_note,
     })
     mentorsByUnit[row.occupation_program_unit_id] = list
   }
@@ -311,6 +315,7 @@ export async function createEvent(data: {
           lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
           headcount: r.headcount ?? null,
           session_headcount: r.session_headcount ?? null,
+          school_request_response: r.school_request_response || null,
         }))
       )
       .select('id')
@@ -476,6 +481,7 @@ export async function updateEvent(
       lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
       headcount: r.headcount ?? null,
       session_headcount: r.session_headcount ?? null,
+      school_request_response: r.school_request_response || null,
     }
     const existing = r.id ? existingById.get(r.id) : undefined
     if (existing) {

@@ -100,6 +100,8 @@ function buildInitialProgramUnits(
       unitId: r.occupation_program_unit_id ?? '',
       title: unit?.title ?? '-',
       ...path,
+      schoolRequestNote: unit?.school_request_note ?? null,
+      schoolRequestResponse: r.school_request_response ?? '',
       startTime: toDatetimeLocal(r.start_time),
       endTime: toDatetimeLocal(r.end_time),
       classroom: r.classroom ?? '',
@@ -353,6 +355,7 @@ export function EventForm({
           lecture_fee_after_tax: calcLectureFeeAfterTax(u.lectureFee),
           headcount: u.headcount,
           session_headcount: u.sessionHeadcount,
+          school_request_response: u.schoolRequestResponse || null,
         })),
       }
 
