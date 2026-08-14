@@ -105,15 +105,19 @@ function buildInitialProgramUnits(
       schoolRequestResponse: r.school_request_response ?? '',
       finalProductAvailable: unit?.final_product_available ?? null,
       isDeliveryAvailable: unit?.is_delivery_available ?? null,
+      mentorMaterialCost: unit?.mentor_material_cost ?? null,
+      dreampiaMaterialCost: unit?.dreampia_material_cost ?? null,
       startTime: toDatetimeLocal(r.start_time),
       endTime: toDatetimeLocal(r.end_time),
       classroom: r.classroom ?? '',
+      instructorWaitingRoom: r.instructor_waiting_room ?? '',
       target: r.target ?? '',
       lectureFee: r.lecture_fee,
       headcount: r.headcount,
       sessionHeadcount: r.session_headcount,
       mentorId: r.mentor_id,
       remarks: r.remarks ?? '',
+      attendance: r.attendance,
     }
   })
 }
@@ -355,6 +359,7 @@ export function EventForm({
           start_time: u.startTime || null,
           end_time: u.endTime || null,
           classroom: u.classroom || null,
+          instructor_waiting_room: u.instructorWaitingRoom || null,
           target: u.target || null,
           lecture_fee: u.lectureFee,
           lecture_fee_after_tax: calcLectureFeeAfterTax(u.lectureFee),

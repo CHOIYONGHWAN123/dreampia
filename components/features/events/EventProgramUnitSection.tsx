@@ -15,6 +15,8 @@ export type UnitOption = {
   school_request_note: string | null
   final_product_available: boolean | null
   is_delivery_available: boolean | null
+  mentor_material_cost: number | null
+  dreampia_material_cost: number | null
 }
 export type MentorOption = {
   id: string
@@ -22,6 +24,8 @@ export type MentorOption = {
   score: number | null
   belongsToName: string | null
   schoolRequestNote: string | null
+  lectureFeePayerName: string | null
+  materialFeePayerName: string | null
 }
 export type ProgramUnitPhoto = { id: string; url: string }
 
@@ -37,15 +41,19 @@ export type SelectedProgramUnit = {
   schoolRequestResponse: string
   finalProductAvailable: boolean | null
   isDeliveryAvailable: boolean | null
+  mentorMaterialCost: number | null
+  dreampiaMaterialCost: number | null
   startTime: string
   endTime: string
   classroom: string
+  instructorWaitingRoom: string
   target: string
   lectureFee: number | null
   headcount: number | null
   sessionHeadcount: number | null
   mentorId: string | null
   remarks: string
+  attendance: boolean | null
 }
 
 // 강사료 3.3% 원천징수 후 세후 강의료
@@ -185,15 +193,19 @@ export function EventProgramUnitSection({
         schoolRequestResponse: '',
         finalProductAvailable: unit.final_product_available,
         isDeliveryAvailable: unit.is_delivery_available,
+        mentorMaterialCost: unit.mentor_material_cost,
+        dreampiaMaterialCost: unit.dreampia_material_cost,
         startTime: defaultStartTime ?? '',
         endTime: defaultEndTime ?? '',
         classroom: '',
+        instructorWaitingRoom: '',
         target: '',
         lectureFee: null,
         headcount: null,
         sessionHeadcount: null,
         mentorId: null,
         remarks: '',
+        attendance: null,
       },
     ])
   }
@@ -448,7 +460,7 @@ export function EventProgramUnitSection({
 
       {/* 추가된 프로그램 목록 - 엑셀 시트처럼 프로그램 1개당 1행 */}
       <div className="border border-gray-200 rounded-lg overflow-x-auto">
-        <table className="text-sm border-collapse" style={{ minWidth: '2600px' }}>
+        <table className="text-sm border-collapse" style={{ minWidth: '3300px' }}>
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">프로그램</th>
@@ -456,10 +468,13 @@ export function EventProgramUnitSection({
               <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">학교요청사항 답변</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">완성품 제공</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">택배 가능</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">1인당 강사 재료비</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">1인당 드림피아 재료비</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36">일자</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">시작 시간</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">종료 시간</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">강의실</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">대기실</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36">대상</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">강의료</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">인원수</th>
@@ -467,6 +482,9 @@ export function EventProgramUnitSection({
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-40 min-w-40">강사 배정</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">강사등급</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">소속구분</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">강의료 입금자명</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">재료비 입금자명</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-20 min-w-20">출석</th>
               <th className="px-2 py-2 text-left font-medium text-gray-700 w-40 min-w-40">비고</th>
               <th className="px-2 py-2 text-left font-medium text-gray-700 w-40 min-w-40">사진</th>
               <th className="px-2 py-2 w-16 min-w-16" />
@@ -475,7 +493,7 @@ export function EventProgramUnitSection({
           <tbody>
             {value.length === 0 ? (
               <tr>
-                <td colSpan={19} className="py-6 text-center text-xs text-gray-400">
+                <td colSpan={25} className="py-6 text-center text-xs text-gray-400">
                   추가된 프로그램이 없습니다.
                 </td>
               </tr>
@@ -517,6 +535,12 @@ export function EventProgramUnitSection({
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
                       {v.isDeliveryAvailable ? '가능' : '불가'}
                     </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {v.mentorMaterialCost != null ? v.mentorMaterialCost.toLocaleString() : '-'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {v.dreampiaMaterialCost != null ? v.dreampiaMaterialCost.toLocaleString() : '-'}
+                    </td>
                     <td className="px-2 py-1.5">
                       <input
                         type="date"
@@ -547,6 +571,15 @@ export function EventProgramUnitSection({
                         value={v.classroom}
                         onChange={(e) => updateUnit(v.key, { classroom: e.target.value })}
                         placeholder="예: 1-1반"
+                        className={fieldInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="text"
+                        value={v.instructorWaitingRoom}
+                        onChange={(e) => updateUnit(v.key, { instructorWaitingRoom: e.target.value })}
+                        placeholder="예: 2층 2학년 학년연구실"
                         className={fieldInputCls}
                       />
                     </td>
@@ -602,6 +635,15 @@ export function EventProgramUnitSection({
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
                       {assignedMentor ? (assignedMentor.belongsToName ?? '개인') : '-'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {assignedMentor ? (assignedMentor.lectureFeePayerName ?? '-') : '-'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {assignedMentor ? (assignedMentor.materialFeePayerName ?? '-') : '-'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {v.attendance === true ? '출석' : v.attendance === false ? '미출석' : '-'}
                     </td>
                     <td className="px-2 py-1.5 align-top">
                       <textarea

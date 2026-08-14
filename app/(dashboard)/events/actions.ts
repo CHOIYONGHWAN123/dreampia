@@ -55,6 +55,7 @@ type EventRowInput = {
   start_time?: string | null
   end_time?: string | null
   classroom?: string | null
+  instructor_waiting_room?: string | null
   target?: string | null
   lecture_fee?: number | null
   lecture_fee_after_tax?: number | null
@@ -70,6 +71,8 @@ export type MentorOptionForUnit = {
   score: number | null
   belongsToName: string | null
   schoolRequestNote: string | null
+  lectureFeePayerName: string | null
+  materialFeePayerName: string | null
 }
 
 export type EventProgramSelectData = {
@@ -84,6 +87,8 @@ export type EventProgramSelectData = {
     school_request_note: string | null
     final_product_available: boolean | null
     is_delivery_available: boolean | null
+    mentor_material_cost: number | null
+    dreampia_material_cost: number | null
   }[]
   mentorsByUnit: Record<string, MentorOptionForUnit[]>
 }
@@ -138,6 +143,7 @@ export type EventRowDetailData = {
   start_time: string | null
   end_time: string | null
   classroom: string | null
+  instructor_waiting_room: string | null
   target: string | null
   lecture_fee: number | null
   headcount: number | null
@@ -145,6 +151,7 @@ export type EventRowDetailData = {
   mentor_id: string | null
   school_request_response: string | null
   remarks: string | null
+  attendance: boolean | null
 }
 
 export type EventRowPhoto = { id: string; url: string }
@@ -162,7 +169,7 @@ export async function getEventDetail(id: string): Promise<{
     supabase
       .from('event_rows')
       .select(
-        'id, occupation_program_unit_id, start_time, end_time, classroom, target, lecture_fee, headcount, session_headcount, mentor_id, school_request_response, remarks'
+        'id, occupation_program_unit_id, start_time, end_time, classroom, instructor_waiting_room, target, lecture_fee, headcount, session_headcount, mentor_id, school_request_response, remarks, attendance'
       )
       .eq('event_id', id)
       .order('start_time', { ascending: true, nullsFirst: false }),
@@ -193,9 +200,13 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
     supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
     supabase
       .from('occupation_program_unit')
-      .select('id, title, occupation_programs_id, school_request_note, final_product_available, is_delivery_available')
+      .select(
+        'id, title, occupation_programs_id, school_request_note, final_product_available, is_delivery_available, mentor_material_cost, dreampia_material_cost'
+      )
       .order('title'),
-    supabase.from('mentor_occupation_programs').select('mentor_id, occupation_program_unit_id, school_request_note'),
+    supabase
+      .from('mentor_occupation_programs')
+      .select('mentor_id, occupation_program_unit_id, school_request_note, lecture_fee_payer_id, material_fee_payer_id'),
     supabase.from('mentors').select('id, name, score, belongs_to'),
   ])
 
@@ -212,6 +223,8 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
       score: mentor.score,
       belongsToName: mentor.belongs_to ? mentorMap.get(mentor.belongs_to)?.name ?? null : null,
       schoolRequestNote: row.school_request_note,
+      lectureFeePayerName: row.lecture_fee_payer_id ? mentorMap.get(row.lecture_fee_payer_id)?.name ?? null : null,
+      materialFeePayerName: row.material_fee_payer_id ? mentorMap.get(row.material_fee_payer_id)?.name ?? null : null,
     })
     mentorsByUnit[row.occupation_program_unit_id] = list
   }
@@ -338,6 +351,7 @@ export async function createEvent(data: {
           start_time: r.start_time || null,
           end_time: r.end_time || null,
           classroom: r.classroom || null,
+          instructor_waiting_room: r.instructor_waiting_room || null,
           target: r.target || null,
           lecture_fee: r.lecture_fee ?? null,
           lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
@@ -505,6 +519,7 @@ export async function updateEvent(
       start_time: r.start_time || null,
       end_time: r.end_time || null,
       classroom: r.classroom || null,
+      instructor_waiting_room: r.instructor_waiting_room || null,
       target: r.target || null,
       lecture_fee: r.lecture_fee ?? null,
       lecture_fee_after_tax: r.lecture_fee_after_tax ?? null,
