@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { generateId } from '@/lib/generate-id'
+import { formatScoreWithGrade } from '@/lib/mentor-grade'
 
 export type EventCategoryOption = { id: string; name: string }
 export type FieldOption = { id: string; name: string; event_category_id: string | null }
@@ -12,6 +13,8 @@ export type UnitOption = {
   title: string
   occupation_programs_id: string | null
   school_request_note: string | null
+  final_product_available: boolean | null
+  is_delivery_available: boolean | null
 }
 export type MentorOption = {
   id: string
@@ -20,6 +23,7 @@ export type MentorOption = {
   belongsToName: string | null
   schoolRequestNote: string | null
 }
+export type ProgramUnitPhoto = { id: string; url: string }
 
 export type SelectedProgramUnit = {
   key: string
@@ -31,6 +35,8 @@ export type SelectedProgramUnit = {
   programName: string
   schoolRequestNote: string | null
   schoolRequestResponse: string
+  finalProductAvailable: boolean | null
+  isDeliveryAvailable: boolean | null
   startTime: string
   endTime: string
   classroom: string
@@ -39,6 +45,7 @@ export type SelectedProgramUnit = {
   headcount: number | null
   sessionHeadcount: number | null
   mentorId: string | null
+  remarks: string
 }
 
 // 강사료 3.3% 원천징수 후 세후 강의료
@@ -98,6 +105,7 @@ export function EventProgramUnitSection({
   onChange,
   defaultStartTime,
   defaultEndTime,
+  photosByRow = {},
 }: {
   eventCategoryId: string | null
   fields: FieldOption[]
@@ -109,6 +117,7 @@ export function EventProgramUnitSection({
   onChange: (next: SelectedProgramUnit[]) => void
   defaultStartTime?: string
   defaultEndTime?: string
+  photosByRow?: Record<string, ProgramUnitPhoto[]>
 }) {
   const [search, setSearch] = useState('')
   const [fieldId, setFieldId] = useState('')
@@ -174,6 +183,8 @@ export function EventProgramUnitSection({
         ...buildPath(unit),
         schoolRequestNote: unit.school_request_note,
         schoolRequestResponse: '',
+        finalProductAvailable: unit.final_product_available,
+        isDeliveryAvailable: unit.is_delivery_available,
         startTime: defaultStartTime ?? '',
         endTime: defaultEndTime ?? '',
         classroom: '',
@@ -182,6 +193,7 @@ export function EventProgramUnitSection({
         headcount: null,
         sessionHeadcount: null,
         mentorId: null,
+        remarks: '',
       },
     ])
   }
@@ -436,12 +448,14 @@ export function EventProgramUnitSection({
 
       {/* 추가된 프로그램 목록 - 엑셀 시트처럼 프로그램 1개당 1행 */}
       <div className="border border-gray-200 rounded-lg overflow-x-auto">
-        <table className="text-sm border-collapse" style={{ minWidth: '1850px' }}>
+        <table className="text-sm border-collapse" style={{ minWidth: '2600px' }}>
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">프로그램</th>
               <th className="px-2 py-2 text-left font-medium text-gray-700 w-48 min-w-48">학교요청사항</th>
               <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">학교요청사항 답변</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">완성품 제공</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">택배 가능</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36">일자</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">시작 시간</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">종료 시간</th>
@@ -451,13 +465,17 @@ export function EventProgramUnitSection({
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">인원수</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">차시별 인원수</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-40 min-w-40">강사 배정</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">강사등급</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">소속구분</th>
+              <th className="px-2 py-2 text-left font-medium text-gray-700 w-40 min-w-40">비고</th>
+              <th className="px-2 py-2 text-left font-medium text-gray-700 w-40 min-w-40">사진</th>
               <th className="px-2 py-2 w-16 min-w-16" />
             </tr>
           </thead>
           <tbody>
             {value.length === 0 ? (
               <tr>
-                <td colSpan={13} className="py-6 text-center text-xs text-gray-400">
+                <td colSpan={19} className="py-6 text-center text-xs text-gray-400">
                   추가된 프로그램이 없습니다.
                 </td>
               </tr>
@@ -492,6 +510,12 @@ export function EventProgramUnitSection({
                         rows={2}
                         className={`${fieldInputCls} resize-none`}
                       />
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {v.finalProductAvailable ? '가능' : '불가'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {v.isDeliveryAvailable ? '가능' : '불가'}
                     </td>
                     <td className="px-2 py-1.5">
                       <input
@@ -572,6 +596,42 @@ export function EventProgramUnitSection({
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
                       {assignedMentor ? assignedMentor.name : '미배정'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {assignedMentor ? formatScoreWithGrade(assignedMentor.score) : '-'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {assignedMentor ? (assignedMentor.belongsToName ?? '개인') : '-'}
+                    </td>
+                    <td className="px-2 py-1.5 align-top">
+                      <textarea
+                        value={v.remarks}
+                        onChange={(e) => updateUnit(v.key, { remarks: e.target.value })}
+                        placeholder="비고"
+                        rows={2}
+                        className={`${fieldInputCls} resize-none`}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5 align-top text-xs">
+                      {!v.rowId ? (
+                        <span className="text-gray-300">저장 후 확인 가능</span>
+                      ) : (photosByRow[v.rowId] ?? []).length > 0 ? (
+                        <div className="flex flex-col gap-0.5">
+                          {(photosByRow[v.rowId] ?? []).map((photo, i) => (
+                            <a
+                              key={photo.id}
+                              href={photo.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 underline underline-offset-2 hover:text-blue-700"
+                            >
+                              사진{i + 1}
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-300">-</span>
+                      )}
                     </td>
                     <td className="px-2 py-1.5 text-center">
                       <button

@@ -61,6 +61,7 @@ type EventRowInput = {
   headcount?: number | null
   session_headcount?: number | null
   school_request_response?: string | null
+  remarks?: string | null
 }
 
 export type MentorOptionForUnit = {
@@ -76,7 +77,14 @@ export type EventProgramSelectData = {
   fields: { id: string; name: string; event_category_id: string | null }[]
   occupations: { id: string; name: string; field_id: string | null }[]
   programs: { id: string; name: string; occupation_id: string | null }[]
-  units: { id: string; title: string; occupation_programs_id: string | null; school_request_note: string | null }[]
+  units: {
+    id: string
+    title: string
+    occupation_programs_id: string | null
+    school_request_note: string | null
+    final_product_available: boolean | null
+    is_delivery_available: boolean | null
+  }[]
   mentorsByUnit: Record<string, MentorOptionForUnit[]>
 }
 
@@ -136,12 +144,16 @@ export type EventRowDetailData = {
   session_headcount: number | null
   mentor_id: string | null
   school_request_response: string | null
+  remarks: string | null
 }
+
+export type EventRowPhoto = { id: string; url: string }
 
 export async function getEventDetail(id: string): Promise<{
   event: EventDetailData
   schedules: EventScheduleRow[]
   eventRows: EventRowDetailData[]
+  photosByRow: Record<string, EventRowPhoto[]>
 } | null> {
   const supabase = await createServerSupabaseClient()
   const [{ data: event }, { data: schedules }, { data: eventRows }] = await Promise.all([
@@ -150,13 +162,26 @@ export async function getEventDetail(id: string): Promise<{
     supabase
       .from('event_rows')
       .select(
-        'id, occupation_program_unit_id, start_time, end_time, classroom, target, lecture_fee, headcount, session_headcount, mentor_id, school_request_response'
+        'id, occupation_program_unit_id, start_time, end_time, classroom, target, lecture_fee, headcount, session_headcount, mentor_id, school_request_response, remarks'
       )
       .eq('event_id', id)
       .order('start_time', { ascending: true, nullsFirst: false }),
   ])
   if (!event) return null
-  return { event, schedules: schedules ?? [], eventRows: eventRows ?? [] }
+
+  const rowIds = (eventRows ?? []).map((r) => r.id)
+  const { data: photos } = rowIds.length > 0
+    ? await supabase.from('event_photos').select('id, event_rows_id, url').in('event_rows_id', rowIds)
+    : { data: [] as { id: string; event_rows_id: string; url: string }[] }
+
+  const photosByRow: Record<string, EventRowPhoto[]> = {}
+  for (const p of photos ?? []) {
+    const list = photosByRow[p.event_rows_id] ?? []
+    list.push({ id: p.id, url: p.url })
+    photosByRow[p.event_rows_id] = list
+  }
+
+  return { event, schedules: schedules ?? [], eventRows: eventRows ?? [], photosByRow }
 }
 
 export async function getEventProgramSelectData(): Promise<EventProgramSelectData> {
@@ -166,7 +191,10 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
     supabase.from('fields').select('id, name, event_category_id').order('name'),
     supabase.from('occupations').select('id, name, field_id').order('name'),
     supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
-    supabase.from('occupation_program_unit').select('id, title, occupation_programs_id, school_request_note').order('title'),
+    supabase
+      .from('occupation_program_unit')
+      .select('id, title, occupation_programs_id, school_request_note, final_product_available, is_delivery_available')
+      .order('title'),
     supabase.from('mentor_occupation_programs').select('mentor_id, occupation_program_unit_id, school_request_note'),
     supabase.from('mentors').select('id, name, score, belongs_to'),
   ])
@@ -316,6 +344,7 @@ export async function createEvent(data: {
           headcount: r.headcount ?? null,
           session_headcount: r.session_headcount ?? null,
           school_request_response: r.school_request_response || null,
+          remarks: r.remarks || null,
         }))
       )
       .select('id')
@@ -482,6 +511,7 @@ export async function updateEvent(
       headcount: r.headcount ?? null,
       session_headcount: r.session_headcount ?? null,
       school_request_response: r.school_request_response || null,
+      remarks: r.remarks || null,
     }
     const existing = r.id ? existingById.get(r.id) : undefined
     if (existing) {

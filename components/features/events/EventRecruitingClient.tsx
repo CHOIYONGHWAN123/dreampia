@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { formatScoreWithGrade } from '@/lib/mentor-grade'
 import {
   createInvitation,
   createAutoInvitation,
@@ -669,7 +670,7 @@ export function EventRecruitingClient({
                         />
                         <span className="text-gray-800">{m.name}</span>
                         <span className="text-xs text-gray-400">
-                          (점수: {m.score ?? '-'} / 소속: {m.belongsToName ?? '개인'})
+                          (점수: {formatScoreWithGrade(m.score)} / 소속: {m.belongsToName ?? '개인'})
                         </span>
                         {disabledReason && (
                           <span className="text-xs text-red-400 font-medium">({disabledReason})</span>

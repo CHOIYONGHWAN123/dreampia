@@ -3,6 +3,7 @@
 import { useState, useMemo, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
+import { scoreToGrade } from '@/lib/mentor-grade'
 import type {
   MentorWithPrograms,
   MentorOccupationProgramRow,
@@ -521,12 +522,17 @@ function MentorRows({
         />
       </td>
       <td className={td} rowSpan={totalRows} style={{ minWidth: 60 }}>
-        <EditInput
-          value={editFields.score}
-          type="number"
-          onChange={(v) => setEditFields((p) => ({ ...p, score: v }))}
-          placeholder="등급"
-        />
+        <div className="flex flex-col items-center gap-0.5">
+          <EditInput
+            value={editFields.score}
+            type="number"
+            onChange={(v) => setEditFields((p) => ({ ...p, score: v }))}
+            placeholder="점수"
+          />
+          <span className="text-[10px] text-gray-400">
+            {scoreToGrade(editFields.score !== '' ? Number(editFields.score) : null)}등급
+          </span>
+        </div>
       </td>
       <td className={td} rowSpan={totalRows}>{mentor.mentor_type}</td>
       <td className={td} rowSpan={totalRows} style={{ minWidth: 70 }}>{mentor.mentor_unique_code}</td>

@@ -14,7 +14,7 @@ import {
   INSTITUTION_TYPES,
 } from '@/lib/validations/event'
 import { createEvent, updateEvent } from '@/app/(dashboard)/events/actions'
-import type { EventDetailData, EventScheduleRow, EventRowDetailData } from '@/app/(dashboard)/events/actions'
+import type { EventDetailData, EventScheduleRow, EventRowDetailData, EventRowPhoto } from '@/app/(dashboard)/events/actions'
 import {
   EventProgramUnitSection,
   calcLectureFeeAfterTax,
@@ -69,6 +69,7 @@ interface Props {
   initialSchedules?: EventScheduleRow[]
   initialEventRows?: EventRowDetailData[]
   initialEstimateFileUrl?: string | null
+  initialPhotosByRow?: Record<string, EventRowPhoto[]>
 }
 
 function splitDateTime(value: string | null): { date: string; time: string } {
@@ -102,6 +103,8 @@ function buildInitialProgramUnits(
       ...path,
       schoolRequestNote: unit?.school_request_note ?? null,
       schoolRequestResponse: r.school_request_response ?? '',
+      finalProductAvailable: unit?.final_product_available ?? null,
+      isDeliveryAvailable: unit?.is_delivery_available ?? null,
       startTime: toDatetimeLocal(r.start_time),
       endTime: toDatetimeLocal(r.end_time),
       classroom: r.classroom ?? '',
@@ -110,6 +113,7 @@ function buildInitialProgramUnits(
       headcount: r.headcount,
       sessionHeadcount: r.session_headcount,
       mentorId: r.mentor_id,
+      remarks: r.remarks ?? '',
     }
   })
 }
@@ -195,6 +199,7 @@ export function EventForm({
   initialSchedules,
   initialEventRows,
   initialEstimateFileUrl,
+  initialPhotosByRow,
 }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -356,6 +361,7 @@ export function EventForm({
           headcount: u.headcount,
           session_headcount: u.sessionHeadcount,
           school_request_response: u.schoolRequestResponse || null,
+          remarks: u.remarks || null,
         })),
       }
 
@@ -861,6 +867,7 @@ export function EventForm({
           mentorsByUnit={mentorsByUnit}
           value={programUnits}
           onChange={setProgramUnits}
+          photosByRow={initialPhotosByRow}
           defaultStartTime={(() => {
             const d = watch('event_start_date'), t = watch('event_start_at_time')
             return d && t ? `${d}T${t}` : d ? `${d}T00:00` : ''
