@@ -460,40 +460,41 @@ export function EventProgramUnitSection({
 
       {/* 추가된 프로그램 목록 - 엑셀 시트처럼 프로그램 1개당 1행 */}
       <div className="border border-gray-200 rounded-lg overflow-x-auto">
-        <table className="text-sm border-collapse" style={{ minWidth: '3300px' }}>
+        <table className="text-sm border-collapse" style={{ minWidth: '3520px' }}>
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">프로그램</th>
-              <th className="px-2 py-2 text-left font-medium text-gray-700 w-48 min-w-48">학교요청사항</th>
-              <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">학교요청사항 답변</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">완성품 제공</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">택배 가능</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">1인당 강사 재료비</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">1인당 드림피아 재료비</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36">일자</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">시작 시간</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">종료 시간</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36">대상</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">요청직업군</th>
+              <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">프로그램</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-40 min-w-40">강사 배정</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">강의실</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">대기실</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36">대상</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-20 min-w-20">출석</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">강의료</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">강의료 입금자명</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36 whitespace-nowrap">1인당 강사 재료비</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-40 min-w-40 whitespace-nowrap">1인당 드림피아 재료비</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">인원수</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">차시별 인원수</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-40 min-w-40">강사 배정</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">강사등급</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">소속구분</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">강의료 입금자명</th>
               <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">재료비 입금자명</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-20 min-w-20">출석</th>
+              <th className="px-2 py-2 text-left font-medium text-gray-700 w-48 min-w-48">학교요청사항</th>
+              <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">답변</th>
               <th className="px-2 py-2 text-left font-medium text-gray-700 w-40 min-w-40">비고</th>
               <th className="px-2 py-2 text-left font-medium text-gray-700 w-40 min-w-40">사진</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">강사등급</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">소속구분</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">완성품 제공</th>
+              <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">택배 가능</th>
               <th className="px-2 py-2 w-16 min-w-16" />
             </tr>
           </thead>
           <tbody>
             {value.length === 0 ? (
               <tr>
-                <td colSpan={25} className="py-6 text-center text-xs text-gray-400">
+                <td colSpan={26} className="py-6 text-center text-xs text-gray-400">
                   추가된 프로그램이 없습니다.
                 </td>
               </tr>
@@ -505,42 +506,6 @@ export function EventProgramUnitSection({
                   : undefined
                 return (
                   <tr key={v.key} className="border-b border-gray-100 last:border-b-0">
-                    <td className="px-2 py-1.5 align-top">
-                      <div className="font-medium text-gray-800">{v.title}</div>
-                      <div className="text-xs text-gray-400">
-                        {v.fieldName} &gt; {v.occupationName} &gt; {v.programName}
-                      </div>
-                    </td>
-                    <td className="px-2 py-1.5 align-top text-xs text-gray-600 whitespace-pre-wrap">
-                      {v.schoolRequestNote && <div>{v.schoolRequestNote}</div>}
-                      {assignedMentor?.schoolRequestNote && (
-                        <div className="text-gray-400">(강사) {assignedMentor.schoolRequestNote}</div>
-                      )}
-                      {!v.schoolRequestNote && !assignedMentor?.schoolRequestNote && (
-                        <span className="text-gray-300">-</span>
-                      )}
-                    </td>
-                    <td className="px-2 py-1.5 align-top">
-                      <textarea
-                        value={v.schoolRequestResponse}
-                        onChange={(e) => updateUnit(v.key, { schoolRequestResponse: e.target.value })}
-                        placeholder="학교(기관) 답변 기록"
-                        rows={2}
-                        className={`${fieldInputCls} resize-none`}
-                      />
-                    </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {v.finalProductAvailable ? '가능' : '불가'}
-                    </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {v.isDeliveryAvailable ? '가능' : '불가'}
-                    </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {v.mentorMaterialCost != null ? v.mentorMaterialCost.toLocaleString() : '-'}
-                    </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {v.dreampiaMaterialCost != null ? v.dreampiaMaterialCost.toLocaleString() : '-'}
-                    </td>
                     <td className="px-2 py-1.5">
                       <input
                         type="date"
@@ -568,6 +533,25 @@ export function EventProgramUnitSection({
                     <td className="px-2 py-1.5">
                       <input
                         type="text"
+                        value={v.target}
+                        onChange={(e) => updateUnit(v.key, { target: e.target.value })}
+                        placeholder="1학년"
+                        className={fieldInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">{v.occupationName}</td>
+                    <td className="px-2 py-1.5 align-top">
+                      <div className="font-medium text-gray-800">{v.title}</div>
+                      <div className="text-xs text-gray-400">
+                        {v.fieldName} &gt; {v.programName}
+                      </div>
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {assignedMentor ? assignedMentor.name : '미배정'}
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="text"
                         value={v.classroom}
                         onChange={(e) => updateUnit(v.key, { classroom: e.target.value })}
                         placeholder="예: 1-1반"
@@ -583,14 +567,8 @@ export function EventProgramUnitSection({
                         className={fieldInputCls}
                       />
                     </td>
-                    <td className="px-2 py-1.5">
-                      <input
-                        type="text"
-                        value={v.target}
-                        onChange={(e) => updateUnit(v.key, { target: e.target.value })}
-                        placeholder="1학년"
-                        className={fieldInputCls}
-                      />
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {v.attendance === true ? '출석' : v.attendance === false ? '미출석' : '-'}
                     </td>
                     <td className="px-2 py-1.5">
                       <input
@@ -602,6 +580,15 @@ export function EventProgramUnitSection({
                         min={0}
                         className={fieldInputCls}
                       />
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {assignedMentor ? (assignedMentor.lectureFeePayerName ?? '-') : '-'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {v.mentorMaterialCost != null ? v.mentorMaterialCost.toLocaleString() : '-'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {v.dreampiaMaterialCost != null ? v.dreampiaMaterialCost.toLocaleString() : '-'}
                     </td>
                     <td className="px-2 py-1.5">
                       <input
@@ -628,22 +615,25 @@ export function EventProgramUnitSection({
                       />
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {assignedMentor ? assignedMentor.name : '미배정'}
-                    </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {assignedMentor ? formatScoreWithGrade(assignedMentor.score) : '-'}
-                    </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {assignedMentor ? (assignedMentor.belongsToName ?? '개인') : '-'}
-                    </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {assignedMentor ? (assignedMentor.lectureFeePayerName ?? '-') : '-'}
-                    </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
                       {assignedMentor ? (assignedMentor.materialFeePayerName ?? '-') : '-'}
                     </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {v.attendance === true ? '출석' : v.attendance === false ? '미출석' : '-'}
+                    <td className="px-2 py-1.5 align-top text-xs text-gray-600 whitespace-pre-wrap">
+                      {v.schoolRequestNote && <div>{v.schoolRequestNote}</div>}
+                      {assignedMentor?.schoolRequestNote && (
+                        <div className="text-gray-400">(강사) {assignedMentor.schoolRequestNote}</div>
+                      )}
+                      {!v.schoolRequestNote && !assignedMentor?.schoolRequestNote && (
+                        <span className="text-gray-300">-</span>
+                      )}
+                    </td>
+                    <td className="px-2 py-1.5 align-top">
+                      <textarea
+                        value={v.schoolRequestResponse}
+                        onChange={(e) => updateUnit(v.key, { schoolRequestResponse: e.target.value })}
+                        placeholder="학교(기관) 답변 기록"
+                        rows={2}
+                        className={`${fieldInputCls} resize-none`}
+                      />
                     </td>
                     <td className="px-2 py-1.5 align-top">
                       <textarea
@@ -674,6 +664,18 @@ export function EventProgramUnitSection({
                       ) : (
                         <span className="text-gray-300">-</span>
                       )}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {assignedMentor ? formatScoreWithGrade(assignedMentor.score) : '-'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {assignedMentor ? (assignedMentor.belongsToName ?? '개인') : '-'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {v.finalProductAvailable ? '가능' : '불가'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {v.isDeliveryAvailable ? '가능' : '불가'}
                     </td>
                     <td className="px-2 py-1.5 text-center">
                       <button
