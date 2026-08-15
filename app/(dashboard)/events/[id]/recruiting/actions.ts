@@ -335,7 +335,8 @@ export async function createInvitation(input: {
     if (logErr) throw new Error(logErr.message)
   }
 
-  // TODO: 초대된 멘토에게 푸시 알림 발송 (추후 구현)
+  // 초대된 멘토에게 푸시 알림 발송은 invitation_mentors insert 트리거
+  // (notify_invitation_mentor_push → send-invitation-push Edge Function)가 처리한다.
 
   revalidatePath(`/events/${input.eventId}/recruiting`)
   revalidatePath('/my-tasks/recruiting')
