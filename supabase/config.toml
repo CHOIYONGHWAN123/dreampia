@@ -345,3 +345,9 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/send-invitation-push/deno.json"
 entrypoint = "./functions/send-invitation-push/index.ts"
+
+[functions.send-assignment-cancel-push]
+enabled = true
+verify_jwt = true
+import_map = "./functions/send-assignment-cancel-push/deno.json"
+entrypoint = "./functions/send-assignment-cancel-push/index.ts"

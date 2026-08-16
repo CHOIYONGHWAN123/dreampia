@@ -2,13 +2,14 @@
 //
 // invitation_mentors 테이블에 새 행이 생기면(관리자 수동 초대든, 자동배정 최초 생성/재배정이든,
 // 10분마다 도는 expire_stale_invitations 크론이 다음 후보로 넘기는 경우든 — 전부 결국 이 테이블에
-// insert된다) Supabase Database Webhook이 이 함수를 호출한다. 대상 멘토의 Expo 푸시 토큰을 조회해
-// "강의요청" 화면으로 딥링크되는 알림을 보낸다.
+// insert된다) invitation_mentors AFTER INSERT 트리거(20260816040000, pg_net 기반)가 이 함수를
+// 호출한다. 대상 멘토의 Expo 푸시 토큰을 조회해 "강의요청" 화면으로 딥링크되는 알림을 보낸다.
 //
-// 이 함수는 브라우저가 아니라 Postgres(supabase_functions.http_request 트리거)가 서버 대 서버로
-// 호출하므로 supabase-js의 functions.invoke()를 쓰지 않는다 — 그래서 다른 함수들과 달리 항상 200을
-// 내려줄 필요가 없고, 실제 HTTP 상태 코드를 그대로 쓴다. verify_jwt = true로 배포해서, 플랫폼이
-// supabase_functions.http_request가 자동으로 붙이는 service-role 인증을 검증해준다(별도 시크릿 불필요).
+// 이 함수는 브라우저가 아니라 Postgres(pg_net)가 서버 대 서버로 호출하므로 supabase-js의
+// functions.invoke()를 쓰지 않는다 — 그래서 다른 함수들과 달리 항상 200을 내려줄 필요가 없고,
+// 실제 HTTP 상태 코드를 그대로 쓴다. 호출자는 publishable(anon) 키를 Authorization으로 보내고,
+// verify_jwt = true는 그 키가 유효한 JWT인지만 검증한다 — 실제 데이터 접근 권한은 이 함수 안의
+// service-role 클라이언트가 갖는다.
 
 import { createClient } from "@supabase/supabase-js";
 
