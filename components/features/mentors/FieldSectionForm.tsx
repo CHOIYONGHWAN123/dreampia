@@ -6,7 +6,7 @@ import { createProgramEntry, type FieldSectionState } from './new-mentor-types'
 import type { UnitOption } from './ProgramUnitPicker'
 
 const selCls =
-  'w-full border border-gray-300 rounded px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-300 disabled:bg-gray-50 disabled:text-gray-400'
+  'w-full border border-gray-300 rounded-xl px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary-300 disabled:bg-gray-50 disabled:text-gray-400'
 
 // "분야 추가" 버튼으로 늘어나는 한 섹션: 분야 → 직종 선택 후, 그 직종에 속한 프로그램(occupation_programs)을
 // "프로그램 추가" 버튼으로 여러 개 등록할 수 있다.
@@ -51,7 +51,7 @@ export function FieldSectionForm({
   )
 
   return (
-    <div className="border border-gray-300 rounded-lg p-4 space-y-3">
+    <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3 shadow-[0_10px_28px_rgba(20,20,40,0.06)]">
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold text-gray-800">분야 섹션</span>
         {onRemove && (
@@ -160,7 +160,7 @@ export function FieldSectionForm({
             onClick={() =>
               onChange({ ...section, programEntries: [...section.programEntries, createProgramEntry()] })
             }
-            className="text-xs text-blue-600 hover:text-blue-800"
+            className="text-xs text-primary-600 hover:text-primary-800"
           >
             + 프로그램 추가
           </button>

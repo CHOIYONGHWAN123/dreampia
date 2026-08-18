@@ -26,7 +26,7 @@ export function ProgramEntryForm({
   onRemove?: () => void
 }) {
   return (
-    <div className="border border-gray-200 rounded-lg p-3 space-y-3 bg-gray-50/50">
+    <div className="border border-gray-200 rounded-xl p-3 space-y-3 bg-gray-50/50">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-gray-500">프로그램</span>
         {onRemove && (
@@ -70,9 +70,9 @@ export function ProgramEntryForm({
                   lectureFeePayerId: entry.lectureFeePayerId === selfId ? '' : selfId,
                 })
               }
-              className={`px-1.5 py-0.5 text-[11px] rounded border transition-colors ${
+              className={`px-1.5 py-0.5 text-[11px] rounded-full border transition-colors ${
                 entry.lectureFeePayerId === selfId
-                  ? 'bg-gray-800 text-white border-gray-800'
+                  ? 'bg-primary-500 text-white border-primary-500'
                   : 'border-gray-300 text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -98,9 +98,9 @@ export function ProgramEntryForm({
                   materialFeePayerId: entry.materialFeePayerId === selfId ? '' : selfId,
                 })
               }
-              className={`px-1.5 py-0.5 text-[11px] rounded border transition-colors ${
+              className={`px-1.5 py-0.5 text-[11px] rounded-full border transition-colors ${
                 entry.materialFeePayerId === selfId
-                  ? 'bg-gray-800 text-white border-gray-800'
+                  ? 'bg-primary-500 text-white border-primary-500'
                   : 'border-gray-300 text-gray-500 hover:bg-gray-50'
               }`}
             >

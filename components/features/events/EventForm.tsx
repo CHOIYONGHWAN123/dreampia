@@ -180,12 +180,12 @@ function buildDefaultValues(
 
 // 엑셀 시트처럼 라벨 셀 + 입력 셀이 테두리로 구분되는 표 형태 스타일
 const cellLabelCls =
-  'px-3 py-2 border border-gray-200 bg-gray-50 text-sm font-medium text-gray-700 whitespace-nowrap align-top w-36'
-const cellValueCls = 'px-2 py-1 border border-gray-200 align-middle'
+  'px-3 py-2 border border-primary-100 bg-primary-50 text-sm font-bold text-primary-700 whitespace-nowrap align-top w-36'
+const cellValueCls = 'px-2 py-1 border border-primary-100 align-middle'
 const cellInputCls =
-  'w-full px-1.5 py-1 text-sm outline-none bg-transparent focus:bg-blue-50 rounded-sm transition-colors'
+  'w-full px-1.5 py-1 text-sm outline-none bg-transparent focus:bg-primary-50 rounded-sm transition-colors'
 const cellSelectCls =
-  'w-full px-1.5 py-1 text-sm bg-white outline-none focus:bg-blue-50 rounded-sm transition-colors text-gray-700'
+  'w-full px-1.5 py-1 text-sm bg-white outline-none focus:bg-primary-50 rounded-sm transition-colors text-gray-700'
 const tableCls = 'w-full border-collapse'
 
 export function EventForm({
@@ -387,16 +387,16 @@ export function EventForm({
   const isBusy = isPending || isUploading
 
   return (
-    <div className="p-8 max-w-7xl">
+    <div className="p-8 max-w-7xl bg-gray-50 min-h-full">
       {/* 헤더 - 스크롤해도 항상 보이도록 상단에 고정 */}
-      <div className="sticky top-0 z-10 bg-white flex items-center justify-between py-4 border-b border-gray-200 mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">{eventId ? '행사 수정' : '행사 등록'}</h1>
+      <div className="sticky top-0 z-10 bg-white flex items-center justify-between py-4 mb-8 shadow-[0_4px_12px_rgba(20,20,40,0.05)]">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">{eventId ? '행사 수정' : '행사 등록'}</h1>
         <div className="flex gap-2">
           {eventId && (
             <button
               type="button"
               onClick={() => router.push(`/events/${eventId}/recruiting`)}
-              className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-sm border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors"
             >
               강사 섭외 바로가기
             </button>
@@ -404,7 +404,7 @@ export function EventForm({
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm border border-gray-300 rounded-full text-gray-600 hover:bg-gray-50 transition-colors"
           >
             취소
           </button>
@@ -412,7 +412,7 @@ export function EventForm({
             type="button"
             onClick={handleSubmit(onSubmit)}
             disabled={isBusy}
-            className="px-5 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            className="px-5 py-2 text-sm bg-primary-500 text-white rounded-full font-bold hover:bg-primary-600 disabled:opacity-50 transition-colors shadow-[0_8px_20px_rgba(37,99,235,0.25)]"
           >
             {isBusy ? '저장 중...' : '저장'}
           </button>
@@ -576,9 +576,9 @@ export function EventForm({
                   <button
                     type="button"
                     onClick={() => setValue('has_elevator', true)}
-                    className={`px-2.5 py-1 text-xs rounded border transition-colors ${
+                    className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
                       watch('has_elevator') === true
-                        ? 'bg-gray-900 text-white border-gray-900'
+                        ? 'bg-primary-500 text-white border-primary-500'
                         : 'border-gray-300 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -587,9 +587,9 @@ export function EventForm({
                   <button
                     type="button"
                     onClick={() => setValue('has_elevator', false)}
-                    className={`px-2.5 py-1 text-xs rounded border transition-colors ${
+                    className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
                       watch('has_elevator') === false
-                        ? 'bg-gray-900 text-white border-gray-900'
+                        ? 'bg-primary-500 text-white border-primary-500'
                         : 'border-gray-300 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -615,7 +615,7 @@ export function EventForm({
                       href={watch('floor_map_url')}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-blue-500 underline whitespace-nowrap"
+                      className="text-xs text-primary-600 underline whitespace-nowrap"
                     >
                       현재 파일 보기
                     </a>
@@ -623,7 +623,7 @@ export function EventForm({
                   <button
                     type="button"
                     onClick={() => floorMapInputRef.current?.click()}
-                    className="px-2.5 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
+                    className="px-2.5 py-1 text-xs border border-gray-300 rounded-full hover:bg-gray-50 transition-colors whitespace-nowrap"
                   >
                     {watch('floor_map_url') || floorMapFile ? '재업로드' : '파일 선택'}
                   </button>
@@ -819,7 +819,7 @@ export function EventForm({
                   type="file"
                   accept=".pdf,.hwp,.xlsx,.xls,.doc,.docx"
                   onChange={(e) => setEstimateFile(e.target.files?.[0] ?? null)}
-                  className="w-full text-xs text-gray-600 file:mr-2 file:py-1 file:px-2 file:rounded file:border file:border-gray-300 file:text-xs file:bg-white file:text-gray-700 hover:file:bg-gray-50 cursor-pointer"
+                  className="w-full text-xs text-gray-600 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border file:border-gray-300 file:text-xs file:bg-white file:text-gray-700 hover:file:bg-gray-50 cursor-pointer"
                 />
                 {estimateFile ? (
                   <p className="mt-0.5 text-xs text-gray-500">{estimateFile.name}</p>
@@ -829,7 +829,7 @@ export function EventForm({
                       href={initialEstimateFileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-0.5 inline-block text-xs text-blue-500 hover:underline"
+                      className="mt-0.5 inline-block text-xs text-primary-600 hover:underline"
                     >
                       현재 견적서 보기
                     </a>

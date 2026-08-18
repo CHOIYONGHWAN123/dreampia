@@ -11,7 +11,7 @@ import { BANK_OPTIONS } from '@/constants/banks'
 import { generateId } from '@/lib/generate-id'
 
 const inputCls =
-  'w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-300'
+  'w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-300'
 const labelCls = 'text-xs text-gray-500 mb-1 block'
 
 export function MentorNewClient({ selectData }: { selectData: AddProgramSelectData }) {
@@ -122,14 +122,14 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
   }
 
   return (
-    <div className="p-8 max-w-3xl">
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">강사 추가</h1>
+    <div className="p-8 max-w-3xl bg-gray-50 min-h-full">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">강사 추가</h1>
         <button
           type="button"
           onClick={handleSubmit}
           disabled={submitting}
-          className="px-5 py-1.5 bg-gray-900 text-white rounded text-sm hover:bg-gray-700 disabled:opacity-50"
+          className="px-5 py-1.5 bg-primary-500 text-white rounded-full font-bold text-sm hover:bg-primary-600 disabled:opacity-50"
         >
           {submitting ? '저장 중...' : '저장'}
         </button>
@@ -137,8 +137,8 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
 
       <div className="space-y-4">
         {/* 로그인 계정 */}
-        <div className="border border-blue-100 rounded-lg p-4 bg-blue-50/40 space-y-3">
-          <p className="text-xs font-medium text-blue-700">강사 앱 로그인 계정 <span className="font-normal text-blue-500">(선택 — 입력 시 자동으로 계정이 생성됩니다)</span></p>
+        <div className="border border-primary-100 rounded-2xl p-4 bg-primary-50/40 space-y-3">
+          <p className="text-xs font-medium text-primary-700">강사 앱 로그인 계정 <span className="font-normal text-primary-500">(선택 — 입력 시 자동으로 계정이 생성됩니다)</span></p>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className={labelCls}>이메일</label>
@@ -223,7 +223,7 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
           <label className={labelCls}>계좌번호</label>
           <div className="flex gap-2">
             <select
-              className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-300 w-40 shrink-0"
+              className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-300 w-40 shrink-0"
               value={bankName}
               onChange={(e) => setBankName(e.target.value)}
             >
@@ -257,7 +257,7 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
             <a
               href="/templates/agreement-form.hwpx"
               download="드림피아_동의서_양식.hwpx"
-              className="text-xs text-blue-600 hover:text-blue-800 underline whitespace-nowrap"
+              className="text-xs text-primary-600 hover:text-primary-800 underline whitespace-nowrap"
             >
               양식 다운로드
             </a>
@@ -300,7 +300,7 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
         <button
           type="button"
           onClick={() => setFieldSections((prev) => [...prev, createFieldSection()])}
-          className="text-sm text-blue-600 hover:text-blue-800"
+          className="text-sm text-primary-600 hover:text-primary-800"
         >
           + 분야 추가
         </button>

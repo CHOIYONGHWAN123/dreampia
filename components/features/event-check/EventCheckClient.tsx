@@ -12,9 +12,9 @@ import { SCHOOL_LEVEL_OPTIONS } from '@/app/(dashboard)/programs/constants'
 const rowCls = 'flex items-center gap-3'
 const labelCls = 'w-28 shrink-0 text-sm font-medium text-gray-700'
 const inputCls =
-  'flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:border-gray-500 transition-colors'
+  'flex-1 px-3 py-1.5 border border-gray-300 rounded-xl text-sm outline-none focus:border-primary-400 transition-colors'
 const selectCls =
-  'flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm bg-white text-gray-700 outline-none focus:border-gray-500 transition-colors'
+  'flex-1 px-3 py-1.5 border border-gray-300 rounded-xl text-sm bg-white text-gray-700 outline-none focus:border-primary-400 transition-colors'
 
 export function EventCheckClient({ formData }: { formData: EventCheckFormData }) {
   const { units, programs, occupations } = formData
@@ -89,10 +89,10 @@ export function EventCheckClient({ formData }: { formData: EventCheckFormData })
   }
 
   return (
-    <div className="p-8 max-w-3xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">일자별 행사 진행 여부</h1>
+    <div className="p-8 max-w-3xl bg-gray-50 min-h-full">
+      <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-8">일자별 행사 진행 여부</h1>
 
-      <div className="space-y-3 bg-white border border-gray-200 rounded-lg p-6">
+      <div className="space-y-3 bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] p-6">
         <div className={rowCls}>
           <label className={labelCls}>교급</label>
           <select className={selectCls} value={schoolLevel} onChange={(e) => handleSchoolLevelChange(e.target.value)}>
@@ -169,7 +169,7 @@ export function EventCheckClient({ formData }: { formData: EventCheckFormData })
             type="button"
             onClick={onSubmit}
             disabled={!canSubmit || isPending}
-            className="px-5 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            className="px-5 py-2 text-sm bg-primary-500 text-white rounded-full font-bold hover:bg-primary-600 disabled:opacity-50 transition-colors shadow-[0_8px_20px_rgba(37,99,235,0.25)]"
           >
             {isPending ? '확인 중...' : '가용 여부 확인'}
           </button>
@@ -177,11 +177,11 @@ export function EventCheckClient({ formData }: { formData: EventCheckFormData })
       </div>
 
       {result && (
-        <div className="mt-6 bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+        <div className="mt-6 bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] p-6 space-y-4">
           <div className="flex items-center gap-3">
             <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                result.canProceed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                result.canProceed ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
               }`}
             >
               {result.canProceed ? '진행가능' : '진행불가'}

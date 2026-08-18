@@ -176,7 +176,7 @@ export function CategoryDrilldownChart({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+    <div className="bg-white rounded-2xl p-5 shadow-[0_10px_28px_rgba(20,20,40,0.06)]">
       <div className="flex items-center justify-between mb-1">
         <h2 className="text-sm font-semibold text-gray-700">행사 횟수 — 카테고리별</h2>
         <span className="text-xs text-gray-400">
@@ -189,7 +189,7 @@ export function CategoryDrilldownChart({
         <button
           type="button"
           onClick={() => setPath([])}
-          className={`px-2 py-1 rounded ${path.length === 0 ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+          className={`px-2.5 py-1 rounded-full font-medium ${path.length === 0 ? 'bg-primary-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}
         >
           전체
         </button>
@@ -199,7 +199,7 @@ export function CategoryDrilldownChart({
             <button
               type="button"
               onClick={() => setPath(path.slice(0, i + 1))}
-              className={`px-2 py-1 rounded ${i === path.length - 1 ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+              className={`px-2.5 py-1 rounded-full font-medium ${i === path.length - 1 ? 'bg-primary-500 text-white' : 'text-gray-500 hover:bg-gray-100'}`}
             >
               {c.name}
             </button>
@@ -253,7 +253,7 @@ export function CategoryDrilldownChart({
                     type="button"
                     disabled={!clickable}
                     onClick={() => handleSliceClick(s)}
-                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm text-left transition-colors ${
+                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-xl text-sm text-left transition-colors ${
                       clickable ? 'hover:bg-gray-50 cursor-pointer' : 'cursor-default'
                     }`}
                   >

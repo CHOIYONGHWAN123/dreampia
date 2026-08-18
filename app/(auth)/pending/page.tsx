@@ -16,7 +16,7 @@ export default function PendingPage() {
   return (
     <div className="text-center space-y-4">
       <div className="text-5xl mb-4">⏳</div>
-      <h2 className="text-lg font-semibold text-gray-800">승인 대기 중입니다</h2>
+      <h2 className="text-lg font-bold text-gray-900">승인 대기 중입니다</h2>
       <p className="text-sm text-gray-500 leading-relaxed">
         회원가입이 완료되었습니다.
         <br />
@@ -26,7 +26,7 @@ export default function PendingPage() {
       </p>
       <button
         onClick={handleSignOut}
-        className="mt-4 px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        className="mt-4 px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
       >
         로그아웃
       </button>

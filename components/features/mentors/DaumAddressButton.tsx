@@ -40,7 +40,7 @@ export function DaumAddressButton({ onComplete }: { onComplete: (address: string
     <button
       type="button"
       onClick={openPostcode}
-      className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors shrink-0 whitespace-nowrap"
+      className="px-3 py-1.5 text-sm border border-gray-300 rounded-full hover:bg-gray-50 transition-colors shrink-0 whitespace-nowrap"
     >
       주소 검색
     </button>

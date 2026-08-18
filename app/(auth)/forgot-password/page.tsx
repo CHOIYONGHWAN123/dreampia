@@ -13,11 +13,11 @@ import {
 } from '@/lib/validations/auth'
 
 const inputCls =
-  'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-const labelCls = 'block text-sm font-medium text-gray-700 mb-1'
+  'w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-transparent'
+const labelCls = 'block text-sm font-medium text-gray-600 mb-1'
 const errorCls = 'mt-1 text-xs text-red-500'
 const buttonCls =
-  'w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors'
+  'w-full py-3 px-4 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-bold rounded-full shadow-[0_10px_24px_rgba(37,99,235,0.25)] transition-colors'
 
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState<'request' | 'verify'>('request')
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
   if (step === 'request') {
     return (
       <form onSubmit={requestForm.handleSubmit(onRequestSubmit)} className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-800 mb-6">비밀번호 찾기</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-6">비밀번호 찾기</h2>
 
         <div>
           <label className={labelCls}>이메일</label>
@@ -94,7 +94,7 @@ export default function ForgotPasswordPage() {
         </button>
 
         <p className="text-center text-sm text-gray-500">
-          <Link href="/login" className="text-blue-600 hover:underline font-medium">
+          <Link href="/login" className="text-primary-600 hover:underline font-medium">
             로그인 화면으로 돌아가기
           </Link>
         </p>
@@ -104,7 +104,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <form onSubmit={verifyForm.handleSubmit(onVerifySubmit)} className="space-y-4">
-      <h2 className="text-lg font-semibold text-gray-800 mb-6">비밀번호 재설정</h2>
+      <h2 className="text-lg font-bold text-gray-900 mb-6">비밀번호 재설정</h2>
       <p className="text-sm text-gray-500 -mt-2 mb-2">
         {email}로 인증번호를 보냈습니다. 이메일을 확인해주세요.
       </p>
@@ -158,14 +158,14 @@ export default function ForgotPasswordPage() {
 
       <p className="text-center text-sm text-gray-500">
         인증번호를 못 받으셨나요?{' '}
-        <button type="button" onClick={handleResend} className="text-blue-600 hover:underline font-medium">
+        <button type="button" onClick={handleResend} className="text-primary-600 hover:underline font-medium">
           재전송
         </button>
       </p>
       {resendMessage && <p className="text-center text-xs text-gray-400">{resendMessage}</p>}
 
       <p className="text-center text-sm text-gray-500">
-        <Link href="/login" className="text-blue-600 hover:underline font-medium">
+        <Link href="/login" className="text-primary-600 hover:underline font-medium">
           로그인 화면으로 돌아가기
         </Link>
       </p>

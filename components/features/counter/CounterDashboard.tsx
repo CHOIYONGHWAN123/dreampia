@@ -41,7 +41,7 @@ function inRange(iso: string | null, start: string, end: string): boolean {
 }
 
 const dateInputCls =
-  'border border-gray-300 rounded px-2 py-1.5 text-sm outline-none focus:border-gray-500'
+  'border border-gray-300 rounded-full px-3 py-1.5 text-sm outline-none focus:border-primary-400'
 
 export function CounterDashboard({
   mentors,
@@ -98,9 +98,9 @@ export function CounterDashboard({
   ]
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-8 bg-gray-50 min-h-full">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-gray-900">카운터 관리</h1>
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">카운터 관리</h1>
         <div className="flex items-center gap-2">
           <input
             type="date"
@@ -122,7 +122,7 @@ export function CounterDashboard({
                 setStartDate('')
                 setEndDate('')
               }}
-              className="px-3 py-1.5 text-xs border border-gray-300 rounded text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap"
+              className="px-3 py-1.5 text-xs border border-gray-300 rounded-full text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap"
             >
               전체 기간
             </button>
@@ -133,7 +133,7 @@ export function CounterDashboard({
       {/* ── 상단 stat 카드 ── */}
       <div className="grid grid-cols-3 gap-4">
         {stats.map(({ label, value, sub }) => (
-          <div key={label} className="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm">
+          <div key={label} className="bg-white rounded-2xl p-6 text-center shadow-[0_10px_28px_rgba(20,20,40,0.06)]">
             <p className="text-sm text-gray-500 mb-1">{label}</p>
             <p className="text-4xl font-bold text-gray-900">{value.toLocaleString()}</p>
             <p className="text-xs text-gray-400 mt-2">{sub}</p>
@@ -153,7 +153,7 @@ export function CounterDashboard({
       />
 
       {/* 기관 등록 내역 */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+      <div className="bg-white rounded-2xl p-5 shadow-[0_10px_28px_rgba(20,20,40,0.06)]">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">기관 등록 내역</h2>
         <div className="space-y-0 max-h-80 overflow-y-auto">
           {recentInstitutions.length === 0 ? (

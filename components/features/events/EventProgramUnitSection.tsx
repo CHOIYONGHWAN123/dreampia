@@ -84,9 +84,9 @@ export function buildUnitPath(
 }
 
 const selCls =
-  'border border-gray-300 rounded px-2 py-1.5 text-sm bg-white outline-none focus:border-gray-500 disabled:bg-gray-50 disabled:text-gray-400'
+  'border border-gray-300 rounded-xl px-2 py-1.5 text-sm bg-white outline-none focus:border-primary-400 disabled:bg-gray-50 disabled:text-gray-400'
 const fieldInputCls =
-  'w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:border-gray-500'
+  'w-full border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-primary-400'
 
 // startTime/endTime은 "YYYY-MM-DDTHH:mm" 형태로 그대로 저장하되, 입력은
 // 일자 하나 + 시작/종료 시간 두 개로 나눠 받기 위한 변환 헬퍼.
@@ -268,7 +268,7 @@ export function EventProgramUnitSection({
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 space-y-4">
+    <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] p-4 space-y-4">
       <div>
         <h3 className="text-sm font-semibold text-gray-700">프로그램 추가</h3>
         <p className="mt-0.5 text-xs text-gray-400">
@@ -283,10 +283,10 @@ export function EventProgramUnitSection({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="프로그램 유닛명 검색"
-          className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:border-gray-500 transition-colors"
+          className="w-full px-3 py-1.5 border border-gray-300 rounded-full text-sm outline-none focus:border-primary-400 transition-colors"
         />
         {searchResults.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-52 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-[0_20px_50px_rgba(20,20,40,0.15)] z-20 max-h-52 overflow-y-auto overflow-x-hidden">
             {searchResults.map((u) => {
               const path = buildPath(u)
               return (
@@ -379,7 +379,7 @@ export function EventProgramUnitSection({
           type="button"
           disabled={!unitId}
           onClick={handleAddFromDropdown}
-          className="px-3 py-1.5 text-xs bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-50 transition-colors whitespace-nowrap"
+          className="px-3 py-1.5 text-xs bg-primary-500 text-white rounded-full font-bold hover:bg-primary-600 disabled:opacity-50 transition-colors whitespace-nowrap"
         >
           추가
         </button>
@@ -387,7 +387,7 @@ export function EventProgramUnitSection({
 
       {/* 일괄 적용 */}
       {value.length > 0 && (
-        <div className="border border-gray-200 rounded-lg p-3 space-y-2 bg-gray-50">
+        <div className="border border-primary-100 rounded-2xl p-3 space-y-2 bg-primary-50/40">
           <p className="text-xs font-medium text-gray-600">
             일괄 적용 <span className="text-gray-400 font-normal">(추가된 모든 프로그램에 값을 한 번에 적용합니다)</span>
           </p>
@@ -415,7 +415,7 @@ export function EventProgramUnitSection({
               type="button"
               onClick={applyBulkTime}
               disabled={!bulkDate && !bulkStartTime && !bulkEndTime}
-              className="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors whitespace-nowrap"
+              className="px-3 py-1.5 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 disabled:opacity-40 disabled:border-gray-300 disabled:text-gray-400 transition-colors whitespace-nowrap"
             >
               전체 적용
             </button>
@@ -432,7 +432,7 @@ export function EventProgramUnitSection({
               type="button"
               onClick={applyBulkTarget}
               disabled={!bulkTarget}
-              className="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors whitespace-nowrap"
+              className="px-3 py-1.5 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 disabled:opacity-40 disabled:border-gray-300 disabled:text-gray-400 transition-colors whitespace-nowrap"
             >
               전체 적용
             </button>
@@ -450,7 +450,7 @@ export function EventProgramUnitSection({
               type="button"
               onClick={applyBulkLectureFee}
               disabled={bulkLectureFee === null}
-              className="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors whitespace-nowrap"
+              className="px-3 py-1.5 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 disabled:opacity-40 disabled:border-gray-300 disabled:text-gray-400 transition-colors whitespace-nowrap"
             >
               전체 적용
             </button>
@@ -459,35 +459,35 @@ export function EventProgramUnitSection({
       )}
 
       {/* 추가된 프로그램 목록 - 엑셀 시트처럼 프로그램 1개당 1행 */}
-      <div className="border border-gray-200 rounded-lg overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
         <table className="text-sm border-collapse" style={{ minWidth: '3520px' }}>
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36">일자</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">시작 시간</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">종료 시간</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36">대상</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">요청직업군</th>
-              <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">프로그램</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-40 min-w-40">강사 배정</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">강의실</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">대기실</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-20 min-w-20">출석</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">강의료</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">강의료 입금자명</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-36 min-w-36 whitespace-nowrap">1인당 강사 재료비</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-40 min-w-40 whitespace-nowrap">1인당 드림피아 재료비</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">인원수</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">차시별 인원수</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">재료비 입금자명</th>
-              <th className="px-2 py-2 text-left font-medium text-gray-700 w-48 min-w-48">학교요청사항</th>
-              <th className="px-2 py-2 text-left font-medium text-gray-700 w-56 min-w-56">답변</th>
-              <th className="px-2 py-2 text-left font-medium text-gray-700 w-40 min-w-40">비고</th>
-              <th className="px-2 py-2 text-left font-medium text-gray-700 w-40 min-w-40">사진</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">강사등급</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-32 min-w-32">소속구분</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-28 min-w-28">완성품 제공</th>
-              <th className="px-2 py-2 text-center font-medium text-gray-700 w-24 min-w-24">택배 가능</th>
+            <tr className="bg-primary-50 border-b border-primary-100">
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36">일자</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">시작 시간</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">종료 시간</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36">대상</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">요청직업군</th>
+              <th className="px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">프로그램</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40">강사 배정</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의실</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">대기실</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-20 min-w-20">출석</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의료</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">강의료 입금자명</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36 whitespace-nowrap">1인당 강사 재료비</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40 whitespace-nowrap">1인당 드림피아 재료비</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">인원수</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">차시별 인원수</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">재료비 입금자명</th>
+              <th className="px-2 py-2 text-left font-bold text-primary-700 w-48 min-w-48">학교요청사항</th>
+              <th className="px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">답변</th>
+              <th className="px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">비고</th>
+              <th className="px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">사진</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">강사등급</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">소속구분</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">완성품 제공</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">택배 가능</th>
               <th className="px-2 py-2 w-16 min-w-16" />
             </tr>
           </thead>
@@ -655,7 +655,7 @@ export function EventProgramUnitSection({
                               href={photo.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 underline underline-offset-2 hover:text-blue-700"
+                              className="text-primary-600 underline underline-offset-2 hover:text-primary-700"
                             >
                               사진{i + 1}
                             </a>
