@@ -16,12 +16,12 @@ export function TeachersClient({ teachers }: { teachers: TeacherRow[] }) {
   }, [teachers, searchText])
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">선생님 관리</h1>
+    <div className="p-8 bg-gray-50 min-h-full">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">선생님 관리</h1>
         <button
           type="button"
-          className="px-4 py-1.5 bg-gray-900 text-white rounded text-sm hover:bg-gray-700 transition-colors"
+          className="px-5 py-2 bg-primary-500 text-white rounded-full text-sm font-bold shadow-[0_8px_20px_rgba(37,99,235,0.25)] hover:bg-primary-600 transition-colors"
           onClick={() => router.push('/teachers/new')}
         >
           선생님 추가
@@ -34,21 +34,21 @@ export function TeachersClient({ teachers }: { teachers: TeacherRow[] }) {
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           placeholder="학교명 또는 선생님 성함 검색"
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400 w-64"
+          className="border border-gray-200 rounded-full px-4 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary-300 w-64"
         />
       </div>
 
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-amber-50 border-b border-gray-200">
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-14">no</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700">학교명</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-24">지역1</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-24">지역2</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700">주소</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">선생님</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-44">아이디</th>
+            <tr className="bg-primary-50 border-b border-primary-100">
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-14">no</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700">학교명</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-24">지역1</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-24">지역2</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700">주소</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-28">선생님</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-44">아이디</th>
               <th className="px-4 py-2.5 w-20" />
             </tr>
           </thead>
@@ -66,7 +66,7 @@ export function TeachersClient({ teachers }: { teachers: TeacherRow[] }) {
                   <td className="px-4 py-2.5 text-center">
                     <button
                       type="button"
-                      className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
+                      className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap"
                       onClick={() => router.push(`/teachers/${teacher.id}/edit`)}
                     >
                       수정

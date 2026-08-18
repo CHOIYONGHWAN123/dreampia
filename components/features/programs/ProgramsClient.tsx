@@ -267,9 +267,9 @@ export function ProgramsClient({ initialEventCategories, initialFields }: Props)
   const selectedProgramName = programs.find(p => p.id === selectedProgramId)?.name
 
   return (
-    <div className="p-8">
-      <div className="pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">프로그램 관리</h1>
+    <div className="p-8 bg-gray-50 min-h-full">
+      <div className="mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">프로그램 관리</h1>
         <p className="text-sm text-gray-400 mt-1">
           행사구분 → 분야 → 직종 → 프로그램 → 프로그램 유닛 순서로 선택하며 관리합니다.
         </p>
@@ -290,9 +290,9 @@ export function ProgramsClient({ initialEventCategories, initialFields }: Props)
           <button
             type="button"
             onClick={selectUnassigned}
-            className={`mt-2 px-3 py-1.5 text-xs rounded border transition-colors ${
+            className={`mt-2 px-3 py-1.5 text-xs rounded-full border transition-colors ${
               viewingUnassigned
-                ? 'bg-gray-900 text-white border-gray-900'
+                ? 'bg-primary-500 text-white border-primary-500 font-semibold'
                 : 'border-gray-300 text-gray-500 hover:bg-gray-50'
             }`}
           >
@@ -348,12 +348,12 @@ export function ProgramsClient({ initialEventCategories, initialFields }: Props)
             <button
               onClick={() => setUnitPopup({ open: true, unit: null })}
               disabled={!selectedProgramId}
-              className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-1.5 text-xs bg-primary-500 text-white rounded-full font-bold hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               추가
             </button>
           </div>
-          <div className="border border-gray-200 rounded-lg overflow-hidden flex-1 min-h-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] flex-1 min-h-50 overflow-y-auto">
             {!selectedProgramId ? (
               <div className="py-16 text-center text-gray-400 text-xs px-2">
                 프로그램을 먼저 선택해주세요.
@@ -368,7 +368,7 @@ export function ProgramsClient({ initialEventCategories, initialFields }: Props)
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => setUnitPopup({ open: true, unit })}
-                      className="px-2 py-0.5 text-xs rounded border border-gray-300 hover:bg-gray-50 transition-colors"
+                      className="px-2 py-0.5 text-xs rounded border border-primary-300 text-primary-600 hover:bg-primary-50 transition-colors"
                     >
                       수정
                     </button>

@@ -73,8 +73,8 @@ export function StockAdjustPopup({
   }
 
   const segBtn = (active: boolean) =>
-    `flex-1 py-1.5 text-xs rounded font-medium transition-colors ${
-      active ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100'
+    `flex-1 py-1.5 text-xs rounded-full font-medium transition-colors ${
+      active ? 'bg-primary-500 text-white' : 'text-gray-500 hover:bg-gray-100'
     }`
 
   const stockRow = (
@@ -83,12 +83,12 @@ export function StockAdjustPopup({
     after: number,
     highlight: boolean
   ) => (
-    <div className={`flex items-center justify-between px-3 py-2 rounded ${highlight ? 'bg-blue-50' : 'bg-gray-50'}`}>
+    <div className={`flex items-center justify-between px-3 py-2 rounded-xl ${highlight ? 'bg-primary-50' : 'bg-gray-50'}`}>
       <span className="text-xs text-gray-600">{label}</span>
       <div className="flex items-center gap-2 text-xs font-mono">
         <span className="text-gray-500">{before.toLocaleString()}</span>
         <span className="text-gray-400">→</span>
-        <span className={after !== before ? (direction === 'add' ? 'text-blue-600 font-semibold' : 'text-red-500 font-semibold') : 'text-gray-500'}>
+        <span className={after !== before ? (direction === 'add' ? 'text-primary-600 font-semibold' : 'text-red-500 font-semibold') : 'text-gray-500'}>
           {after.toLocaleString()}
           {after !== before && (
             <span className="ml-1 text-[10px]">
@@ -102,15 +102,15 @@ export function StockAdjustPopup({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg p-6 w-[440px]" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-base font-semibold text-gray-900 mb-1">재고 조정</h2>
+      <div className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(20,20,40,0.15)] p-6 w-110" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-base font-extrabold text-gray-900 mb-1">재고 조정</h2>
         <p className="text-xs text-gray-400 mb-5">{unitTitle}</p>
 
         <div className="space-y-4">
           {/* 조정 대상 */}
           <div>
             <label className="text-xs text-gray-500 mb-1.5 block">조정 대상</label>
-            <div className="flex gap-1 bg-gray-100 p-1 rounded">
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-full">
               <button type="button" className={segBtn(target === 'free')} onClick={() => setTarget('free')}>
                 여유 재고
               </button>
@@ -128,7 +128,7 @@ export function StockAdjustPopup({
           {/* 추가 / 감소 */}
           <div>
             <label className="text-xs text-gray-500 mb-1.5 block">조정 방향</label>
-            <div className="flex gap-1 bg-gray-100 p-1 rounded">
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-full">
               <button type="button" className={segBtn(direction === 'add')} onClick={() => setDirection('add')}>
                 + 추가
               </button>
@@ -147,7 +147,7 @@ export function StockAdjustPopup({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="조정할 수량을 입력하세요"
-              className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm outline-none focus:border-gray-500"
+              className="w-full border border-gray-300 rounded-xl px-3 py-1.5 text-sm outline-none focus:border-primary-400"
               autoFocus
             />
           </div>
@@ -160,7 +160,7 @@ export function StockAdjustPopup({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="예: 신규 입고, 파손 폐기, 키트 패킹"
-              className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm outline-none focus:border-gray-500"
+              className="w-full border border-gray-300 rounded-xl px-3 py-1.5 text-sm outline-none focus:border-primary-400"
             />
           </div>
 
@@ -183,14 +183,14 @@ export function StockAdjustPopup({
             type="button"
             onClick={handleSubmit}
             disabled={isPending || !canSubmit}
-            className="px-6 py-2 bg-gray-900 text-white rounded text-sm hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            className="px-6 py-2 bg-primary-500 text-white rounded-full font-bold text-sm hover:bg-primary-600 disabled:opacity-50 transition-colors"
           >
             {isPending ? '저장 중...' : '저장'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50 transition-colors"
+            className="px-6 py-2 border border-gray-300 rounded-full text-sm hover:bg-gray-50 transition-colors"
           >
             취소
           </button>

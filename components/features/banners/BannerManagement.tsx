@@ -159,25 +159,25 @@ export function BannerManagement() {
   if (loading) return <div className="p-8 text-gray-400 text-sm">로딩 중...</div>
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-gray-50 min-h-full">
       {/* 헤더 */}
-      <div className="pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">배너 관리</h1>
+      <div className="mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">배너 관리</h1>
       </div>
 
       <div className="grid grid-cols-2 gap-8">
         {/* 왼쪽: 배너 등록 */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-gray-600">배너 등록</span>
+            <span className="text-sm font-bold text-gray-700">배너 등록</span>
             <button
               onClick={handleSaveSlots}
-              className="px-4 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors"
+              className="px-4 py-1.5 bg-primary-500 text-white rounded-full text-sm font-bold hover:bg-primary-600 transition-colors"
             >
               저장
             </button>
           </div>
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
             {slots.map((banner, i) => (
               <div
                 key={i}
@@ -188,11 +188,11 @@ export function BannerManagement() {
                   type="text"
                   readOnly
                   value={banner?.name || ''}
-                  className="flex-1 text-sm border border-gray-200 rounded px-2 py-1.5 bg-gray-50 text-gray-700"
+                  className="flex-1 text-sm border border-gray-200 rounded-full px-3 py-1.5 bg-gray-50 text-gray-700"
                 />
                 <button
                   onClick={() => openSelectPopup(i)}
-                  className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors shrink-0"
+                  className="px-3 py-1.5 text-sm border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors shrink-0"
                 >
                   선택
                 </button>
@@ -204,13 +204,13 @@ export function BannerManagement() {
         {/* 오른쪽: 배너 목록 */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-gray-600">배너 목록</span>
+            <span className="text-sm font-bold text-gray-700">배너 목록</span>
             <button
               onClick={() => {
                 setAddForm({ name: '', linkUrl: '', imageFile: null })
                 setAddPopup(true)
               }}
-              className="px-4 py-1.5 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors"
+              className="px-4 py-1.5 bg-primary-500 text-white rounded-full text-sm font-bold hover:bg-primary-600 transition-colors"
             >
               추가
             </button>
@@ -220,7 +220,7 @@ export function BannerManagement() {
               pagedBanners.map(banner => (
                 <div
                   key={banner.id}
-                  className="flex items-center gap-3 border border-gray-200 rounded-lg p-3"
+                  className="flex items-center gap-3 bg-white rounded-2xl shadow-[0_8px_22px_rgba(20,20,40,0.05)] p-3"
                 >
                   <div className="w-24 h-16 bg-gray-100 rounded overflow-hidden shrink-0">
                     {banner.image_url ? (
@@ -251,20 +251,20 @@ export function BannerManagement() {
                   </div>
                   <div className="flex flex-col gap-1 shrink-0">
                     {usedBannerIds.has(banner.id) ? (
-                      <span className="px-3 py-1 text-xs text-green-600 border border-green-600 rounded text-center">
+                      <span className="px-3 py-1 text-xs text-emerald-600 bg-emerald-50 rounded-full text-center font-semibold">
                         사용중
                       </span>
                     ) : (
                       <button
                         onClick={() => handleDelete(banner.id)}
-                        className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors"
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-full hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors"
                       >
                         삭제
                       </button>
                     )}
                     <button
                       onClick={() => openEditPopup(banner)}
-                      className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                      className="px-3 py-1 text-sm border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors"
                     >
                       수정
                     </button>
@@ -272,7 +272,7 @@ export function BannerManagement() {
                 </div>
               ))
             ) : (
-              <div className="border border-gray-200 rounded-lg py-16 text-center text-gray-400 text-sm">
+              <div className="bg-white rounded-2xl shadow-[0_8px_22px_rgba(20,20,40,0.05)] py-16 text-center text-gray-400 text-sm">
                 등록된 배너가 없습니다.
               </div>
             )}
@@ -285,9 +285,9 @@ export function BannerManagement() {
                 <button
                   key={i}
                   onClick={() => setRightPage(i + 1)}
-                  className={`w-8 h-8 text-sm rounded transition-colors ${
+                  className={`w-8 h-8 text-sm rounded-full transition-colors ${
                     rightPage === i + 1
-                      ? 'bg-gray-900 text-white'
+                      ? 'bg-primary-500 text-white font-bold'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
@@ -314,15 +314,15 @@ export function BannerManagement() {
           onClick={closeSelectPopup}
         >
           <div
-            className="bg-white rounded-lg p-6 w-96 max-h-[70vh] flex flex-col"
+            className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(20,20,40,0.15)] p-6 w-96 max-h-[70vh] flex flex-col"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex-1 overflow-y-auto border border-gray-200 rounded mb-4">
+            <div className="flex-1 overflow-y-auto border border-gray-100 rounded-xl mb-4">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
+                  <tr className="border-b border-primary-100 bg-primary-50">
                     <th className="w-10 py-2.5"></th>
-                    <th className="py-2.5 text-center text-xs font-medium text-gray-500">배너명</th>
+                    <th className="py-2.5 text-center text-xs font-bold text-primary-700">배너명</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -357,13 +357,13 @@ export function BannerManagement() {
             <div className="flex justify-center gap-2">
               <button
                 onClick={confirmSelect}
-                className="px-6 py-2 border border-gray-400 rounded hover:bg-gray-50 text-sm"
+                className="px-6 py-2 bg-primary-500 text-white rounded-full font-bold hover:bg-primary-600 text-sm"
               >
                 선택
               </button>
               <button
                 onClick={closeSelectPopup}
-                className="px-6 py-2 border border-gray-400 rounded hover:bg-gray-50 text-sm"
+                className="px-6 py-2 border border-gray-300 rounded-full hover:bg-gray-50 text-sm"
               >
                 취소
               </button>
@@ -379,21 +379,21 @@ export function BannerManagement() {
           onClick={() => setAddPopup(false)}
         >
           <div
-            className="bg-white rounded-lg p-6 w-96"
+            className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(20,20,40,0.15)] p-6 w-96"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-base font-medium mb-4">배너추가</h2>
+            <h2 className="text-base font-extrabold text-gray-900 mb-4">배너추가</h2>
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   readOnly
                   value={addForm.imageFile?.name || ''}
-                  className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm bg-gray-50"
+                  className="flex-1 border border-gray-200 rounded-full px-3.5 py-2 text-sm bg-gray-50"
                 />
                 <button
                   onClick={() => addImageInputRef.current?.click()}
-                  className="px-3 py-2 text-sm border border-gray-900 rounded hover:bg-gray-50 shrink-0"
+                  className="px-3 py-2 text-sm border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 shrink-0"
                 >
                   이미지
                 </button>
@@ -412,26 +412,26 @@ export function BannerManagement() {
                 value={addForm.name}
                 onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))}
                 placeholder="배너명을 입력해주세요."
-                className="w-full border border-green-500 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                className="w-full border border-gray-200 rounded-full px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-300"
               />
               <input
                 type="text"
                 value={addForm.linkUrl}
                 onChange={e => setAddForm(f => ({ ...f, linkUrl: e.target.value }))}
                 placeholder="링크할 주소를 입력해주세요."
-                className="w-full border border-green-500 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                className="w-full border border-gray-200 rounded-full px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-300"
               />
             </div>
             <div className="flex justify-center gap-2 mt-6">
               <button
                 onClick={handleAddConfirm}
-                className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm"
+                className="px-6 py-2 bg-primary-500 text-white rounded-full font-bold hover:bg-primary-600 text-sm"
               >
                 확인
               </button>
               <button
                 onClick={() => setAddPopup(false)}
-                className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm"
+                className="px-6 py-2 border border-gray-300 rounded-full hover:bg-gray-50 text-sm"
               >
                 취소
               </button>
@@ -447,10 +447,10 @@ export function BannerManagement() {
           onClick={() => setEditPopup(false)}
         >
           <div
-            className="bg-white rounded-lg p-6 w-96"
+            className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(20,20,40,0.15)] p-6 w-96"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-base font-medium mb-4">배너수정</h2>
+            <h2 className="text-base font-extrabold text-gray-900 mb-4">배너수정</h2>
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <input
@@ -462,11 +462,11 @@ export function BannerManagement() {
                       ? getFilenameFromUrl(editingBanner.image_url)
                       : '')
                   }
-                  className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm bg-gray-50"
+                  className="flex-1 border border-gray-200 rounded-full px-3.5 py-2 text-sm bg-gray-50"
                 />
                 <button
                   onClick={() => editImageInputRef.current?.click()}
-                  className="px-3 py-2 text-sm border border-gray-900 rounded hover:bg-gray-50 shrink-0"
+                  className="px-3 py-2 text-sm border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 shrink-0"
                 >
                   이미지
                 </button>
@@ -485,26 +485,26 @@ export function BannerManagement() {
                 value={editForm.name}
                 onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
                 placeholder="배너명을 입력해주세요."
-                className="w-full border border-green-500 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                className="w-full border border-gray-200 rounded-full px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-300"
               />
               <input
                 type="text"
                 value={editForm.linkUrl}
                 onChange={e => setEditForm(f => ({ ...f, linkUrl: e.target.value }))}
                 placeholder="링크할 주소를 입력해주세요."
-                className="w-full border border-green-500 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                className="w-full border border-gray-200 rounded-full px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-300"
               />
             </div>
             <div className="flex justify-center gap-2 mt-6">
               <button
                 onClick={handleEditConfirm}
-                className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm"
+                className="px-6 py-2 bg-primary-500 text-white rounded-full font-bold hover:bg-primary-600 text-sm"
               >
                 확인
               </button>
               <button
                 onClick={() => setEditPopup(false)}
-                className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm"
+                className="px-6 py-2 border border-gray-300 rounded-full hover:bg-gray-50 text-sm"
               >
                 취소
               </button>

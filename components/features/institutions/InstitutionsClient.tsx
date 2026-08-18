@@ -68,13 +68,13 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-gray-50 min-h-full">
       {/* 헤더 */}
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">기관 관리</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">기관 관리</h1>
         <button
           type="button"
-          className="px-4 py-1.5 bg-gray-900 text-white rounded text-sm hover:bg-gray-700 transition-colors"
+          className="px-5 py-2 bg-primary-500 text-white rounded-full text-sm font-bold shadow-[0_8px_20px_rgba(37,99,235,0.25)] hover:bg-primary-600 transition-colors"
           onClick={() => router.push('/institutions/new')}
         >
           기관 추가
@@ -86,7 +86,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
         <select
           value={filterRegion1}
           onChange={(e) => handleRegion1Change(e.target.value)}
-          className="border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+          className="border border-gray-200 rounded-full px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-primary-300"
         >
           <option value="">지역1 전체</option>
           {region1List.map((r) => (
@@ -97,7 +97,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
         <select
           value={filterRegion2}
           onChange={(e) => setFilterRegion2(e.target.value)}
-          className="border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+          className="border border-gray-200 rounded-full px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-primary-300"
         >
           <option value="">지역2 전체</option>
           {region2List.map((r) => (
@@ -108,7 +108,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+          className="border border-gray-200 rounded-full px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-primary-300"
         >
           <option value="">기관 전체</option>
           {INSTITUTION_TYPES.map((t) => (
@@ -121,7 +121,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           placeholder="기관명 검색"
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400 w-56"
+          className="border border-gray-200 rounded-full px-4 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary-300 w-56"
         />
 
         <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer select-none">
@@ -129,7 +129,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
             type="checkbox"
             checked={showDeleted}
             onChange={(e) => setShowDeleted(e.target.checked)}
-            className="cursor-pointer"
+            className="cursor-pointer accent-primary-600"
           />
           삭제된 기관 보기
         </label>
@@ -137,20 +137,20 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
 
       {/* 등록된 학교 수 */}
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-sm text-gray-600">등록된 학교 수</span>
-        <span className="text-sm font-bold text-red-500">{filtered.length}</span>
+        <span className="text-sm text-gray-500">등록된 학교 수</span>
+        <span className="text-sm font-bold text-primary-600">{filtered.length}</span>
       </div>
 
       {/* 테이블 */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-amber-50 border-b border-gray-200">
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-14">no</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-24">지역1</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-24">지역2</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">기관</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700">기관명</th>
+            <tr className="bg-primary-50 border-b border-primary-100">
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-14">no</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-24">지역1</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-24">지역2</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-28">기관</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700">기관명</th>
               <th className="px-4 py-2.5 w-52" />
             </tr>
           </thead>
@@ -174,7 +174,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
                         <button
                           type="button"
                           disabled={restoringTargetId === institution.id}
-                          className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 transition-colors whitespace-nowrap"
+                          className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 disabled:opacity-50 transition-colors whitespace-nowrap"
                           onClick={() => handleRestore(institution.id)}
                         >
                           {restoringTargetId === institution.id ? '복구 중...' : '복구'}
@@ -182,7 +182,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
                       ) : (
                         <button
                           type="button"
-                          className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
+                          className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap"
                           onClick={() => router.push(`/institutions/${institution.id}/edit`)}
                         >
                           수정
@@ -190,7 +190,7 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
                       )}
                       <button
                         type="button"
-                        className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
+                        className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap"
                         onClick={() => router.push(`/institutions/${institution.id}`)}
                       >
                         행사 관리

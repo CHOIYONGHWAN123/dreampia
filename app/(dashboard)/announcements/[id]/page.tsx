@@ -19,9 +19,9 @@ export default async function AnnouncementDetailPage({
   if (!data) notFound()
 
   return (
-    <div className="p-8">
-      <div className="pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">공지사항 수정</h1>
+    <div className="p-8 bg-gray-50 min-h-full">
+      <div className="mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">공지사항 수정</h1>
       </div>
       <AnnouncementForm
         id={data.id}

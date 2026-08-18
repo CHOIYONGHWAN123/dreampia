@@ -11,8 +11,8 @@ interface Props {
 export function TermsEditor({ initialServiceTerms, initialPrivacyPolicy }: Props) {
   return (
     <div>
-      <div className="pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">이용약관</h1>
+      <div className="mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">이용약관</h1>
       </div>
 
       <div className="space-y-10">
@@ -57,19 +57,19 @@ function TermsSection({
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
       {/* 섹션 헤더 */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+      <div className="flex items-center justify-between px-5 py-3.5 bg-primary-50">
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-teal-500 text-white text-xs font-bold">
+          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gold-500 text-white text-xs font-bold">
             {index}
           </span>
-          <span className="text-sm font-medium text-gray-700">{label}</span>
+          <span className="text-sm font-bold text-primary-700">{label}</span>
         </div>
         <button
           onClick={handleSave}
           disabled={isPending}
-          className="px-4 py-1.5 bg-white border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          className="px-4 py-1.5 bg-white border border-primary-300 rounded-full text-sm text-primary-600 hover:bg-primary-100 disabled:opacity-50 transition-colors"
         >
           {isPending ? '저장 중...' : saved ? '저장됨 ✓' : '저장'}
         </button>

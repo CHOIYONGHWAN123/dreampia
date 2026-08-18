@@ -64,13 +64,13 @@ export function MentorFeesClient({
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">강사료 대장</h1>
+    <div className="p-6 bg-gray-50 min-h-full">
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">강사료 대장</h1>
       </div>
 
       {/* 월 선택 탭 */}
-      <div className="flex gap-1 overflow-x-auto pb-2 mb-4">
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
         {availableMonths.length === 0 ? (
           <span className="text-sm text-gray-400">데이터 없음</span>
         ) : (
@@ -81,10 +81,10 @@ export function MentorFeesClient({
                 key={`${year}-${month}`}
                 type="button"
                 onClick={() => handleMonthChange(year, month)}
-                className={`px-3 py-1.5 text-sm rounded whitespace-nowrap transition-colors ${
+                className={`px-4 py-2 text-sm font-bold rounded-full whitespace-nowrap transition-colors ${
                   isActive
-                    ? 'bg-gray-900 text-white font-medium'
-                    : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                    ? 'bg-primary-500 text-white shadow-[0_6px_16px_rgba(37,99,235,0.3)]'
+                    : 'text-gray-500 hover:bg-gray-100'
                 }`}
               >
                 {year}년 {month}월
@@ -104,33 +104,33 @@ export function MentorFeesClient({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="학교명 검색"
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400 w-56"
+          className="border border-gray-200 rounded-full px-4 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary-300 w-56"
         />
         <button
           type="button"
           onClick={() => setDescending((v) => !v)}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap"
+          className="px-3 py-1.5 text-sm border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap"
         >
           날짜 {descending ? '내림차순' : '오름차순'}
         </button>
       </div>
 
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-amber-50 border-b border-gray-200">
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-12">NO</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">날짜</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24">강사명</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700">학교명</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">강의료</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">재료비</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">강연료</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">총 강연료</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">세후 금액</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32">계좌번호</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28">주민번호</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32">비고</th>
+            <tr className="bg-primary-50 border-b border-primary-100">
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-12">NO</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24">날짜</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24">강사명</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700">학교명</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28">강의료</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28">재료비</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28">강연료</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28">총 강연료</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28">세후 금액</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32">계좌번호</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28">주민번호</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32">비고</th>
             </tr>
           </thead>
           <tbody>
@@ -189,7 +189,7 @@ export function MentorFeesClient({
                         defaultValue={line.remarks ?? ''}
                         onBlur={(e) => handleRemarkBlur(line.eventRowId, e.target.value, line.remarks)}
                         disabled={isPending}
-                        className="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400"
+                        className="w-full border border-gray-200 rounded-full px-2.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary-300"
                       />
                     </td>
                   </tr>

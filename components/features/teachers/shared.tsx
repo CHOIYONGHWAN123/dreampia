@@ -63,7 +63,7 @@ export function InstitutionSearchSelect({
           placeholder={placeholder}
           onChange={(e) => { setSearch(e.target.value); setOpen(true) }}
           onFocus={() => setOpen(true)}
-          className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-300"
+          className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-300"
         />
       )}
       {open && (
@@ -75,7 +75,7 @@ export function InstitutionSearchSelect({
                   type="button"
                   tabIndex={0}
                   onMouseDown={(e) => { e.preventDefault(); handleSelect(i.id) }}
-                  className="w-full text-left px-3 py-1.5 text-sm hover:bg-blue-50"
+                  className="w-full text-left px-3 py-1.5 text-sm hover:bg-primary-50"
                 >
                   {institutionLabel(i)}
                 </button>

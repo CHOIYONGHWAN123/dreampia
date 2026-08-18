@@ -37,8 +37,8 @@ interface Props {
   isDeleted?: boolean
 }
 
-const inputCls = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-gray-500 transition-colors'
-const selectCls = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-gray-500 transition-colors bg-white text-gray-700'
+const inputCls = 'w-full px-3 py-2 border border-gray-300 rounded-xl text-sm outline-none focus:border-primary-400 transition-colors'
+const selectCls = 'w-full px-3 py-2 border border-gray-300 rounded-xl text-sm outline-none focus:border-primary-400 transition-colors bg-white text-gray-700'
 const labelCls = 'block text-sm font-medium text-gray-700 mb-1.5'
 
 export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
@@ -164,13 +164,13 @@ export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 max-w-lg">
       {isDeleted && (
-        <div className="flex items-center justify-between gap-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+        <div className="flex items-center justify-between gap-3 p-3 bg-red-50 rounded-2xl text-sm text-red-600">
           <span>삭제된 기관입니다. 목록/선택 화면에는 더 이상 나타나지 않습니다.</span>
           <button
             type="button"
             onClick={handleRestore}
             disabled={isRestoring}
-            className="px-3 py-1 text-xs bg-white border border-red-300 rounded hover:bg-red-100 disabled:opacity-50 transition-colors whitespace-nowrap"
+            className="px-3 py-1 text-xs bg-white border border-red-300 rounded-full hover:bg-red-100 disabled:opacity-50 transition-colors whitespace-nowrap"
           >
             {isRestoring ? '복구 중...' : '복구'}
           </button>
@@ -204,12 +204,12 @@ export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
             value={address ?? ''}
             readOnly
             placeholder="주소 찾기 버튼을 눌러 검색하세요."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-700 cursor-default outline-none"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm bg-gray-50 text-gray-700 cursor-default outline-none"
           />
           <button
             type="button"
             onClick={handleAddressSearch}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap"
+            className="px-4 py-2 text-sm border border-primary-300 text-primary-600 rounded-xl hover:bg-primary-50 transition-colors whitespace-nowrap"
           >
             주소 찾기
           </button>
@@ -314,7 +314,7 @@ export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
             onClick={() => setValue('has_elevator', true)}
             className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
               hasElevator === true
-                ? 'bg-gray-900 text-white border-gray-900'
+                ? 'bg-primary-500 text-white border-primary-500'
                 : 'border-gray-300 text-gray-600 hover:bg-gray-50'
             }`}
           >
@@ -325,7 +325,7 @@ export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
             onClick={() => setValue('has_elevator', false)}
             className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
               hasElevator === false && hasElevator !== undefined
-                ? 'bg-gray-900 text-white border-gray-900'
+                ? 'bg-primary-500 text-white border-primary-500'
                 : 'border-gray-300 text-gray-600 hover:bg-gray-50'
             }`}
           >
@@ -343,7 +343,7 @@ export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
               href={existingFloorMapUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block text-xs text-blue-500 underline"
+              className="inline-block text-xs text-primary-600 underline"
             >
               현재 파일 보기
             </a>
@@ -362,7 +362,7 @@ export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
             <button
               type="button"
               onClick={() => floorMapInputRef.current?.click()}
-              className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap"
+              className="px-4 py-2 text-sm border border-primary-300 text-primary-600 rounded-xl hover:bg-primary-50 transition-colors whitespace-nowrap"
             >
               {existingFloorMapUrl || floorMapFile ? '재업로드' : '파일 선택'}
             </button>
@@ -380,7 +380,7 @@ export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
             type="button"
             onClick={handleDelete}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm text-red-500 border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors"
+            className="px-4 py-2 text-sm text-red-500 border border-red-200 rounded-full hover:bg-red-50 disabled:opacity-50 transition-colors"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>
@@ -391,14 +391,14 @@ export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
           <button
             type="button"
             onClick={() => router.push('/institutions')}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm border border-gray-300 rounded-full text-gray-600 hover:bg-gray-50 transition-colors"
           >
             취소
           </button>
           <button
             type="submit"
             disabled={isBusy}
-            className="px-5 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            className="px-5 py-2 text-sm bg-primary-500 text-white rounded-full font-bold hover:bg-primary-600 disabled:opacity-50 transition-colors"
           >
             {isBusy ? '저장 중...' : isEdit ? '수정' : '등록'}
           </button>

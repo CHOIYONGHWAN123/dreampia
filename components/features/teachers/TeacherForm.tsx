@@ -14,7 +14,7 @@ import {
 import { InstitutionSearchSelect } from './shared'
 
 const inputCls =
-  'w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-300'
+  'w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-300'
 const labelCls = 'text-xs text-gray-500 mb-1 block'
 
 export function TeacherForm({
@@ -158,9 +158,9 @@ export function TeacherForm({
       </div>
 
       {!isEdit && (
-        <div className="border border-blue-100 rounded-lg p-4 bg-blue-50/40 space-y-3">
-          <p className="text-xs font-medium text-blue-700">
-            로그인 계정 <span className="font-normal text-blue-500">(선택 — 입력 시 자동으로 계정이 생성됩니다)</span>
+        <div className="rounded-2xl p-4 bg-primary-50 space-y-3">
+          <p className="text-xs font-bold text-primary-700">
+            로그인 계정 <span className="font-normal text-primary-500">(선택 — 입력 시 자동으로 계정이 생성됩니다)</span>
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
@@ -210,8 +210,8 @@ export function TeacherForm({
       )}
 
       {isEdit && (
-        <div className="border border-gray-200 rounded-lg p-4 space-y-3">
-          <p className="text-xs font-medium text-gray-700">로그인 계정</p>
+        <div className="bg-white rounded-2xl shadow-[0_8px_22px_rgba(20,20,40,0.05)] p-4 space-y-3">
+          <p className="text-xs font-bold text-gray-700">로그인 계정</p>
           {teacher.userId ? (
             <>
               <p className="text-sm text-gray-600">아이디: {teacher.email ?? '-'}</p>
@@ -228,7 +228,7 @@ export function TeacherForm({
                   type="button"
                   onClick={handleResetPassword}
                   disabled={resettingPassword || resetPassword.length < 6}
-                  className="px-3 py-2 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
+                  className="px-3 py-2 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 disabled:opacity-50 whitespace-nowrap"
                 >
                   {resettingPassword ? '재설정 중...' : '비밀번호 재설정'}
                 </button>
@@ -265,7 +265,7 @@ export function TeacherForm({
                 type="button"
                 onClick={handleCreateAccount}
                 disabled={creatingAccount}
-                className="px-3 py-2 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                className="px-3 py-2 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 disabled:opacity-50"
               >
                 {creatingAccount ? '생성 중...' : '계정 생성'}
               </button>
@@ -279,7 +279,7 @@ export function TeacherForm({
           <button
             type="button"
             onClick={handleDelete}
-            className="px-4 py-2 text-sm text-red-500 border border-red-200 rounded hover:bg-red-50 transition-colors"
+            className="px-4 py-2 text-sm text-red-500 border border-red-200 rounded-full hover:bg-red-50 transition-colors"
           >
             삭제
           </button>
@@ -290,7 +290,7 @@ export function TeacherForm({
           type="button"
           onClick={handleSubmit}
           disabled={submitting}
-          className="px-5 py-2 bg-gray-900 text-white rounded text-sm hover:bg-gray-700 disabled:opacity-50"
+          className="px-5 py-2 bg-primary-500 text-white rounded-full text-sm font-bold hover:bg-primary-600 disabled:opacity-50"
         >
           {submitting ? '저장 중...' : '저장'}
         </button>

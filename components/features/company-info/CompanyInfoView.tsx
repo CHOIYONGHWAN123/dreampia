@@ -56,11 +56,11 @@ export function CompanyInfoView({ initialContent }: Props) {
   return (
     <div>
       {/* 헤더 */}
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">회사소개</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">회사소개</h1>
         <button
           onClick={() => setMode('edit')}
-          className="px-4 py-1.5 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50"
+          className="px-4 py-1.5 border border-primary-300 rounded-full text-sm text-primary-600 hover:bg-primary-50 transition-colors"
         >
           편집
         </button>
@@ -68,13 +68,15 @@ export function CompanyInfoView({ initialContent }: Props) {
 
       {/* 미리보기 */}
       {content ? (
-        <HtmlPreview html={content} />
+        <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
+          <HtmlPreview html={content} />
+        </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+        <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] flex flex-col items-center justify-center py-24 text-gray-400">
           <p className="text-sm">아직 등록된 내용이 없습니다.</p>
           <button
             onClick={() => setMode('edit')}
-            className="mt-3 text-sm text-gray-500 underline hover:text-gray-700"
+            className="mt-3 text-sm text-primary-600 underline hover:text-primary-700"
           >
             편집하기
           </button>

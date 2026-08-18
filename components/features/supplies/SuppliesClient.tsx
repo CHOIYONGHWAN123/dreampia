@@ -36,8 +36,8 @@ interface Props {
 }
 
 const STATUS_CLS = {
-  safe: "inline-block px-2 py-0.5 text-xs rounded bg-blue-50 text-blue-600",
-  danger: "inline-block px-2 py-0.5 text-xs rounded bg-red-50 text-red-500",
+  safe: "inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-primary-50 text-primary-600",
+  danger: "inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-50 text-red-500",
 };
 
 // 키트 재고 상태가 "위험"인지 여부 - StockStatus의 판정 로직과 동일하게 맞춘다.
@@ -145,18 +145,18 @@ export function SuppliesClient({ units, fields }: Props) {
   }, [units, search, filterFieldId, filterOccupationId, filterProgramId]);
 
   const thCls =
-    "px-3 py-2.5 text-xs font-medium text-gray-600 text-center bg-amber-50 border-b border-r border-gray-200 whitespace-nowrap";
+    "px-3 py-2.5 text-xs font-bold text-primary-700 text-center bg-primary-50 border-b border-r border-primary-100 whitespace-nowrap";
   const td =
     "px-3 py-2.5 text-xs text-gray-700 text-center border-b border-r border-gray-100";
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-gray-50 min-h-full">
       {/* 헤더 */}
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">준비물 관리</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">준비물 관리</h1>
         <a
           href="/supplies/logs"
-          className="px-4 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+          className="px-4 py-1.5 text-sm border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors"
         >
           기간별 준비물 현황
         </a>
@@ -169,7 +169,7 @@ export function SuppliesClient({ units, fields }: Props) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="분야 / 직종 / 프로그램 / 유닛명 검색"
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm outline-none focus:border-gray-500 w-64"
+          className="border border-gray-200 rounded-full px-4 py-1.5 text-sm outline-none focus:border-primary-400 w-64"
         />
 
         <select
@@ -179,7 +179,7 @@ export function SuppliesClient({ units, fields }: Props) {
             setFilterOccupationId("");
             setFilterProgramId("");
           }}
-          className="border border-gray-300 rounded px-2 py-1.5 text-sm bg-white outline-none focus:border-gray-500"
+          className="border border-gray-200 rounded-full px-3 py-1.5 text-sm bg-white outline-none focus:border-primary-400"
         >
           <option value="">분야 전체</option>
           {fields.map((f) => (
@@ -196,7 +196,7 @@ export function SuppliesClient({ units, fields }: Props) {
             setFilterProgramId("");
           }}
           disabled={!filterFieldId}
-          className="border border-gray-300 rounded px-2 py-1.5 text-sm bg-white outline-none focus:border-gray-500 disabled:bg-gray-50 disabled:text-gray-400"
+          className="border border-gray-200 rounded-full px-3 py-1.5 text-sm bg-white outline-none focus:border-primary-400 disabled:bg-gray-50 disabled:text-gray-400"
         >
           <option value="">직종 전체</option>
           {occupations.map((o) => (
@@ -210,7 +210,7 @@ export function SuppliesClient({ units, fields }: Props) {
           value={filterProgramId}
           onChange={(e) => setFilterProgramId(e.target.value)}
           disabled={!filterOccupationId}
-          className="border border-gray-300 rounded px-2 py-1.5 text-sm bg-white outline-none focus:border-gray-500 disabled:bg-gray-50 disabled:text-gray-400"
+          className="border border-gray-200 rounded-full px-3 py-1.5 text-sm bg-white outline-none focus:border-primary-400 disabled:bg-gray-50 disabled:text-gray-400"
         >
           <option value="">프로그램 전체</option>
           {programs.map((p) => (
@@ -222,13 +222,13 @@ export function SuppliesClient({ units, fields }: Props) {
 
         <span className="text-sm text-gray-500 ml-2">
           검색 결과{" "}
-          <span className="font-semibold text-gray-800">{filtered.length}</span>
+          <span className="font-bold text-primary-600">{filtered.length}</span>
           건
         </span>
       </div>
 
       {/* 테이블 */}
-      <div className="border border-gray-200 rounded-lg overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
         <table
           className="text-xs border-collapse w-full"
           style={{ minWidth: "960px" }}
@@ -343,7 +343,7 @@ export function SuppliesClient({ units, fields }: Props) {
                       <td className={td}>
                         <a
                           href={`/supplies/logs?supplyId=${u.supply!.id}`}
-                          className="px-2 py-0.5 text-xs border border-gray-300 rounded hover:bg-gray-100 transition-colors whitespace-nowrap"
+                          className="px-2.5 py-0.5 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap"
                         >
                           현황 보기
                         </a>
@@ -362,7 +362,7 @@ export function SuppliesClient({ units, fields }: Props) {
                               kitStock: u.kitStock,
                             })
                           }
-                          className="px-2 py-0.5 text-xs border border-blue-300 text-blue-600 rounded hover:bg-blue-50 transition-colors whitespace-nowrap"
+                          className="px-2.5 py-0.5 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap"
                         >
                           재고 조정
                         </button>
@@ -379,7 +379,7 @@ export function SuppliesClient({ units, fields }: Props) {
                             supply: u.supply,
                           })
                         }
-                        className="px-2 py-0.5 text-xs border border-gray-300 rounded hover:bg-gray-100 transition-colors"
+                        className="px-2.5 py-0.5 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors"
                       >
                         {hasSup ? "수정" : "추가"}
                       </button>

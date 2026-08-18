@@ -55,7 +55,7 @@ export function AnnouncementForm({ id, defaultValues }: Props) {
           {...register('title')}
           type="text"
           placeholder="공지사항 제목을 입력하세요."
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-gray-500 transition-colors"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-primary-400 transition-colors"
         />
         {errors.title && (
           <p className="mt-1 text-xs text-red-500">{errors.title.message}</p>
@@ -69,7 +69,7 @@ export function AnnouncementForm({ id, defaultValues }: Props) {
           {...register('content')}
           rows={16}
           placeholder="공지사항 내용을 입력하세요."
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-gray-500 transition-colors resize-none leading-relaxed"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-primary-400 transition-colors resize-none leading-relaxed"
         />
         {errors.content && (
           <p className="mt-1 text-xs text-red-500">{errors.content.message}</p>
@@ -83,7 +83,7 @@ export function AnnouncementForm({ id, defaultValues }: Props) {
             type="button"
             onClick={handleDelete}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm text-red-500 border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors"
+            className="px-4 py-2 text-sm text-red-500 border border-red-200 rounded-full hover:bg-red-50 disabled:opacity-50 transition-colors"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>
@@ -94,14 +94,14 @@ export function AnnouncementForm({ id, defaultValues }: Props) {
           <button
             type="button"
             onClick={() => router.push('/announcements')}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm border border-gray-300 rounded-full text-gray-600 hover:bg-gray-50 transition-colors"
           >
             취소
           </button>
           <button
             type="submit"
             disabled={isPending}
-            className="px-5 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            className="px-5 py-2 text-sm bg-primary-500 text-white rounded-full font-bold hover:bg-primary-600 disabled:opacity-50 transition-colors"
           >
             {isPending ? '저장 중...' : isEdit ? '수정' : '등록'}
           </button>

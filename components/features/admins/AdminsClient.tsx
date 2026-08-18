@@ -48,18 +48,20 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
   }
 
   const td = 'px-4 py-2.5 text-center text-gray-800 border-b border-gray-100'
-  const th = 'px-4 py-2.5 text-center font-medium text-gray-700 bg-amber-50 border-b border-gray-200 whitespace-nowrap'
+  const th = 'px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 whitespace-nowrap'
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">관리자 관리</h1>
-        <span className="text-sm text-gray-500">
-          등록된 관리자 <span className="font-semibold text-gray-800">{admins.length}</span>명
-        </span>
+    <div className="p-8 bg-gray-50 min-h-full">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">관리자 관리</h1>
+          <p className="text-sm text-gray-400 mt-1">
+            등록된 관리자 <span className="font-bold text-primary-600">{admins.length}</span>명
+          </p>
+        </div>
       </div>
 
-      <div className="border border-gray-200 rounded-lg overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
         <table className="w-full text-sm" style={{ minWidth: '1000px' }}>
           <thead>
             <tr>
@@ -101,7 +103,7 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
                         checked={a.isSuper}
                         disabled={busy || isSelf}
                         onChange={(e) => handleToggle(a.id, 'is_super', e.target.checked)}
-                        className="w-4 h-4 accent-gray-900 cursor-pointer disabled:cursor-not-allowed"
+                        className="w-4 h-4 accent-primary-600 cursor-pointer disabled:cursor-not-allowed"
                       />
                     </td>
                     <td className={td}>
@@ -110,7 +112,7 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
                         checked={a.isSales}
                         disabled={busy}
                         onChange={(e) => handleToggle(a.id, 'is_sales', e.target.checked)}
-                        className="w-4 h-4 accent-blue-600 cursor-pointer disabled:cursor-not-allowed"
+                        className="w-4 h-4 accent-primary-600 cursor-pointer disabled:cursor-not-allowed"
                       />
                     </td>
                     <td className={td}>
@@ -119,7 +121,7 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
                         checked={a.isComm}
                         disabled={busy}
                         onChange={(e) => handleToggle(a.id, 'is_comm', e.target.checked)}
-                        className="w-4 h-4 accent-blue-600 cursor-pointer disabled:cursor-not-allowed"
+                        className="w-4 h-4 accent-primary-600 cursor-pointer disabled:cursor-not-allowed"
                       />
                     </td>
                     <td className={td}>
@@ -136,7 +138,7 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
                           type="button"
                           disabled={busy}
                           onClick={() => handleApprove(a.id)}
-                          className="px-3 py-1 text-xs bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-50 whitespace-nowrap"
+                          className="px-3 py-1 text-xs bg-primary-500 text-white rounded-full hover:bg-primary-600 disabled:opacity-50 whitespace-nowrap"
                         >
                           승인
                         </button>
@@ -153,7 +155,7 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
                           type="button"
                           disabled={busy}
                           onClick={() => handleDelete(a.id, a.name)}
-                          className="px-2 py-0.5 text-xs border border-red-300 text-red-500 rounded hover:bg-red-50 disabled:opacity-50 whitespace-nowrap"
+                          className="px-2 py-0.5 text-xs border border-red-300 text-red-500 rounded-full hover:bg-red-50 disabled:opacity-50 whitespace-nowrap"
                         >
                           삭제
                         </button>

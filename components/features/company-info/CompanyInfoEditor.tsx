@@ -105,20 +105,20 @@ export function CompanyInfoEditor({ initialContent, onSaved, onCancel }: Props) 
   return (
     <div>
       {/* 헤더 */}
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">회사소개</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">회사소개</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={onCancel}
             disabled={isPending}
-            className="px-4 py-1.5 border border-gray-300 rounded text-sm text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+            className="px-4 py-1.5 border border-gray-300 rounded-full text-sm text-gray-500 hover:bg-gray-50 disabled:opacity-50"
           >
             취소
           </button>
           <button
             onClick={handleSave}
             disabled={isPending}
-            className="px-5 py-1.5 bg-gray-900 text-white rounded text-sm hover:bg-gray-700 disabled:opacity-50"
+            className="px-5 py-1.5 bg-primary-500 text-white rounded-full text-sm font-bold hover:bg-primary-600 disabled:opacity-50"
           >
             {isPending ? '저장 중...' : '저장'}
           </button>
@@ -135,7 +135,7 @@ export function CompanyInfoEditor({ initialContent, onSaved, onCancel }: Props) 
       />
 
       {/* 에디터 */}
-      <div className="border border-gray-200 rounded">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
         {/* 툴바 - 미리보기 모드에서는 숨김 */}
         <div className={`flex items-center gap-0.5 px-2 py-1.5 border-b border-gray-200 bg-gray-50 flex-wrap ${mode === 'preview' ? 'hidden' : ''}`}>
           <ToolbarButton
@@ -255,7 +255,7 @@ export function CompanyInfoEditor({ initialContent, onSaved, onCancel }: Props) 
               onClick={() => switchMode(m)}
               className={`px-4 py-1.5 text-xs border-l border-gray-200 transition-colors ${
                 mode === m
-                  ? 'bg-white font-medium text-gray-900'
+                  ? 'bg-white font-bold text-primary-600'
                   : 'text-gray-500 hover:bg-gray-100'
               }`}
             >
@@ -287,8 +287,8 @@ function ToolbarButton({
       onClick={onClick}
       title={title}
       disabled={disabled}
-      className={`px-2 py-1 text-sm rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-200 ${
-        active ? 'bg-gray-200' : ''
+      className={`px-2 py-1 text-sm rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-200 ${
+        active ? 'bg-primary-100 text-primary-700' : ''
       }`}
     >
       {children}

@@ -11,7 +11,7 @@ export default async function CompanyInfoPage() {
     .single()
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-gray-50 min-h-full">
       <CompanyInfoView initialContent={data?.content_html ?? ''} />
     </div>
   )

@@ -9,9 +9,9 @@ export default async function TeacherEditPage({ params }: { params: Promise<{ id
   if (!teacher) notFound()
 
   return (
-    <div className="p-8 max-w-3xl">
-      <div className="pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">선생님 수정</h1>
+    <div className="p-8 max-w-3xl bg-gray-50 min-h-full">
+      <div className="mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">선생님 수정</h1>
       </div>
       <TeacherForm selectData={selectData} teacher={teacher} />
     </div>

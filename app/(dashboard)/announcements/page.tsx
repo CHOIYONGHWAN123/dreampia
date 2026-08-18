@@ -25,26 +25,26 @@ export default async function AnnouncementsPage({
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-gray-50 min-h-full">
       {/* 헤더 */}
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">공지사항</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">공지사항</h1>
         <Link
           href="/announcements/new"
-          className="px-4 py-1.5 bg-gray-900 text-white rounded-lg text-sm hover:bg-gray-700 transition-colors"
+          className="px-5 py-2 bg-primary-500 text-white rounded-full text-sm font-bold shadow-[0_8px_20px_rgba(37,99,235,0.25)] hover:bg-primary-600 transition-colors"
         >
           작성
         </Link>
       </div>
 
       {/* 게시판 테이블 */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-primary-50 border-b border-primary-100">
             <tr>
-              <th className="w-16 px-4 py-3 text-center text-xs font-medium text-gray-500">번호</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">제목</th>
-              <th className="w-32 px-4 py-3 text-center text-xs font-medium text-gray-500">작성일</th>
+              <th className="w-16 px-4 py-3 text-center text-xs font-bold text-primary-700">번호</th>
+              <th className="px-4 py-3 text-left text-xs font-bold text-primary-700">제목</th>
+              <th className="w-32 px-4 py-3 text-center text-xs font-bold text-primary-700">작성일</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -57,7 +57,7 @@ export default async function AnnouncementsPage({
                     <td className="px-4 py-3">
                       <Link
                         href={`/announcements/${item.id}`}
-                        className="text-gray-800 hover:text-gray-900 hover:underline"
+                        className="text-gray-800 hover:text-primary-600 hover:underline"
                       >
                         {item.title}
                       </Link>

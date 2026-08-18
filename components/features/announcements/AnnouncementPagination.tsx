@@ -14,8 +14,8 @@ export function AnnouncementPagination({ currentPage, totalPages }: Props) {
   }
 
   const pages = getPageRange()
-  const baseClass = 'inline-flex items-center justify-center w-9 h-9 text-sm border rounded-lg transition-colors'
-  const activeClass = 'bg-gray-900 text-white border-gray-900'
+  const baseClass = 'inline-flex items-center justify-center w-9 h-9 text-sm border rounded-full transition-colors'
+  const activeClass = 'bg-primary-500 text-white border-primary-500 font-bold'
   const defaultClass = 'border-gray-200 text-gray-600 hover:bg-gray-50'
   const disabledClass = 'border-gray-100 text-gray-300 pointer-events-none'
 

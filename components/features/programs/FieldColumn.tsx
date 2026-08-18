@@ -103,12 +103,12 @@ export function FieldColumn({
         <button
           onClick={openAdd}
           disabled={disabled}
-          className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-1.5 text-xs bg-primary-500 text-white rounded-full font-bold hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           추가
         </button>
       </div>
-      <div className="border border-gray-200 rounded-lg overflow-hidden flex-1 min-h-50 overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] flex-1 min-h-50 overflow-y-auto">
         {disabled ? (
           <div className="py-16 text-center text-gray-400 text-xs px-2">{disabledMessage}</div>
         ) : items.length > 0 ? (
@@ -117,7 +117,7 @@ export function FieldColumn({
               key={item.id}
               onClick={() => onSelect(item.id)}
               className={`flex items-center justify-between gap-2 px-3 py-2 border-b border-gray-100 last:border-b-0 cursor-pointer transition-colors ${
-                selectedId === item.id ? 'bg-gray-900 text-white' : 'hover:bg-gray-50'
+                selectedId === item.id ? 'bg-primary-500 text-white font-semibold' : 'hover:bg-gray-50'
               }`}
             >
               <span className="text-sm truncate">{item.name}</span>
@@ -130,7 +130,7 @@ export function FieldColumn({
                   className={`px-2 py-0.5 text-xs rounded border transition-colors ${
                     selectedId === item.id
                       ? 'border-white/40 hover:bg-white/10'
-                      : 'border-gray-300 hover:bg-gray-50'
+                      : 'border-primary-300 text-primary-600 hover:bg-primary-50'
                   }`}
                 >
                   수정
@@ -158,15 +158,15 @@ export function FieldColumn({
 
       {popup.open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={closePopup}>
-          <div className="bg-white rounded-lg p-6 w-80" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-base font-medium mb-4">{popup.id ? `${title} 수정` : `${title} 추가`}</h2>
+          <div className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(20,20,40,0.15)] p-6 w-80" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-base font-extrabold text-gray-900 mb-4">{popup.id ? `${title} 수정` : `${title} 추가`}</h2>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="이름을 입력해주세요."
               autoFocus
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
             />
             {popup.id && (
               <>
@@ -174,7 +174,7 @@ export function FieldColumn({
                 <select
                   value={eventCategoryId}
                   onChange={(e) => setEventCategoryId(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500"
+                  className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
                 >
                   <option value="">미분류</option>
                   {eventCategories.map((ec) => (
@@ -187,14 +187,14 @@ export function FieldColumn({
               <button
                 onClick={handleSave}
                 disabled={pending}
-                className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-primary-500 text-white rounded-full font-bold hover:bg-primary-600 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {pending ? '저장 중…' : '확인'}
               </button>
               <button
                 onClick={closePopup}
                 disabled={pending}
-                className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 border border-gray-300 rounded-full hover:bg-gray-50 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 취소
               </button>

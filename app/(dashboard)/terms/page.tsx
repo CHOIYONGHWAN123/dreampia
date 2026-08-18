@@ -11,7 +11,7 @@ export default async function TermsPage() {
     .single()
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-gray-50 min-h-full">
       <TermsEditor
         initialServiceTerms={data?.service_terms ?? ''}
         initialPrivacyPolicy={data?.privacy_policy ?? ''}

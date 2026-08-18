@@ -74,10 +74,10 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-white rounded-lg p-6 w-120 max-h-[85vh] overflow-y-auto"
+        className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(20,20,40,0.15)] p-6 w-120 max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-base font-medium mb-4">
+        <h2 className="text-base font-extrabold text-gray-900 mb-4">
           {initial ? '프로그램 유닛 수정' : '프로그램 유닛 추가'}
         </h2>
         <div className="space-y-3">
@@ -87,7 +87,7 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
             onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
             placeholder="유닛 이름을 입력해주세요."
             autoFocus
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500"
+            className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
           />
 
           <div className="grid grid-cols-2 gap-3">
@@ -102,7 +102,7 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
                     mentorMaterialCost: e.target.value === '' ? null : Number(e.target.value),
                   }))
                 }
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
               />
             </div>
             <div>
@@ -116,7 +116,7 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
                     dreampiaMaterialCost: e.target.value === '' ? null : Number(e.target.value),
                   }))
                 }
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
               />
             </div>
           </div>
@@ -126,7 +126,7 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
             <select
               value={form.prepBy ?? ''}
               onChange={e => setForm(f => ({ ...f, prepBy: e.target.value || null }))}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
             >
               <option value="">선택안함</option>
               {PREP_BY_OPTIONS.map(option => (
@@ -142,7 +142,7 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
             <select
               value={form.schoolLevel ?? ''}
               onChange={e => setForm(f => ({ ...f, schoolLevel: e.target.value || null }))}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
             >
               <option value="">선택안함</option>
               {SCHOOL_LEVEL_OPTIONS.map(level => (
@@ -160,7 +160,7 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
                 href={form.syllabus}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-blue-600 hover:text-blue-800 underline block mb-1"
+                className="text-xs text-primary-600 hover:text-primary-700 underline block mb-1"
               >
                 기존 파일 보기
               </a>
@@ -174,7 +174,7 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
               value={form.schoolRequestNote ?? ''}
               onChange={e => setForm(f => ({ ...f, schoolRequestNote: e.target.value }))}
               rows={2}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500 resize-none"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400 resize-none"
             />
           </div>
 
@@ -184,7 +184,7 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
               value={form.description ?? ''}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               rows={3}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-500 resize-none"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400 resize-none"
             />
           </div>
 
@@ -194,6 +194,7 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
                 type="checkbox"
                 checked={form.finalProductAvailable ?? false}
                 onChange={e => setForm(f => ({ ...f, finalProductAvailable: e.target.checked }))}
+                className="accent-primary-600"
               />
               완성품제공가능
             </label>
@@ -202,6 +203,7 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
                 type="checkbox"
                 checked={form.isDeliveryAvailable}
                 onChange={e => setForm(f => ({ ...f, isDeliveryAvailable: e.target.checked }))}
+                className="accent-primary-600"
               />
               택배 가능
             </label>
@@ -212,11 +214,11 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
           <button
             onClick={handleSubmit}
             disabled={isUploading}
-            className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm disabled:opacity-50"
+            className="px-6 py-2 bg-primary-500 text-white rounded-full font-bold hover:bg-primary-600 text-sm disabled:opacity-50"
           >
             {isUploading ? '업로드 중...' : '확인'}
           </button>
-          <button onClick={onClose} className="px-6 py-2 border border-gray-900 rounded hover:bg-gray-50 text-sm">
+          <button onClick={onClose} className="px-6 py-2 border border-gray-300 rounded-full hover:bg-gray-50 text-sm">
             취소
           </button>
         </div>

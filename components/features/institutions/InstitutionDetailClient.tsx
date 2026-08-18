@@ -31,9 +31,9 @@ type Event = {
 };
 
 const DISABLED_BTN =
-  "px-3 py-1 text-xs border border-gray-200 rounded text-gray-300 cursor-not-allowed whitespace-nowrap";
+  "px-3 py-1 text-xs border border-gray-200 rounded-full text-gray-300 cursor-not-allowed whitespace-nowrap";
 const SELECT_CLS =
-  "border border-gray-300 rounded px-2 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400";
+  "border border-gray-300 rounded-full px-2 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-primary-400";
 const SUPPLIES_STATUS_OPTIONS = [
   "준비 완료",
   "체크 전",
@@ -138,15 +138,15 @@ export function InstitutionDetailClient({
   };
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-gray-50 min-h-full">
       {/* 헤더 */}
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
           기관별 행사 관리 페이지
         </h1>
         <button
           type="button"
-          className="px-4 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+          className="px-4 py-1.5 text-sm border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
           onClick={() => router.back()}
         >
           목록으로
@@ -154,23 +154,23 @@ export function InstitutionDetailClient({
       </div>
 
       {institution.is_deleted && (
-        <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+        <div className="mb-6 p-3 bg-red-50 rounded-2xl text-sm text-red-600">
           삭제된 기관입니다. 기존 기록은 그대로 보존되어 있으며, 새 행사는 등록할 수 없습니다.
         </div>
       )}
 
       {/* 학교 기본 정보 */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden mb-8 w-80">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden mb-8 w-80">
         <table className="w-full text-sm">
           <tbody>
             <tr className="border-b border-gray-100">
-              <td className="px-4 py-2.5 text-gray-500 bg-gray-50 w-20 font-medium">
+              <td className="px-4 py-2.5 text-gray-500 bg-primary-50 w-20 font-bold">
                 기관명
               </td>
               <td className="px-4 py-2.5 text-gray-800">{institution.name}</td>
             </tr>
             <tr>
-              <td className="px-4 py-2.5 text-gray-500 bg-gray-50 font-medium">
+              <td className="px-4 py-2.5 text-gray-500 bg-primary-50 font-bold">
                 주소
               </td>
               <td className="px-4 py-2.5 text-gray-800">
@@ -185,11 +185,11 @@ export function InstitutionDetailClient({
       <div className="mb-8">
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-700">
+            <span className="text-sm font-bold text-gray-800">
               등록된 행사
             </span>
             {localEvents.length > 0 && (
-              <span className="text-xs font-bold text-gray-400">
+              <span className="text-xs font-bold text-primary-600">
                 {localEvents.length}
               </span>
             )}
@@ -197,7 +197,7 @@ export function InstitutionDetailClient({
           <button
             type="button"
             disabled={institution.is_deleted}
-            className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors whitespace-nowrap"
+            className="px-4 py-1.5 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors whitespace-nowrap"
             onClick={() =>
               router.push(`/events/new?institutionId=${institution.id}`)
             }
@@ -206,26 +206,26 @@ export function InstitutionDetailClient({
           </button>
         </div>
 
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-12 min-w-12">
+              <tr className="bg-primary-50 border-b border-primary-100">
+                <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-12 min-w-12">
                   no
                 </th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-24 min-w-24">
+                <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-24 min-w-24">
                   상태
                 </th>
-                <th className="px-4 py-2.5 text-left font-medium text-gray-700 min-w-32">
+                <th className="px-4 py-2.5 text-left font-bold text-primary-700 min-w-32">
                   행사명
                 </th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
+                <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
                   시작일시
                 </th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
+                <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
                   종료일시
                 </th>
-                <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-36 min-w-36">
+                <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-36 min-w-36">
                   담당선생님
                 </th>
                 <th className="px-4 py-2.5 w-16 min-w-16" />
@@ -248,8 +248,8 @@ export function InstitutionDetailClient({
                         <span
                           className={
                             status === "진행중"
-                              ? "inline-block px-2 py-0.5 text-xs font-medium rounded bg-blue-50 text-blue-600"
-                              : "inline-block px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-500"
+                              ? "inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-primary-50 text-primary-600"
+                              : "inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-500"
                           }
                         >
                           [{status}]
@@ -297,92 +297,92 @@ export function InstitutionDetailClient({
       {/* 진행 */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-sm font-semibold text-gray-700">진행</span>
+          <span className="text-sm font-bold text-gray-800">진행</span>
           {inProgressEvents.length > 0 && (
-            <span className="text-xs font-bold text-red-500">
+            <span className="text-xs font-bold text-primary-600">
               {inProgressEvents.length}
             </span>
           )}
         </div>
 
-        <div className="border border-gray-200 rounded-lg overflow-x-auto">
+        <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
           <table className="text-sm" style={{ minWidth: "2280px" }}>
             <thead>
-              <tr className="bg-amber-50 border-b border-gray-200">
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-12 min-w-12">
+              <tr className="bg-primary-50 border-b border-primary-100">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-12 min-w-12">
                   no
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24 min-w-24">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 min-w-24">
                   시작일시
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24 min-w-24">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 min-w-24">
                   종료일시
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-36 min-w-36">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-36 min-w-36">
                   행사명
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32 min-w-32">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
                   담당선생님
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
                   강사 섭외 현황
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24 min-w-24">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 min-w-24">
                   섭외 현황
                   <br />
                   페이지
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32 min-w-32">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
                   준비물 준비
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32 min-w-32">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
                   강사섭외일자
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
                   강사 섭외
                   <br />
                   전달 여부
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32 min-w-32">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
                   학교요청사항
                   <br />
                   다운
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32 min-w-32">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
                   학교요청사항
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-36 min-w-36">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-36 min-w-36">
                   성범조 조회서
                   <br />
                   등록 알림
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
                   견적서
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
                   행정서류
                   <br />
                   다운받기
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
                   행정서류
                   <br />
                   전달
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
                   계약 현황
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32 min-w-32">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
                   공지사항
                   <br />
                   알림보내기
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 min-w-28">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
                   보고서
                   <br />
                   다운받기
                 </th>
-                <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-16 min-w-16">
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-16 min-w-16">
                   삭제
                 </th>
               </tr>
@@ -424,7 +424,7 @@ export function InstitutionDetailClient({
                     <td className="px-3 py-2.5 text-center">
                       <Link
                         href={`/events/${event.id}/recruiting`}
-                        className="inline-block px-3 py-1 text-xs border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap"
+                        className="inline-block px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap"
                       >
                         보기
                       </Link>
@@ -521,7 +521,7 @@ export function InstitutionDetailClient({
                       <button
                         type="button"
                         disabled={uploadingId === event.id}
-                        className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-50"
+                        className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap disabled:opacity-50"
                         onClick={() => fileInputRefs.current[event.id]?.click()}
                       >
                         {uploadingId === event.id
@@ -580,7 +580,7 @@ export function InstitutionDetailClient({
                     <td className="px-3 py-2.5 text-center">
                       <button
                         type="button"
-                        className="px-3 py-1 text-xs border border-red-200 text-red-500 rounded hover:bg-red-50 transition-colors"
+                        className="px-3 py-1 text-xs border border-red-200 text-red-500 rounded-full hover:bg-red-50 transition-colors"
                         onClick={() => handleDeleteEvent(event.id)}
                       >
                         삭제

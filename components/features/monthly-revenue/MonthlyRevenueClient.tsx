@@ -32,17 +32,16 @@ export function MonthlyRevenueClient({
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">월별 수익 관리</h1>
+    <div className="p-7 bg-gray-50 min-h-full">
+      <div className="mb-5">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">월별 수익 관리</h1>
+        <p className="text-sm text-gray-400 mt-1">
+          수익 = 계약금(예산) − 강의료(세전 합계) − 재료비 · 행사 시작일이 속한 달 기준으로 집계됩니다.
+        </p>
       </div>
 
-      <p className="text-xs text-gray-400 mb-4">
-        수익 = 계약금(예산) − 강의료(세전 합계) − 재료비. 행사 시작일이 속한 달 기준으로 집계됩니다.
-      </p>
-
       {/* 월 선택 탭 */}
-      <div className="flex gap-1 overflow-x-auto pb-2 mb-4">
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-5">
         {availableMonths.length === 0 ? (
           <span className="text-sm text-gray-400">데이터 없음</span>
         ) : (
@@ -53,10 +52,10 @@ export function MonthlyRevenueClient({
                 key={`${year}-${month}`}
                 type="button"
                 onClick={() => handleMonthChange(year, month)}
-                className={`px-3 py-1.5 text-sm rounded whitespace-nowrap transition-colors ${
+                className={`px-4 py-2 text-sm font-bold rounded-full whitespace-nowrap transition-colors ${
                   isActive
-                    ? 'bg-gray-900 text-white font-medium'
-                    : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                    ? 'bg-primary-500 text-white shadow-[0_6px_16px_rgba(37,99,235,0.3)]'
+                    : 'text-gray-500 hover:bg-gray-100'
                 }`}
               >
                 {year}년 {month}월
@@ -67,39 +66,41 @@ export function MonthlyRevenueClient({
       </div>
 
       {/* 월 합계 요약 */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
-        <div className="border border-gray-200 rounded-lg p-4">
-          <div className="text-xs text-gray-500 mb-1">계약금 합계</div>
-          <div className="text-lg font-semibold text-gray-900">{won(totals.contractAmount)}</div>
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-3xl p-5 shadow-[0_10px_28px_rgba(20,20,40,0.06)]">
+          <div className="text-xs text-gray-400 mb-1.5">계약금 합계</div>
+          <div className="text-xl font-extrabold text-gray-900">{won(totals.contractAmount)}</div>
         </div>
-        <div className="border border-gray-200 rounded-lg p-4">
-          <div className="text-xs text-gray-500 mb-1">강의료 합계</div>
-          <div className="text-lg font-semibold text-gray-900">{won(totals.lectureFeeTotal)}</div>
+        <div className="bg-white rounded-3xl p-5 shadow-[0_10px_28px_rgba(20,20,40,0.06)]">
+          <div className="text-xs text-gray-400 mb-1.5">강의료 합계</div>
+          <div className="text-xl font-extrabold text-gray-900">{won(totals.lectureFeeTotal)}</div>
         </div>
-        <div className="border border-gray-200 rounded-lg p-4">
-          <div className="text-xs text-gray-500 mb-1">재료비 합계</div>
-          <div className="text-lg font-semibold text-gray-900">{won(totals.materialCostTotal)}</div>
+        <div className="bg-white rounded-3xl p-5 shadow-[0_10px_28px_rgba(20,20,40,0.06)]">
+          <div className="text-xs text-gray-400 mb-1.5">재료비 합계</div>
+          <div className="text-xl font-extrabold text-gray-900">{won(totals.materialCostTotal)}</div>
         </div>
-        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-          <div className="text-xs text-gray-500 mb-1">수익 합계</div>
-          <div className={`text-lg font-semibold ${totals.revenue < 0 ? 'text-red-600' : 'text-gray-900'}`}>
-            {won(totals.revenue)}
-          </div>
+        <div
+          className={`rounded-3xl p-5 shadow-[0_10px_28px_rgba(20,20,40,0.08)] ${
+            totals.revenue < 0 ? 'bg-red-500' : 'bg-linear-to-br from-primary-500 to-primary-700'
+          }`}
+        >
+          <div className="text-xs text-white/70 mb-1.5">수익 합계</div>
+          <div className="text-xl font-extrabold text-white">{won(totals.revenue)}</div>
         </div>
       </div>
 
-      <div className="border border-gray-200 rounded-lg overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
         <table className="text-sm" style={{ minWidth: '1100px' }}>
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-16 whitespace-nowrap">일자</th>
-              <th className="px-3 py-2.5 text-left font-medium text-gray-700 w-40 whitespace-nowrap">기관명</th>
-              <th className="px-3 py-2.5 text-left font-medium text-gray-700 min-w-40">행사명</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-32 whitespace-nowrap">계약 현황</th>
-              <th className="px-3 py-2.5 text-right font-medium text-gray-700 w-28 whitespace-nowrap">계약금</th>
-              <th className="px-3 py-2.5 text-right font-medium text-gray-700 w-28 whitespace-nowrap">강의료</th>
-              <th className="px-3 py-2.5 text-right font-medium text-gray-700 w-28 whitespace-nowrap">재료비</th>
-              <th className="px-3 py-2.5 text-right font-medium text-gray-700 w-28 whitespace-nowrap">수익</th>
+            <tr className="bg-primary-50 border-b border-primary-100">
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-16 whitespace-nowrap">일자</th>
+              <th className="px-3 py-2.5 text-left font-bold text-primary-700 w-40 whitespace-nowrap">기관명</th>
+              <th className="px-3 py-2.5 text-left font-bold text-primary-700 min-w-40">행사명</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 whitespace-nowrap">계약 현황</th>
+              <th className="px-3 py-2.5 text-right font-bold text-primary-700 w-28 whitespace-nowrap">계약금</th>
+              <th className="px-3 py-2.5 text-right font-bold text-primary-700 w-28 whitespace-nowrap">강의료</th>
+              <th className="px-3 py-2.5 text-right font-bold text-primary-700 w-28 whitespace-nowrap">재료비</th>
+              <th className="px-3 py-2.5 text-right font-bold text-primary-700 w-28 whitespace-nowrap">수익</th>
             </tr>
           </thead>
           <tbody>
@@ -109,7 +110,7 @@ export function MonthlyRevenueClient({
                   <td className="px-3 py-2.5 text-center text-gray-600 whitespace-nowrap">{fmtDate(r.eventStartAt)}</td>
                   <td className="px-3 py-2.5 text-gray-800">{r.institutionName}</td>
                   <td className="px-3 py-2.5 text-gray-800">
-                    <Link href={`/events/${r.eventId}`} className="hover:underline">
+                    <Link href={`/events/${r.eventId}`} className="text-primary-700 hover:underline">
                       {r.eventName}
                     </Link>
                   </td>
@@ -118,7 +119,7 @@ export function MonthlyRevenueClient({
                   <td className="px-3 py-2.5 text-right text-gray-600 whitespace-nowrap">{won(r.lectureFeeTotal)}</td>
                   <td className="px-3 py-2.5 text-right text-gray-600 whitespace-nowrap">{won(r.materialCostTotal)}</td>
                   <td
-                    className={`px-3 py-2.5 text-right font-medium whitespace-nowrap ${
+                    className={`px-3 py-2.5 text-right font-bold whitespace-nowrap ${
                       r.revenue < 0 ? 'text-red-600' : 'text-gray-900'
                     }`}
                   >

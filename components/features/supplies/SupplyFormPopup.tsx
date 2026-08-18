@@ -68,7 +68,7 @@ export function SupplyFormPopup({ unitId, unitTitle, initial, onClose, onSaved }
     })
   }
 
-  const inputCls = 'w-full border border-gray-300 rounded px-3 py-1.5 text-sm outline-none focus:border-gray-500'
+  const inputCls = 'w-full border border-gray-300 rounded-xl px-3 py-1.5 text-sm outline-none focus:border-primary-400'
   const labelCls = 'text-xs text-gray-500 mb-0.5 block'
 
   return (
@@ -77,10 +77,10 @@ export function SupplyFormPopup({ unitId, unitTitle, initial, onClose, onSaved }
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg p-6 w-[480px] max-h-[85vh] overflow-y-auto"
+        className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(20,20,40,0.15)] p-6 w-120 max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-base font-semibold text-gray-900 mb-1">
+        <h2 className="text-base font-extrabold text-gray-900 mb-1">
           {isEdit ? '준비물 수정' : '준비물 추가'}
         </h2>
         <p className="text-xs text-gray-400 mb-5">{unitTitle}</p>
@@ -104,7 +104,7 @@ export function SupplyFormPopup({ unitId, unitTitle, initial, onClose, onSaved }
                   type="checkbox"
                   checked={form.is_consumable}
                   onChange={(e) => set('is_consumable', e.target.checked)}
-                  className="w-4 h-4"
+                  className="w-4 h-4 accent-primary-600"
                 />
                 소모성 재료
               </label>
@@ -186,14 +186,14 @@ export function SupplyFormPopup({ unitId, unitTitle, initial, onClose, onSaved }
             type="button"
             onClick={handleSubmit}
             disabled={isPending}
-            className="px-6 py-2 bg-gray-900 text-white rounded text-sm hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            className="px-6 py-2 bg-primary-500 text-white rounded-full font-bold text-sm hover:bg-primary-600 disabled:opacity-50 transition-colors"
           >
             {isPending ? '저장 중...' : '저장'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50 transition-colors"
+            className="px-6 py-2 border border-gray-300 rounded-full text-sm hover:bg-gray-50 transition-colors"
           >
             취소
           </button>
