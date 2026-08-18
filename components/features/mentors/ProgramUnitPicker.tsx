@@ -25,7 +25,7 @@ export interface UnitOption {
 }
 
 const selCls =
-  'w-full border border-gray-300 rounded px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-300 disabled:bg-gray-50 disabled:text-gray-400'
+  'w-full border border-gray-300 rounded px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary-300 disabled:bg-gray-50 disabled:text-gray-400'
 
 // 분야 → 직종까지 선택된 상태에서, 프로그램 → 교급(다중선택) → 교급별 유닛을 고르는 공용 피커.
 // 교급을 체크하면 그 교급에 해당하는 유닛 선택지가 나타나고, 선택을 해제하면 사라진다.
@@ -107,7 +107,7 @@ export function ProgramUnitPicker({
                   onClick={() => toggleLevel(level)}
                   className={`text-xs px-2 py-1 rounded border transition-colors ${
                     checked
-                      ? 'bg-blue-100 text-blue-700 border-blue-300 font-medium'
+                      ? 'bg-primary-100 text-primary-700 border-primary-300 font-medium'
                       : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -126,7 +126,7 @@ export function ProgramUnitPicker({
           (u) => !excludedUnitIds?.has(u.id) || u.id === levelSelection.unitId
         )
         return (
-          <div key={levelSelection.schoolLevel} className="flex items-center gap-2 pl-2 border-l-2 border-blue-100">
+          <div key={levelSelection.schoolLevel} className="flex items-center gap-2 pl-2 border-l-2 border-primary-100">
             <span className="text-xs text-gray-500 w-12 shrink-0">{levelSelection.schoolLevel}</span>
             <select
               className={`${selCls} flex-1 min-w-0`}

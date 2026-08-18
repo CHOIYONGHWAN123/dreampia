@@ -78,7 +78,7 @@ function EditInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 text-center"
+      className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary-300 text-center"
     />
   )
 }
@@ -119,7 +119,7 @@ function ProgramScoreCell({
       disabled={saving}
       onChange={(e) => setText(e.target.value)}
       onBlur={commit}
-      className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-blue-300 disabled:opacity-50"
+      className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary-300 disabled:opacity-50"
     />
   )
 }
@@ -157,7 +157,7 @@ function SchoolRequestNoteCell({
       onBlur={commit}
       rows={2}
       placeholder="이 강사에게만 해당하는 학교 요청사항"
-      className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-blue-300 disabled:opacity-50"
+      className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-primary-300 disabled:opacity-50"
     />
   )
 }
@@ -225,7 +225,7 @@ function AddProgramModal({
   }
 
   const selCls =
-    'w-full border border-gray-300 rounded px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-300 disabled:bg-gray-50 disabled:text-gray-400'
+    'w-full border border-gray-300 rounded px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary-300 disabled:bg-gray-50 disabled:text-gray-400'
 
   return createPortal(
     <div
@@ -327,7 +327,7 @@ function AddProgramModal({
             type="button"
             onClick={handleSubmit}
             disabled={!levelSelections.length || pending}
-            className="px-3 py-1.5 text-sm bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-50"
+            className="px-3 py-1.5 text-sm bg-primary-500 text-white rounded hover:bg-primary-600 disabled:opacity-50"
           >
             {pending ? '추가 중…' : '추가'}
           </button>
@@ -555,7 +555,7 @@ function MentorRows({
         <select
           value={editFields.bank}
           onChange={(e) => setEditFields((p) => ({ ...p, bank: e.target.value }))}
-          className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 text-center bg-white"
+          className="w-full border border-gray-300 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary-300 text-center bg-white"
         >
           <option value="">은행 선택</option>
           {BANK_OPTIONS.map((bank) => (
@@ -601,7 +601,7 @@ function MentorRows({
           checked={localAuth}
           disabled={authPending}
           onChange={(e) => handleAuthToggle(e.target.checked)}
-          className="w-4 h-4 accent-blue-600 cursor-pointer"
+          className="w-4 h-4 accent-primary-600 cursor-pointer"
         />
       </td>
       <td className={td} rowSpan={totalRows}>
@@ -609,7 +609,7 @@ function MentorRows({
           type="button"
           disabled={savePending}
           onClick={handleSave}
-          className="px-2 py-0.5 text-xs bg-gray-800 text-white rounded hover:bg-gray-600 disabled:opacity-50 whitespace-nowrap"
+          className="px-2 py-0.5 text-xs bg-primary-600 text-white rounded hover:bg-primary-500 disabled:opacity-50 whitespace-nowrap"
         >
           {savePending ? '저장중…' : '수정하기'}
         </button>
@@ -637,7 +637,7 @@ function MentorRows({
         <button
           type="button"
           onClick={() => setShowAddModal(true)}
-          className="text-xs text-blue-600 hover:text-blue-800 py-0.5"
+          className="text-xs text-primary-600 hover:text-primary-700 py-0.5"
         >
           + 프로그램 추가
         </button>
@@ -868,15 +868,18 @@ export function MentorsClient({
   }
 
   const thCls =
-    'px-2 py-2 text-center text-xs font-medium text-gray-700 border-b border-r border-gray-200 whitespace-nowrap bg-amber-50'
+    'px-2 py-2 text-center text-xs font-bold text-primary-700 border-b border-r border-primary-100 whitespace-nowrap bg-primary-50'
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">강사 관리</h1>
+    <div className="p-7 bg-gray-50 min-h-full">
+      <div className="flex items-center justify-between pb-5 mb-5">
+        <div>
+          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">강사</h1>
+          <p className="text-sm text-gray-400 mt-1">등급·소속·강의 가능 여부를 한눈에 확인하고 섭외에 활용하세요.</p>
+        </div>
         <button
           type="button"
-          className="px-4 py-1.5 bg-gray-900 text-white rounded text-sm hover:bg-gray-700 transition-colors"
+          className="px-5 py-2.5 bg-primary-500 text-white rounded-full text-sm font-bold shadow-[0_8px_20px_rgba(37,99,235,0.25)] hover:bg-primary-600 transition-colors"
           onClick={() => router.push('/mentors/new')}
         >
           강사 추가
@@ -887,7 +890,7 @@ export function MentorsClient({
         <select
           value={filterAvailable}
           onChange={(e) => setFilterAvailable(e.target.value)}
-          className="border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+          className="border border-gray-200 rounded-full px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-primary-300"
         >
           <option value="">강의가능 전체</option>
           <option value="true">가능</option>
@@ -896,7 +899,7 @@ export function MentorsClient({
         <select
           value={filterAuthenticated}
           onChange={(e) => setFilterAuthenticated(e.target.value)}
-          className="border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+          className="border border-gray-200 rounded-full px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-primary-300"
         >
           <option value="">인증 전체</option>
           <option value="true">인증</option>
@@ -907,14 +910,14 @@ export function MentorsClient({
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           placeholder="강사명 검색"
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400 w-48"
+          className="border border-gray-200 rounded-full px-4 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary-300 w-48"
         />
-        <span className="text-sm text-gray-600 ml-2">
-          등록된 강사 수 <span className="font-bold text-red-500">{filtered.length}</span>
+        <span className="text-sm text-gray-500 ml-2">
+          등록된 강사 수 <span className="font-bold text-primary-600">{filtered.length}</span>
         </span>
       </div>
 
-      <div className="border border-gray-200 rounded-lg overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
         <table
           className="text-xs border-collapse"
           style={{ minWidth: `${THEAD.reduce((s, c) => s + c.w, 0)}px` }}

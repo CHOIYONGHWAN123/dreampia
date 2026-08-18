@@ -32,7 +32,7 @@ export function LevelFileInputs({
                   href="/templates/ppt-template.pptx"
                   download="드림피아_PPT_양식.pptx"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-[11px] text-blue-600 hover:text-blue-800 underline whitespace-nowrap"
+                  className="text-[11px] text-primary-600 hover:text-primary-700 underline whitespace-nowrap"
                 >
                   양식 다운로드
                 </a>
@@ -50,7 +50,7 @@ export function LevelFileInputs({
                   href="/templates/profile-template.hwpx"
                   download="드림피아_프로필_양식.hwpx"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-[11px] text-blue-600 hover:text-blue-800 underline whitespace-nowrap"
+                  className="text-[11px] text-primary-600 hover:text-primary-700 underline whitespace-nowrap"
                 >
                   양식 다운로드
                 </a>

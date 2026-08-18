@@ -37,7 +37,7 @@ export function FileDropZone({
       onClick={() => inputRef.current?.click()}
       className={`relative flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed px-3 py-4 cursor-pointer transition-colors select-none ${
         dragging
-          ? 'border-blue-400 bg-blue-50'
+          ? 'border-primary-400 bg-primary-50'
           : file
           ? 'border-green-400 bg-green-50'
           : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
@@ -107,7 +107,7 @@ export function AreaSelector({
           onClick={() => toggle(area)}
           className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${
             value.includes(area)
-              ? 'bg-blue-100 text-blue-700 border-blue-300 font-medium'
+              ? 'bg-primary-100 text-primary-700 border-primary-300 font-medium'
               : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
           }`}
         >
@@ -185,7 +185,7 @@ export function MentorSearchSelect({
           placeholder={placeholder}
           onChange={(e) => { setSearch(e.target.value); setOpen(true) }}
           onFocus={() => setOpen(true)}
-          className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-300"
+          className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-300"
         />
       )}
       {open && (
@@ -197,7 +197,7 @@ export function MentorSearchSelect({
                   type="button"
                   tabIndex={0}
                   onMouseDown={(e) => { e.preventDefault(); handleSelect(m.id) }}
-                  className="w-full text-left px-3 py-1.5 text-sm hover:bg-blue-50"
+                  className="w-full text-left px-3 py-1.5 text-sm hover:bg-primary-50"
                 >
                   {m.name}
                 </button>
@@ -241,7 +241,7 @@ export function FileCell({
   return (
     <div className="flex flex-col items-center gap-0.5">
       {url ? (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-xs">
+        <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary-600 underline text-xs">
           다운로드
         </a>
       ) : (

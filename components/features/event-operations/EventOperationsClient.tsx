@@ -119,13 +119,13 @@ function recruitDanger(status: string | null, startAt: string | null) {
 // ── 셀 스타일 ─────────────────────────────────────────────────────────
 
 const th =
-  'px-2 py-2 text-center text-[11px] font-medium text-gray-600 bg-amber-50 border-b border-r border-gray-200 whitespace-nowrap sticky top-0 z-10'
+  'px-2 py-2 text-center text-[11px] font-bold text-primary-700 bg-primary-50 border-b border-r border-primary-100 whitespace-nowrap sticky top-0 z-10'
 const td =
   'px-2 py-1.5 text-center text-[11px] text-gray-700 border-b border-r border-gray-100 align-middle whitespace-nowrap'
 const tdL =
   'px-2 py-1.5 text-left text-[11px] text-gray-700 border-b border-r border-gray-100 align-middle'
 const selectCls =
-  'text-[11px] border border-gray-200 rounded px-1 py-0.5 bg-white w-full cursor-pointer focus:outline-none focus:border-blue-400 disabled:opacity-50'
+  'text-[11px] border border-gray-200 rounded-md px-1 py-0.5 bg-white w-full cursor-pointer focus:outline-none focus:border-primary-400 disabled:opacity-50'
 
 // ── 공통 뱃지 ────────────────────────────────────────────────────────
 
@@ -137,15 +137,15 @@ const Badge = ({
   color: 'green' | 'red' | 'gray' | 'blue' | 'orange' | 'purple'
 }) => {
   const cls = {
-    green: 'bg-green-50 text-green-600',
+    green: 'bg-emerald-50 text-emerald-600',
     red: 'bg-red-50 text-red-500',
     gray: 'bg-gray-100 text-gray-500',
-    blue: 'bg-blue-50 text-blue-600',
-    orange: 'bg-orange-50 text-orange-600',
+    blue: 'bg-primary-50 text-primary-600',
+    orange: 'bg-gold-100 text-gold-700',
     purple: 'bg-purple-50 text-purple-600',
   }[color]
   return (
-    <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] ${cls}`}>{text}</span>
+    <span className={`inline-block px-2 py-0.5 rounded-full font-semibold text-[10px] ${cls}`}>{text}</span>
   )
 }
 
@@ -329,8 +329,8 @@ function SingleAdminPicker({
           {admins.map((a) => (
             <div
               key={a.id}
-              className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-blue-50 ${
-                selectedId === a.id ? 'bg-blue-50 font-medium text-blue-700' : ''
+              className={`px-3 py-2 text-[11px] cursor-pointer hover:bg-primary-50 ${
+                selectedId === a.id ? 'bg-primary-50 font-medium text-primary-700' : ''
               }`}
               onClick={() => handleSelect(a.id)}
             >
@@ -440,7 +440,7 @@ function FieldAdminPicker({
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 py-1 text-[11px] bg-gray-900 text-white rounded disabled:opacity-50"
+              className="flex-1 py-1 text-[11px] bg-primary-600 text-white rounded disabled:opacity-50"
             >
               저장
             </button>
@@ -496,13 +496,13 @@ function InlineTextCell({
             if (e.key === 'Enter') save()
             if (e.key === 'Escape') { setText(value ?? ''); setEditing(false) }
           }}
-          className="text-[11px] border border-gray-300 rounded px-1 py-0.5 w-full focus:outline-none focus:border-blue-400"
+          className="text-[11px] border border-gray-300 rounded px-1 py-0.5 w-full focus:outline-none focus:border-primary-400"
           placeholder={placeholder}
         />
         <button
           onClick={save}
           disabled={saving}
-          className="text-[10px] px-1.5 py-0.5 text-white bg-blue-500 rounded whitespace-nowrap disabled:opacity-50"
+          className="text-[10px] px-1.5 py-0.5 text-white bg-primary-500 rounded whitespace-nowrap disabled:opacity-50"
         >
           저장
         </button>
@@ -522,7 +522,7 @@ function InlineTextCell({
       className="cursor-pointer rounded px-1 min-h-5 flex items-center justify-center hover:bg-gray-50"
     >
       {value ? (
-        <span className="text-[11px] text-blue-600 underline break-all">{value}</span>
+        <span className="text-[11px] text-primary-600 underline break-all">{value}</span>
       ) : (
         <span className="text-[10px] text-gray-300">{placeholder}</span>
       )}
@@ -573,10 +573,10 @@ function InlineBudgetCell({
             if (e.key === 'Enter') save()
             if (e.key === 'Escape') { setText(value != null ? String(value) : ''); setEditing(false) }
           }}
-          className="text-[11px] border border-gray-300 rounded px-1 py-0.5 w-20 focus:outline-none focus:border-blue-400"
+          className="text-[11px] border border-gray-300 rounded px-1 py-0.5 w-20 focus:outline-none focus:border-primary-400"
           placeholder="금액"
         />
-        <button onClick={save} disabled={saving} className="text-[10px] px-1.5 py-0.5 text-white bg-blue-500 rounded whitespace-nowrap disabled:opacity-50">저장</button>
+        <button onClick={save} disabled={saving} className="text-[10px] px-1.5 py-0.5 text-white bg-primary-500 rounded whitespace-nowrap disabled:opacity-50">저장</button>
         <button onClick={() => { setText(value != null ? String(value) : ''); setEditing(false) }} className="text-[10px] px-1.5 py-0.5 border border-gray-300 rounded whitespace-nowrap">취소</button>
       </div>
     )
@@ -588,7 +588,7 @@ function InlineBudgetCell({
       className="cursor-pointer rounded px-1 min-h-5 flex items-center justify-center hover:bg-gray-50"
     >
       {value != null ? (
-        <span className="text-[11px] text-blue-600 underline">₩{value.toLocaleString()}</span>
+        <span className="text-[11px] text-primary-600 underline">₩{value.toLocaleString()}</span>
       ) : (
         <span className="text-[10px] text-gray-300">클릭하여 입력</span>
       )}
@@ -701,13 +701,14 @@ export function EventOperationsClient({
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">행사운영확인표</h1>
+    <div className="p-7 bg-gray-50 min-h-full">
+      <div className="pb-5 mb-5">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">행사운영확인표</h1>
+        <p className="text-sm text-gray-400 mt-1">이번 달 진행 중인 행사를 실제 수업일 기준으로 확인하세요.</p>
       </div>
 
       {/* 월 선택 탭 */}
-      <div className="flex gap-1 overflow-x-auto pb-2 mb-4">
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
         {availableMonths.length === 0 ? (
           <span className="text-sm text-gray-400">데이터 없음</span>
         ) : (
@@ -718,10 +719,10 @@ export function EventOperationsClient({
                 key={`${year}-${month}`}
                 type="button"
                 onClick={() => handleMonthChange(year, month)}
-                className={`px-3 py-1.5 text-sm rounded whitespace-nowrap transition-colors ${
+                className={`px-4 py-2 text-sm font-bold rounded-full whitespace-nowrap transition-colors ${
                   isActive
-                    ? 'bg-gray-900 text-white font-medium'
-                    : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                    ? 'bg-primary-500 text-white shadow-[0_6px_16px_rgba(37,99,235,0.3)]'
+                    : 'text-gray-500 hover:bg-gray-100'
                 }`}
               >
                 {year}년 {month}월
@@ -736,7 +737,7 @@ export function EventOperationsClient({
         <span className="font-semibold text-gray-800">{rows.length}</span>건
       </p>
 
-      <div className="border border-gray-200 rounded-lg overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
         <table className="border-collapse text-[11px]" style={{ minWidth: '4000px' }}>
           <thead>
             <tr>
@@ -808,7 +809,7 @@ export function EventOperationsClient({
                       {row.institutionId ? (
                         <a
                           href={`/institutions/${row.institutionId}`}
-                          className="text-blue-600 hover:underline"
+                          className="text-primary-600 hover:underline"
                         >
                           {row.institutionName ?? '-'}
                         </a>
@@ -947,7 +948,7 @@ export function EventOperationsClient({
                           type="button"
                           onClick={() => handleCrimeCheckNotify(row.id)}
                           disabled={isPending}
-                          className="px-2 py-0.5 text-[11px] border border-blue-300 text-blue-600 rounded hover:bg-blue-50 transition-colors disabled:opacity-50 whitespace-nowrap"
+                          className="px-2 py-0.5 text-[11px] border border-primary-300 text-primary-600 rounded hover:bg-primary-50 transition-colors disabled:opacity-50 whitespace-nowrap"
                         >
                           발송
                         </button>

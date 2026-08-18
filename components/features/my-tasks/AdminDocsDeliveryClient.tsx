@@ -65,21 +65,21 @@ export function AdminDocsDeliveryClient({ rows }: { rows: AdminDocsDeliveryRow[]
   }
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">행정서류 전달</h1>
+    <div className="p-8 bg-gray-50 min-h-full">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">행정서류 전달</h1>
       </div>
 
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-amber-50 border-b border-gray-200">
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-14">No.</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">일자</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700">기관명</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">영업담당자</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-28">소통담당자</th>
-              <th className="px-4 py-2.5 text-center font-medium text-gray-700 w-32">행정서류 전달 완료</th>
+            <tr className="bg-primary-50 border-b border-primary-100">
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-14">No.</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-28">일자</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700">기관명</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-28">영업담당자</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-28">소통담당자</th>
+              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-32">행정서류 전달 완료</th>
             </tr>
           </thead>
           <tbody>
@@ -94,7 +94,7 @@ export function AdminDocsDeliveryClient({ rows }: { rows: AdminDocsDeliveryRow[]
                     {row.institutionId ? (
                       <Link
                         href={`/institutions/${row.institutionId}`}
-                        className="text-gray-900 underline underline-offset-2 hover:text-gray-600 transition-colors"
+                        className="text-primary-700 underline underline-offset-2 hover:text-primary-500 transition-colors"
                       >
                         {row.institutionName ?? '-'}
                       </Link>
@@ -109,7 +109,7 @@ export function AdminDocsDeliveryClient({ rows }: { rows: AdminDocsDeliveryRow[]
                       type="button"
                       disabled={updatingId === row.id}
                       onClick={() => handleMarkDelivered(row.id)}
-                      className="px-3 py-1 text-xs bg-gray-900 text-white rounded hover:bg-gray-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                      className="px-3 py-1 text-xs bg-primary-500 text-white rounded-full hover:bg-primary-600 transition-colors disabled:opacity-50 whitespace-nowrap"
                     >
                       {updatingId === row.id ? '처리중...' : '전달 완료'}
                     </button>
