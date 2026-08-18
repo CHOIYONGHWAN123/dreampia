@@ -51,22 +51,22 @@ export function NavMenu({ isSuperAdmin = false }: { isSuperAdmin?: boolean }) {
     : BASE_MENUS
 
   return (
-    <nav className="flex-1 p-3">
-      <p className="text-xs font-medium text-gray-400 px-2 mb-2">메뉴</p>
+    <nav className="flex-1 px-4 pb-3 space-y-0.5 overflow-y-auto">
+      <p className="text-[11px] font-bold text-gray-400 px-3 mb-2 tracking-wide">메뉴</p>
       {menus.map((menu) => {
         if (menu.children) {
           return (
             <div key={menu.label} className="mb-1">
-              <p className="px-2 py-2 text-sm font-medium text-gray-500">{menu.label}</p>
-              <div className="ml-2 space-y-0.5">
+              <p className="px-3 py-2 text-sm font-semibold text-gray-500">{menu.label}</p>
+              <div className="ml-1 space-y-0.5">
                 {menu.children.map((child) => (
                   <a
                     key={child.href}
                     href={child.href}
-                    className={`flex items-center px-2 py-2 text-sm rounded-lg transition-colors ${
+                    className={`block px-3 py-2 pl-7 text-[13px] rounded-full transition-colors ${
                       isMenuActive(pathname, child.href)
-                        ? 'bg-gray-900 text-white font-medium'
-                        : 'text-gray-600 hover:bg-gray-50'
+                        ? 'bg-primary-50 text-primary-600 font-bold'
+                        : 'text-gray-500 hover:bg-gray-50'
                     }`}
                   >
                     {child.label}
@@ -81,10 +81,10 @@ export function NavMenu({ isSuperAdmin = false }: { isSuperAdmin?: boolean }) {
           <a
             key={menu.href}
             href={menu.href}
-            className={`flex items-center px-2 py-2 text-sm rounded-lg transition-colors ${
+            className={`flex items-center px-3 py-2.5 text-sm rounded-full transition-colors ${
               isMenuActive(pathname, menu.href)
-                ? 'bg-gray-900 text-white font-medium'
-                : 'text-gray-600 hover:bg-gray-50'
+                ? 'bg-primary-50 text-primary-600 font-bold'
+                : 'text-gray-600 hover:bg-gray-50 font-medium'
             }`}
           >
             {menu.label}
