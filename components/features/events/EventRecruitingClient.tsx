@@ -52,7 +52,7 @@ const INVITE_TYPE_LABEL: Record<InviteType, string> = {
   all: '모든수락',
 }
 
-const badgeCls = 'inline-block px-2 py-0.5 rounded text-xs whitespace-nowrap'
+const badgeCls = 'inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap'
 
 function hasTimeConflict(rows: RecruitingEventRow[]): boolean {
   for (let i = 0; i < rows.length; i++) {
@@ -76,7 +76,7 @@ function invitationBadge(status: string, isAllApprovalRequired: boolean, isAuto:
   const typeLabel = INVITE_TYPE_LABEL[isAllApprovalRequired ? 'all' : 'partial']
   if (status === '발송중') {
     return (
-      <span className={`${badgeCls} bg-blue-50 text-blue-600`}>
+      <span className={`${badgeCls} bg-primary-50 text-primary-600`}>
         {isAuto ? '자동섭외중' : '초대중'} ({typeLabel})
       </span>
     )
@@ -368,17 +368,17 @@ export function EventRecruitingClient({
   }
 
   return (
-    <div className="p-8 max-w-6xl">
-      <div className="pb-4 border-b border-gray-200 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">강사 섭외</h1>
-        <p className="mt-1 text-sm text-gray-500">{eventName}</p>
+    <div className="p-8 max-w-6xl bg-gray-50 min-h-full">
+      <div className="mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">강사 섭외</h1>
+        <p className="mt-1 text-sm text-gray-400">{eventName}</p>
       </div>
 
-      <div className="border border-gray-200 rounded-lg overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
         <table className="text-sm" style={{ minWidth: '1500px' }}>
           <thead>
-            <tr className="bg-amber-50 border-b border-gray-200">
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-10">
+            <tr className="bg-primary-50 border-b border-primary-100">
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-10">
                 <input
                   type="checkbox"
                   checked={allSelectableChecked}
@@ -390,17 +390,17 @@ export function EventRecruitingClient({
                   className="disabled:opacity-30"
                 />
               </th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20 whitespace-nowrap">일자</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20 whitespace-nowrap">시작</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20 whitespace-nowrap">종료</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24 whitespace-nowrap">대상</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24 whitespace-nowrap">요청 직업군</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-28 whitespace-nowrap">프로그램</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20 whitespace-nowrap">인원수</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-20 whitespace-nowrap">묶음</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-40 whitespace-nowrap">배정 현황</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-40 whitespace-nowrap">직접 배정</th>
-              <th className="px-3 py-2.5 text-center font-medium text-gray-700 w-24 whitespace-nowrap">배정 취소</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-20 whitespace-nowrap">일자</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-20 whitespace-nowrap">시작</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-20 whitespace-nowrap">종료</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 whitespace-nowrap">대상</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 whitespace-nowrap">요청 직업군</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 whitespace-nowrap">프로그램</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-20 whitespace-nowrap">인원수</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-20 whitespace-nowrap">묶음</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-40 whitespace-nowrap">배정 현황</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-40 whitespace-nowrap">직접 배정</th>
+              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 whitespace-nowrap">배정 취소</th>
             </tr>
           </thead>
           <tbody>
@@ -446,7 +446,7 @@ export function EventRecruitingClient({
                     </td>
                     <td className="px-3 py-2.5 text-center">
                       {r.mentorId ? (
-                        <span className={`${badgeCls} bg-green-50 text-green-700`}>{r.mentorName} (배정 완료)</span>
+                        <span className={`${badgeCls} bg-emerald-50 text-emerald-700`}>{r.mentorName} (배정 완료)</span>
                       ) : r.activeInvitation ? (
                         invitationBadge('발송중', r.activeInvitation.isAllApprovalRequired, r.activeInvitation.isAuto)
                       ) : r.exhausted ? (
@@ -463,7 +463,7 @@ export function EventRecruitingClient({
                             onChange={(e) =>
                               setDirectAssignSelection((prev) => ({ ...prev, [r.id]: e.target.value }))
                             }
-                            className="border border-gray-300 rounded px-1 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 max-w-24"
+                            className="border border-gray-300 rounded-full px-2 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-primary-400 max-w-24"
                           >
                             <option value="">강사 선택</option>
                             {(mentorsByUnit[r.unitId] ?? [])
@@ -478,7 +478,7 @@ export function EventRecruitingClient({
                             type="button"
                             disabled={!directAssignSelection[r.id] || (isAssigning && assigningRowId === r.id)}
                             onClick={() => handleDirectAssign(r.id)}
-                            className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-40 transition-colors whitespace-nowrap"
+                            className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 disabled:opacity-40 transition-colors whitespace-nowrap"
                           >
                             {isAssigning && assigningRowId === r.id ? '배정 중...' : '배정'}
                           </button>
@@ -491,7 +491,7 @@ export function EventRecruitingClient({
                           type="button"
                           onClick={() => handleCancelAssignment(r.id, r.mentorName)}
                           disabled={isCanceling && cancelingRowId === r.id}
-                          className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-red-50 hover:border-red-300 hover:text-red-600 disabled:opacity-40 transition-colors"
+                          className="px-3 py-1 text-xs border border-gray-300 rounded-full hover:bg-red-50 hover:border-red-300 hover:text-red-600 disabled:opacity-40 transition-colors"
                         >
                           {isCanceling && cancelingRowId === r.id ? '취소 중...' : '배정 취소'}
                         </button>
@@ -513,14 +513,14 @@ export function EventRecruitingClient({
 
       {/* 선택 액션 바 */}
       {selectableRows.length > 0 && (
-        <div className="mt-4 border border-gray-200 rounded-lg p-4 bg-white">
+        <div className="mt-4 bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] p-5">
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600">{selectedRowIds.size}개 선택됨</span>
             <button
               type="button"
               disabled={selectedRowIds.size === 0 || isPreviewPending}
               onClick={handleOpenPreview}
-              className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-40 transition-colors"
+              className="px-3 py-1.5 text-xs bg-primary-500 text-white rounded-full hover:bg-primary-600 disabled:opacity-40 transition-colors"
             >
               {isPreviewPending ? '묶음 계산 중...' : '자동 섭외 시작'}
             </button>
@@ -528,7 +528,7 @@ export function EventRecruitingClient({
               type="button"
               disabled={selectedRowIds.size === 0}
               onClick={handleCreateGroup}
-              className="px-3 py-1.5 text-xs border border-purple-300 text-purple-600 rounded hover:bg-purple-50 disabled:opacity-40 transition-colors"
+              className="px-3 py-1.5 text-xs border border-purple-300 text-purple-600 rounded-full hover:bg-purple-50 disabled:opacity-40 transition-colors"
             >
               선택한 일정 묶기
             </button>
@@ -566,10 +566,10 @@ export function EventRecruitingClient({
                     <div
                       key={bundle.eventRowIds.join(',')}
                       className={`flex items-center gap-2 text-xs border rounded px-2 py-1.5 ${
-                        zeroCandidate ? 'border-red-100 bg-red-50' : 'border-blue-100 bg-blue-50'
+                        zeroCandidate ? 'border-red-100 bg-red-50' : 'border-primary-100 bg-primary-50'
                       }`}
                     >
-                      <span className={`font-medium whitespace-nowrap ${zeroCandidate ? 'text-red-600' : 'text-blue-700'}`}>
+                      <span className={`font-medium whitespace-nowrap ${zeroCandidate ? 'text-red-600' : 'text-primary-700'}`}>
                         {autoPreview.manual.length + i + 1} ({bundle.eventRowIds.length > 1 ? '모든수락' : '부분수락'})
                       </span>
                       <span className="text-gray-600 flex-1">{groupRows.map((r) => r.unitTitle).join(' + ')}</span>
@@ -588,7 +588,7 @@ export function EventRecruitingClient({
                   type="button"
                   disabled={isAutoPending || (autoPreview.manual.length === 0 && autoPreview.planned.length === 0)}
                   onClick={handleConfirmAutoInvite}
-                  className="px-4 py-1.5 text-sm bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-40 transition-colors"
+                  className="px-4 py-1.5 text-sm bg-primary-500 text-white rounded-full hover:bg-primary-600 disabled:opacity-40 transition-colors"
                 >
                   {isAutoPending ? '발송 중...' : '발송'}
                 </button>
@@ -596,7 +596,7 @@ export function EventRecruitingClient({
                   type="button"
                   onClick={handleCancelPreview}
                   disabled={isAutoPending}
-                  className="px-4 py-1.5 text-sm border border-gray-300 rounded text-gray-600 hover:bg-gray-50 transition-colors"
+                  className="px-4 py-1.5 text-sm border border-gray-300 rounded-full text-gray-600 hover:bg-gray-50 transition-colors"
                 >
                   취소
                 </button>
@@ -611,7 +611,7 @@ export function EventRecruitingClient({
                 type="button"
                 disabled={selectedRowIds.size === 0}
                 onClick={() => openPicker('partial')}
-                className="px-3 py-1.5 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-40 transition-colors"
+                className="px-3 py-1.5 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 disabled:opacity-40 transition-colors"
               >
                 부분수락으로 초대
               </button>
@@ -619,7 +619,7 @@ export function EventRecruitingClient({
                 type="button"
                 disabled={selectedRowIds.size === 0}
                 onClick={() => openPicker('all')}
-                className="px-3 py-1.5 text-xs bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-40 transition-colors"
+                className="px-3 py-1.5 text-xs bg-primary-500 text-white rounded-full hover:bg-primary-600 disabled:opacity-40 transition-colors"
               >
                 모든수락으로 초대
               </button>
@@ -688,14 +688,14 @@ export function EventRecruitingClient({
                   type="button"
                   onClick={handleSubmit}
                   disabled={isPending || eligibleMentors.length === 0}
-                  className="px-4 py-1.5 text-sm bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-40 transition-colors"
+                  className="px-4 py-1.5 text-sm bg-primary-500 text-white rounded-full hover:bg-primary-600 disabled:opacity-40 transition-colors"
                 >
                   {isPending ? '발송 중...' : '초대 발송'}
                 </button>
                 <button
                   type="button"
                   onClick={closePicker}
-                  className="px-4 py-1.5 text-sm border border-gray-300 rounded text-gray-600 hover:bg-gray-50 transition-colors"
+                  className="px-4 py-1.5 text-sm border border-gray-300 rounded-full text-gray-600 hover:bg-gray-50 transition-colors"
                 >
                   취소
                 </button>
@@ -707,13 +707,13 @@ export function EventRecruitingClient({
 
       {/* 발송된 초대 목록 */}
       <div className="mt-8">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">발송된 초대</h2>
+        <h2 className="text-base font-extrabold text-gray-900 mb-3">발송된 초대</h2>
         {invitations.length === 0 ? (
           <p className="text-xs text-gray-400">아직 발송된 초대가 없습니다.</p>
         ) : (
           <div className="space-y-3">
             {invitations.map((inv) => (
-              <div key={inv.id} className="border border-gray-200 rounded-lg p-3">
+              <div key={inv.id} className="bg-white rounded-2xl shadow-[0_8px_22px_rgba(20,20,40,0.05)] p-4">
                 <div className="flex items-center gap-2 mb-2">
                   {invitationBadge(inv.status, inv.isAllApprovalRequired, inv.isAuto)}
                   <span className="text-xs text-gray-400">일정 {inv.eventRowIds.length}건</span>
@@ -725,7 +725,7 @@ export function EventRecruitingClient({
                       type="button"
                       onClick={() => handleCancelInvitation(inv)}
                       disabled={isCancelingInvitation && cancelingInvitationId === inv.id}
-                      className="ml-auto px-2 py-0.5 text-xs border border-gray-300 rounded hover:bg-red-50 hover:border-red-300 hover:text-red-600 disabled:opacity-40 transition-colors"
+                      className="ml-auto px-2.5 py-1 text-xs border border-gray-300 rounded-full hover:bg-red-50 hover:border-red-300 hover:text-red-600 disabled:opacity-40 transition-colors"
                     >
                       {isCancelingInvitation && cancelingInvitationId === inv.id ? '취소 중...' : '초대 취소'}
                     </button>
