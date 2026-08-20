@@ -6,11 +6,13 @@ import type {
   OccupationProgramUnitData,
   UnitFormPayload,
 } from '@/app/(dashboard)/programs/actions'
+import type { PptTemplateData } from '@/app/(dashboard)/ppt-templates/actions'
 import { FileDropZone, uploadFile } from '@/components/features/mentors/shared'
 
 interface Props {
   initial: OccupationProgramUnitData | null
   occupationProgramId: string
+  pptTemplates: PptTemplateData[]
   onClose: () => void
   onSubmit: (payload: UnitFormPayload) => Promise<void>
 }
@@ -26,6 +28,7 @@ const emptyForm: UnitFormPayload = {
   isDeliveryAvailable: false,
   schoolLevel: null,
   syllabus: null,
+  pptTemplateId: null,
 }
 
 // 팝업이 열릴 때마다 새로 마운트되므로(부모가 unitPopup.open으로 마운트/언마운트를 제어)
@@ -43,10 +46,11 @@ function toFormState(initial: OccupationProgramUnitData | null): UnitFormPayload
     isDeliveryAvailable: initial.is_delivery_available,
     schoolLevel: initial.school_level,
     syllabus: initial.syllabus,
+    pptTemplateId: initial.ppt_template_id,
   }
 }
 
-export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit }: Props) {
+export function UnitFormPopup({ initial, occupationProgramId, pptTemplates, onClose, onSubmit }: Props) {
   const [form, setForm] = useState<UnitFormPayload>(() => toFormState(initial))
   const [syllabusFile, setSyllabusFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -166,6 +170,32 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
               </a>
             )}
             <FileDropZone file={syllabusFile} onChange={setSyllabusFile} accept=".hwp,.hwpx,.pdf,.doc,.docx" />
+          </div>
+
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">
+              PPT 양식 (멘토가 다운로드해서 채워 넣는 빈 템플릿)
+            </label>
+            <select
+              value={form.pptTemplateId ?? ''}
+              onChange={e => setForm(f => ({ ...f, pptTemplateId: e.target.value || null }))}
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
+            >
+              <option value="">선택안함</option>
+              {pptTemplates.map(template => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
+            <a
+              href="/ppt-templates"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-primary-600 hover:text-primary-700 underline block mt-1"
+            >
+              양식 목록 관리
+            </a>
           </div>
 
           <div>

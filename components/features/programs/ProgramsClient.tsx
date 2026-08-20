@@ -38,6 +38,7 @@ import {
   type OccupationProgramUnitData,
   type UnitFormPayload,
 } from '@/app/(dashboard)/programs/actions'
+import type { PptTemplateData } from '@/app/(dashboard)/ppt-templates/actions'
 import { NameColumn } from './NameColumn'
 import { FieldColumn } from './FieldColumn'
 import { UnitFormPopup } from './UnitFormPopup'
@@ -45,9 +46,10 @@ import { UnitFormPopup } from './UnitFormPopup'
 interface Props {
   initialEventCategories: EventCategoryData[]
   initialFields: FieldData[]
+  pptTemplates: PptTemplateData[]
 }
 
-export function ProgramsClient({ initialEventCategories, initialFields }: Props) {
+export function ProgramsClient({ initialEventCategories, initialFields, pptTemplates }: Props) {
   const [eventCategories, setEventCategories] = useState(initialEventCategories)
   const [selectedEventCategoryId, setSelectedEventCategoryId] = useState<string | null>(null)
   const [viewingUnassigned, setViewingUnassigned] = useState(false)
@@ -401,6 +403,7 @@ export function ProgramsClient({ initialEventCategories, initialFields }: Props)
         <UnitFormPopup
           initial={unitPopup.unit}
           occupationProgramId={selectedProgramId}
+          pptTemplates={pptTemplates}
           onClose={() => setUnitPopup({ open: false, unit: null })}
           onSubmit={handleSubmitUnit}
         />
