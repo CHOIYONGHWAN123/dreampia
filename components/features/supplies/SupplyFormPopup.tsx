@@ -30,7 +30,7 @@ export function SupplyFormPopup({ unitId, unitTitle, initial, onClose, onSaved }
     max_daily_stock: initial?.max_daily_stock ?? '',
     is_consumable: initial?.is_consumable ?? false,
     memo: initial?.memo ?? '',
-    initial_total_stock: '',
+    initial_free_stock: '',
     initial_kit_stock: '',
   })
 
@@ -49,6 +49,8 @@ export function SupplyFormPopup({ unitId, unitTitle, initial, onClose, onSaved }
             memo: form.memo || null,
           })
         } else {
+          const freeStock = Number(form.initial_free_stock) || 0
+          const kitStock = Number(form.initial_kit_stock) || 0
           await createSupply({
             occupation_program_unit_id: unitId,
             qty_per_person: Number(form.qty_per_person) || 1,
@@ -56,8 +58,9 @@ export function SupplyFormPopup({ unitId, unitTitle, initial, onClose, onSaved }
             max_daily_stock: toInt(form.max_daily_stock),
             is_consumable: form.is_consumable,
             memo: form.memo || null,
-            initial_total_stock: Number(form.initial_total_stock) || 0,
-            initial_kit_stock: Number(form.initial_kit_stock) || 0,
+            // 여유 재고 + 키트 재고 입력을 받아, 기존 total/kit 로그 모델에 맞춰 총 재고로 환산
+            initial_total_stock: freeStock + kitStock,
+            initial_kit_stock: kitStock,
           })
         }
         onSaved()
@@ -152,12 +155,12 @@ export function SupplyFormPopup({ unitId, unitTitle, initial, onClose, onSaved }
               <p className="text-xs font-medium text-gray-600 mb-3">초기 재고 등록 (선택)</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={labelCls}>총 재고 초기값</label>
+                  <label className={labelCls}>여유 재고 초기값</label>
                   <input
                     type="number"
                     min={0}
-                    value={form.initial_total_stock}
-                    onChange={(e) => set('initial_total_stock', e.target.value)}
+                    value={form.initial_free_stock}
+                    onChange={(e) => set('initial_free_stock', e.target.value)}
                     placeholder="0"
                     className={inputCls}
                   />
@@ -175,7 +178,7 @@ export function SupplyFormPopup({ unitId, unitTitle, initial, onClose, onSaved }
                 </div>
               </div>
               <p className="text-xs text-gray-400 mt-1.5">
-                여유 재고 = 총 재고 − 키트 재고로 자동 계산됩니다.
+                총 재고 = 여유 재고 + 키트 재고로 자동 계산됩니다.
               </p>
             </div>
           )}
