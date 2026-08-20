@@ -351,3 +351,9 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/send-assignment-cancel-push/deno.json"
 entrypoint = "./functions/send-assignment-cancel-push/index.ts"
+
+[functions.send-lecture-reminder-push]
+enabled = true
+verify_jwt = true
+import_map = "./functions/send-lecture-reminder-push/deno.json"
+entrypoint = "./functions/send-lecture-reminder-push/index.ts"
