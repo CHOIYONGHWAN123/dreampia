@@ -8,7 +8,7 @@ type EventRowRow = { id: string; event_id: string | null; occupation_program_uni
 type UnitRow = { id: string; title: string; occupation_programs_id: string | null }
 type ProgramRow = { id: string; name: string; occupation_id: string | null }
 type OccupationRow = { id: string; name: string; field_id: string | null }
-type FieldRow = { id: string; name: string; event_category_id: string | null }
+type FieldRow = { id: string; name: string }
 type CategoryRow = { id: string; name: string }
 
 type Crumb = { id: string; name: string }
@@ -87,7 +87,7 @@ export function CategoryDrilldownChart({
 
       return [
         {
-          categoryId: field.event_category_id,
+          categoryId: event.event_category_id,
           fieldId: field.id,
           fieldName: field.name,
           occupationId: occupation.id,

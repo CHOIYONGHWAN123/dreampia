@@ -77,7 +77,7 @@ export type MentorOptionForUnit = {
 
 export type EventProgramSelectData = {
   eventCategories: { id: string; name: string }[]
-  fields: { id: string; name: string; event_category_id: string | null }[]
+  fields: { id: string; name: string; event_category_ids: string[] }[]
   occupations: { id: string; name: string; field_id: string | null }[]
   programs: { id: string; name: string; occupation_id: string | null }[]
   units: {
@@ -193,9 +193,10 @@ export async function getEventDetail(id: string): Promise<{
 
 export async function getEventProgramSelectData(): Promise<EventProgramSelectData> {
   const supabase = await createServerSupabaseClient()
-  const [eventCategoriesRes, fieldsRes, occsRes, progsRes, unitsRes, mopRes, mentorsRes] = await Promise.all([
+  const [eventCategoriesRes, fieldsRes, fieldEcRes, occsRes, progsRes, unitsRes, mopRes, mentorsRes] = await Promise.all([
     supabase.from('event_categories').select('id, name').order('sort_order'),
-    supabase.from('fields').select('id, name, event_category_id').order('name'),
+    supabase.from('fields').select('id, name').order('name'),
+    supabase.from('field_event_categories').select('field_id, event_category_id'),
     supabase.from('occupations').select('id, name, field_id').order('name'),
     supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
     supabase
@@ -229,9 +230,16 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
     mentorsByUnit[row.occupation_program_unit_id] = list
   }
 
+  const eventCategoryIdsByField = new Map<string, string[]>()
+  for (const l of fieldEcRes.data ?? []) {
+    const list = eventCategoryIdsByField.get(l.field_id) ?? []
+    list.push(l.event_category_id)
+    eventCategoryIdsByField.set(l.field_id, list)
+  }
+
   return {
     eventCategories: eventCategoriesRes.data ?? [],
-    fields: fieldsRes.data ?? [],
+    fields: (fieldsRes.data ?? []).map((f) => ({ ...f, event_category_ids: eventCategoryIdsByField.get(f.id) ?? [] })),
     occupations: (occsRes.data ?? []) as { id: string; name: string; field_id: string | null }[],
     programs: (progsRes.data ?? []) as { id: string; name: string; occupation_id: string | null }[],
     units: unitsRes.data ?? [],

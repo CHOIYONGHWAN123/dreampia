@@ -10,7 +10,7 @@ type EventRow = { id: string; event_id: string | null; occupation_program_unit_i
 type Unit = { id: string; title: string; occupation_programs_id: string | null }
 type Program = { id: string; name: string; occupation_id: string | null }
 type Occupation = { id: string; name: string; field_id: string | null }
-type Field = { id: string; name: string; event_category_id: string | null }
+type Field = { id: string; name: string }
 type EventCategory = { id: string; name: string }
 
 interface Props {

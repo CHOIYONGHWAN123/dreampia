@@ -5,7 +5,7 @@ import { generateId } from '@/lib/generate-id'
 import { formatScoreWithGrade } from '@/lib/mentor-grade'
 
 export type EventCategoryOption = { id: string; name: string }
-export type FieldOption = { id: string; name: string; event_category_id: string | null }
+export type FieldOption = { id: string; name: string; event_category_ids: string[] }
 export type OccupationOption = { id: string; name: string; field_id: string | null }
 export type ProgramOption = { id: string; name: string; occupation_id: string | null }
 export type UnitOption = {
@@ -162,7 +162,7 @@ export function EventProgramUnitSection({
   }, [units, search])
 
   const filteredFields = useMemo(
-    () => (eventCategoryId ? fields.filter((f) => f.event_category_id === eventCategoryId) : []),
+    () => (eventCategoryId ? fields.filter((f) => f.event_category_ids.includes(eventCategoryId)) : []),
     [fields, eventCategoryId]
   )
   const filteredOccupations = useMemo(

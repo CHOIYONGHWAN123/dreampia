@@ -86,8 +86,8 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
   }
 
   const fieldsInView = useMemo(() => {
-    if (viewingUnassigned) return fields.filter((f) => f.event_category_id === null)
-    if (selectedEventCategoryId) return fields.filter((f) => f.event_category_id === selectedEventCategoryId)
+    if (viewingUnassigned) return fields.filter((f) => f.event_category_ids.length === 0)
+    if (selectedEventCategoryId) return fields.filter((f) => f.event_category_ids.includes(selectedEventCategoryId))
     return []
   }, [fields, selectedEventCategoryId, viewingUnassigned])
 
@@ -156,12 +156,12 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
   }
 
   // ── 분야 ──
-  const handleAddField = async (name: string, eventCategoryId: string | null) => {
-    await createField(eventCategoryId, name)
+  const handleAddField = async (name: string, eventCategoryIds: string[]) => {
+    await createField(eventCategoryIds, name)
     setFields(await getFields())
   }
-  const handleEditField = async (id: string, name: string, eventCategoryId: string | null) => {
-    await updateField(id, name, eventCategoryId)
+  const handleEditField = async (id: string, name: string, eventCategoryIds: string[]) => {
+    await updateField(id, name, eventCategoryIds)
     setFields(await getFields())
   }
   const handleDeleteField = async (id: string) => {
@@ -314,7 +314,7 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
           emptyMessage="등록된 분야가 없습니다."
           disabled={!selectedEventCategoryId && !viewingUnassigned}
           disabledMessage="행사구분을 먼저 선택해주세요."
-          defaultEventCategoryId={selectedEventCategoryId}
+          defaultEventCategoryIds={selectedEventCategoryId ? [selectedEventCategoryId] : []}
         />
 
         <NameColumn

@@ -24,7 +24,7 @@ export default async function CounterPage() {
     supabase.from('occupation_program_unit').select('id, title, occupation_programs_id'),
     supabase.from('occupation_programs').select('id, name, occupation_id'),
     supabase.from('occupations').select('id, name, field_id'),
-    supabase.from('fields').select('id, name, event_category_id'),
+    supabase.from('fields').select('id, name'),
     supabase.from('event_categories').select('id, name').order('sort_order', { ascending: true }),
   ])
 

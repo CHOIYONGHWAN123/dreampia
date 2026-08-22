@@ -13,7 +13,7 @@ export interface EventCategoryData {
 export interface FieldData {
   id: string
   name: string
-  event_category_id: string | null
+  event_category_ids: string[]
 }
 
 export interface OccupationData {
@@ -85,8 +85,8 @@ export async function updateEventCategory(id: string, name: string): Promise<voi
 export async function getEventCategoryChildCount(id: string): Promise<number> {
   const supabase = await createServerSupabaseClient()
   const { count } = await supabase
-    .from('fields')
-    .select('id', { count: 'exact', head: true })
+    .from('field_event_categories')
+    .select('field_id', { count: 'exact', head: true })
     .eq('event_category_id', id)
   return count ?? 0
 }
@@ -130,22 +130,39 @@ export async function deleteEventCategoryCascade(id: string): Promise<void> {
   const supabase = await createServerSupabaseClient()
   await assertEventCategoryNotInUse(supabase, id)
 
-  const { data: fields } = await supabase.from('fields').select('id').eq('event_category_id', id)
-  if (fields?.length) {
-    const fieldIds = fields.map((f) => f.id)
-    const { data: occupations } = await supabase.from('occupations').select('id').in('field_id', fieldIds)
-    if (occupations?.length) {
-      const occIds = occupations.map((o) => o.id)
-      const { data: programs } = await supabase.from('occupation_programs').select('id').in('occupation_id', occIds)
-      if (programs?.length) {
-        const progIds = programs.map((p) => p.id)
-        const { data: units } = await supabase.from('occupation_program_unit').select('id').in('occupation_programs_id', progIds)
-        if (units?.length) await cascadeDeleteUnits(supabase, units.map((u) => u.id))
-        await supabase.from('occupation_programs').delete().in('id', progIds)
+  const { data: links } = await supabase
+    .from('field_event_categories')
+    .select('field_id')
+    .eq('event_category_id', id)
+  const linkedFieldIds = links?.map((l) => l.field_id) ?? []
+
+  if (linkedFieldIds.length) {
+    // 이 행사구분과의 연결만 끊는다 — 다른 행사구분에도 걸쳐 있는 분야는 그대로 둔다.
+    await supabase.from('field_event_categories').delete().eq('event_category_id', id)
+
+    // 연결을 끊고 나서 어느 행사구분에도 남아있지 않은 분야만 하위 트리까지 완전 삭제한다.
+    const { data: remaining } = await supabase
+      .from('field_event_categories')
+      .select('field_id')
+      .in('field_id', linkedFieldIds)
+    const stillLinked = new Set(remaining?.map((r) => r.field_id) ?? [])
+    const orphanedFieldIds = linkedFieldIds.filter((fieldId) => !stillLinked.has(fieldId))
+
+    if (orphanedFieldIds.length) {
+      const { data: occupations } = await supabase.from('occupations').select('id').in('field_id', orphanedFieldIds)
+      if (occupations?.length) {
+        const occIds = occupations.map((o) => o.id)
+        const { data: programs } = await supabase.from('occupation_programs').select('id').in('occupation_id', occIds)
+        if (programs?.length) {
+          const progIds = programs.map((p) => p.id)
+          const { data: units } = await supabase.from('occupation_program_unit').select('id').in('occupation_programs_id', progIds)
+          if (units?.length) await cascadeDeleteUnits(supabase, units.map((u) => u.id))
+          await supabase.from('occupation_programs').delete().in('id', progIds)
+        }
+        await supabase.from('occupations').delete().in('id', occIds)
       }
-      await supabase.from('occupations').delete().in('id', occIds)
+      await supabase.from('fields').delete().in('id', orphanedFieldIds)
     }
-    await supabase.from('fields').delete().in('id', fieldIds)
   }
 
   const { error } = await supabase.from('event_categories').delete().eq('id', id)
@@ -157,25 +174,51 @@ export async function deleteEventCategoryCascade(id: string): Promise<void> {
 
 export async function getFields(): Promise<FieldData[]> {
   const supabase = await createServerSupabaseClient()
-  const { data, error } = await supabase.from('fields').select('id, name, event_category_id').order('name')
+  const [{ data: fields, error }, { data: links, error: linksError }] = await Promise.all([
+    supabase.from('fields').select('id, name').order('name'),
+    supabase.from('field_event_categories').select('field_id, event_category_id'),
+  ])
   if (error) throw new Error(error.message)
-  return data || []
+  if (linksError) throw new Error(linksError.message)
+
+  const idsByField = new Map<string, string[]>()
+  for (const l of links ?? []) {
+    const list = idsByField.get(l.field_id) ?? []
+    list.push(l.event_category_id)
+    idsByField.set(l.field_id, list)
+  }
+
+  return (fields || []).map((f) => ({ ...f, event_category_ids: idsByField.get(f.id) ?? [] }))
 }
 
-export async function createField(eventCategoryId: string | null, name: string): Promise<void> {
+export async function createField(eventCategoryIds: string[], name: string): Promise<void> {
   const supabase = await createServerSupabaseClient()
-  const { error } = await supabase.from('fields').insert({ event_category_id: eventCategoryId, name })
+  const { data: field, error } = await supabase.from('fields').insert({ name }).select('id').single()
   if (error) throw new Error(error.message)
+
+  if (eventCategoryIds.length) {
+    const { error: linkError } = await supabase
+      .from('field_event_categories')
+      .insert(eventCategoryIds.map((eventCategoryId) => ({ field_id: field.id, event_category_id: eventCategoryId })))
+    if (linkError) throw new Error(linkError.message)
+  }
   revalidatePath('/programs')
 }
 
-export async function updateField(id: string, name: string, eventCategoryId: string | null): Promise<void> {
+export async function updateField(id: string, name: string, eventCategoryIds: string[]): Promise<void> {
   const supabase = await createServerSupabaseClient()
-  const { error } = await supabase
-    .from('fields')
-    .update({ name, event_category_id: eventCategoryId })
-    .eq('id', id)
+  const { error } = await supabase.from('fields').update({ name }).eq('id', id)
   if (error) throw new Error(error.message)
+
+  const { error: deleteError } = await supabase.from('field_event_categories').delete().eq('field_id', id)
+  if (deleteError) throw new Error(deleteError.message)
+
+  if (eventCategoryIds.length) {
+    const { error: linkError } = await supabase
+      .from('field_event_categories')
+      .insert(eventCategoryIds.map((eventCategoryId) => ({ field_id: id, event_category_id: eventCategoryId })))
+    if (linkError) throw new Error(linkError.message)
+  }
   revalidatePath('/programs')
 }
 

@@ -5,7 +5,7 @@ import { useState } from 'react'
 interface FieldItem {
   id: string
   name: string
-  event_category_id: string | null
+  event_category_ids: string[]
 }
 
 interface Props {
@@ -14,17 +14,17 @@ interface Props {
   eventCategories: { id: string; name: string }[]
   selectedId: string | null
   onSelect: (id: string) => void
-  onAdd: (name: string, eventCategoryId: string | null) => Promise<void>
-  onEdit: (id: string, name: string, eventCategoryId: string | null) => Promise<void>
+  onAdd: (name: string, eventCategoryIds: string[]) => Promise<void>
+  onEdit: (id: string, name: string, eventCategoryIds: string[]) => Promise<void>
   onDelete: (id: string) => Promise<void>
   emptyMessage: string
   disabled?: boolean
   disabledMessage?: string
-  defaultEventCategoryId: string | null
+  defaultEventCategoryIds: string[]
 }
 
-// NameColumn과 동일한 목록/추가/수정/삭제 UI이되, 분야는 event_category_id를 함께 지정해야 해서
-// 추가/수정 모달에 행사구분 select가 하나 더 있다.
+// NameColumn과 동일한 목록/추가/수정/삭제 UI이되, 분야는 여러 행사구분에 걸칠 수 있어서
+// 추가/수정 모달에 행사구분 체크박스 멀티선택이 하나 더 있다.
 export function FieldColumn({
   title,
   items,
@@ -37,22 +37,25 @@ export function FieldColumn({
   emptyMessage,
   disabled = false,
   disabledMessage = '상위 항목을 먼저 선택해주세요.',
-  defaultEventCategoryId,
+  defaultEventCategoryIds,
 }: Props) {
   const [popup, setPopup] = useState<{ open: boolean; id: string | null }>({ open: false, id: null })
   const [name, setName] = useState('')
-  const [eventCategoryId, setEventCategoryId] = useState<string>('')
+  const [eventCategoryIds, setEventCategoryIds] = useState<string[]>([])
   const [pending, setPending] = useState(false)
+
+  const toggleEventCategory = (id: string) =>
+    setEventCategoryIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]))
 
   const openAdd = () => {
     setName('')
-    setEventCategoryId(defaultEventCategoryId ?? '')
+    setEventCategoryIds(defaultEventCategoryIds)
     setPopup({ open: true, id: null })
   }
 
   const openEdit = (item: FieldItem) => {
     setName(item.name)
-    setEventCategoryId(item.event_category_id ?? '')
+    setEventCategoryIds(item.event_category_ids)
     setPopup({ open: true, id: item.id })
   }
 
@@ -75,11 +78,10 @@ export function FieldColumn({
     if (pending) return
     setPending(true)
     try {
-      const categoryId = eventCategoryId || null
       if (popup.id) {
-        await onEdit(popup.id, trimmed, categoryId)
+        await onEdit(popup.id, trimmed, eventCategoryIds)
       } else {
-        await onAdd(trimmed, categoryId)
+        await onAdd(trimmed, eventCategoryIds)
       }
       closePopup()
     } catch (e) {
@@ -168,21 +170,25 @@ export function FieldColumn({
               autoFocus
               className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
             />
-            {popup.id && (
-              <>
-                <label className="text-xs text-gray-500 mt-3 mb-1 block">행사 구분</label>
-                <select
-                  value={eventCategoryId}
-                  onChange={(e) => setEventCategoryId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
+            <label className="text-xs text-gray-500 mt-3 mb-1 block">
+              행사 구분 <span className="text-gray-300">(복수 선택 가능, 미선택 시 미분류)</span>
+            </label>
+            <div className="flex flex-wrap gap-1">
+              {eventCategories.map((ec) => (
+                <button
+                  key={ec.id}
+                  type="button"
+                  onClick={() => toggleEventCategory(ec.id)}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                    eventCategoryIds.includes(ec.id)
+                      ? 'bg-primary-100 text-primary-700 border-primary-300 font-medium'
+                      : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
+                  }`}
                 >
-                  <option value="">미분류</option>
-                  {eventCategories.map((ec) => (
-                    <option key={ec.id} value={ec.id}>{ec.name}</option>
-                  ))}
-                </select>
-              </>
-            )}
+                  {ec.name}
+                </button>
+              ))}
+            </div>
             <div className="flex justify-center gap-2 mt-6">
               <button
                 onClick={handleSave}

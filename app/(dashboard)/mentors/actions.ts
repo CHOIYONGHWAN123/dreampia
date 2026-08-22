@@ -399,7 +399,7 @@ export async function addMentorOccupationProgram(
 
 export type AddProgramSelectData = {
   eventCategories: { id: string; name: string }[]
-  fields: { id: string; name: string; event_category_id: string | null }[]
+  fields: { id: string; name: string; event_category_ids: string[] }[]
   occupations: { id: string; name: string; field_id: string | null }[]
   programs: { id: string; name: string; occupation_id: string | null }[]
   units: { id: string; title: string; occupation_programs_id: string | null; school_level: string | null }[]
@@ -408,9 +408,10 @@ export type AddProgramSelectData = {
 
 export async function getAddProgramSelectData(): Promise<AddProgramSelectData> {
   const supabase = await createServerSupabaseClient()
-  const [eventCategoriesRes, fieldsRes, occsRes, progsRes, unitsRes, mentorsRes] = await Promise.all([
+  const [eventCategoriesRes, fieldsRes, fieldEcRes, occsRes, progsRes, unitsRes, mentorsRes] = await Promise.all([
     supabase.from('event_categories').select('id, name').order('sort_order'),
-    supabase.from('fields').select('id, name, event_category_id').order('name'),
+    supabase.from('fields').select('id, name').order('name'),
+    supabase.from('field_event_categories').select('field_id, event_category_id'),
     supabase.from('occupations').select('id, name, field_id').order('name'),
     supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
     supabase
@@ -419,9 +420,15 @@ export async function getAddProgramSelectData(): Promise<AddProgramSelectData> {
       .order('title'),
     supabase.from('mentors').select('id, name').order('name'),
   ])
+  const eventCategoryIdsByField = new Map<string, string[]>()
+  for (const l of fieldEcRes.data ?? []) {
+    const list = eventCategoryIdsByField.get(l.field_id) ?? []
+    list.push(l.event_category_id)
+    eventCategoryIdsByField.set(l.field_id, list)
+  }
   return {
     eventCategories: eventCategoriesRes.data ?? [],
-    fields: fieldsRes.data ?? [],
+    fields: (fieldsRes.data ?? []).map((f) => ({ ...f, event_category_ids: eventCategoryIdsByField.get(f.id) ?? [] })),
     occupations: (occsRes.data ?? []) as { id: string; name: string; field_id: string | null }[],
     programs: (progsRes.data ?? []) as { id: string; name: string; occupation_id: string | null }[],
     units: unitsRes.data ?? [],
