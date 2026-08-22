@@ -99,7 +99,7 @@ export function FieldColumn({
   }
 
   return (
-    <div className="flex flex-col min-w-0">
+    <div className="flex flex-col w-72 shrink-0">
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium text-gray-600">{title}</span>
         <button
@@ -118,11 +118,11 @@ export function FieldColumn({
             <div
               key={item.id}
               onClick={() => onSelect(item.id)}
-              className={`flex items-center justify-between gap-2 px-3 py-2 border-b border-gray-100 last:border-b-0 cursor-pointer transition-colors ${
+              className={`flex items-start justify-between gap-2 px-3 py-2 border-b border-gray-100 last:border-b-0 cursor-pointer transition-colors ${
                 selectedId === item.id ? 'bg-primary-500 text-white font-semibold' : 'hover:bg-gray-50'
               }`}
             >
-              <span className="text-sm truncate">{item.name}</span>
+              <span className="text-sm flex-1 min-w-0">{item.name}</span>
               <div className="flex items-center gap-1 shrink-0">
                 <button
                   onClick={(e) => {

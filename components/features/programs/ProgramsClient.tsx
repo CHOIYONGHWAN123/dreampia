@@ -277,8 +277,8 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
         </p>
       </div>
 
-      <div className="grid grid-cols-5 gap-4">
-        <div className="flex flex-col min-w-0">
+      <div className="flex gap-4 overflow-x-auto pb-2">
+        <div className="flex flex-col w-72 shrink-0">
           <NameColumn
             title="행사구분"
             items={eventCategories}
@@ -344,7 +344,7 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
         />
 
         {/* 프로그램 유닛 */}
-        <div className="flex flex-col min-w-0">
+        <div className="flex flex-col w-72 shrink-0">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-gray-600">프로그램 유닛</span>
             <button
@@ -364,9 +364,9 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
               units.map(unit => (
                 <div
                   key={unit.id}
-                  className="flex items-center justify-between gap-2 px-3 py-2 border-b border-gray-100 last:border-b-0"
+                  className="flex items-start justify-between gap-2 px-3 py-2 border-b border-gray-100 last:border-b-0"
                 >
-                  <span className="text-sm truncate">{unit.title}</span>
+                  <span className="text-sm flex-1 min-w-0">{unit.title}</span>
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => setUnitPopup({ open: true, unit })}
