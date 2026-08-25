@@ -34,11 +34,23 @@ export default async function EventOperationsPage({
 
   const { data: rowsInMonth } = await supabase
     .from('event_rows')
-    .select('event_id')
+    .select('event_id, start_time')
     .gte('start_time', startOfMonth)
     .lt('start_time', startOfNextMonth)
 
-  const eventIdsInMonth = [...new Set((rowsInMonth ?? []).map((r) => r.event_id).filter(Boolean))] as string[]
+  // 행사별 실제 수업일(날짜 단위, 중복 제거) 목록 — 행사운영확인표에서 행사를 날짜별로 나눠 보여주는 데 사용.
+  const datesByEvent = new Map<string, { key: string; iso: string | null }[]>()
+  for (const r of rowsInMonth ?? []) {
+    if (!r.event_id || !r.start_time) continue
+    const d = new Date(r.start_time)
+    const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
+    const list = datesByEvent.get(r.event_id) ?? []
+    if (!list.some((e) => e.key === key)) list.push({ key, iso: r.start_time })
+    datesByEvent.set(r.event_id, list)
+  }
+  for (const list of datesByEvent.values()) list.sort((a, b) => (a.iso ?? '').localeCompare(b.iso ?? ''))
+
+  const eventIdsInMonth = [...datesByEvent.keys()]
 
   const { data: events } =
     eventIdsInMonth.length > 0
@@ -70,13 +82,10 @@ export default async function EventOperationsPage({
   // 관련 데이터 병렬 조회
   const [
     institutionsRes,
-    sessionsRes,
     eventRowsRes,
   ] = await Promise.all([
     supabase.from('institutions').select('id, region1, region2, institution_type, name, is_deleted')
       .in('id', events.map((e) => e.institution_id).filter(Boolean) as string[]),
-    supabase.from('event_sessions').select('id, event_id, start_at, end_at, sort_order')
-      .in('event_id', eventIds).order('sort_order'),
     supabase.from('event_rows').select('id, event_id').in('event_id', eventIds),
   ])
 
@@ -90,13 +99,6 @@ export default async function EventOperationsPage({
   const institutionMap = new Map((institutionsRes.data ?? []).map((i) => [i.id, i]))
   const adminMap = new Map(admins.map((a) => [a.id, a.name]))
 
-  const sessionsByEvent = new Map<string, typeof sessionsRes.data>()
-  for (const s of sessionsRes.data ?? []) {
-    const arr = sessionsByEvent.get(s.event_id) ?? []
-    arr.push(s)
-    sessionsByEvent.set(s.event_id, arr)
-  }
-
   const photoCountByRow = new Map<string, number>()
   for (const p of photos ?? []) {
     photoCountByRow.set(p.event_rows_id, (photoCountByRow.get(p.event_rows_id) ?? 0) + 1)
@@ -108,62 +110,67 @@ export default async function EventOperationsPage({
     rowsByEvent.set(r.event_id, arr)
   }
 
-  // 최종 행 데이터 합성
-  const rows: EventOperationRow[] = events.map((e, i) => {
+  // 최종 행 데이터 합성 — 행사 하나당, 그 달에 실제 수업이 있었던 날짜 수만큼 행을 나눠서 생성한다.
+  const rows: EventOperationRow[] = []
+  for (const e of events) {
     const inst = e.institution_id ? institutionMap.get(e.institution_id) : null
     const fieldAdminNames = (e.field_admin_ids ?? [])
       .map((id: string) => adminMap.get(id) ?? '')
       .filter(Boolean)
-    const sessions = sessionsByEvent.get(e.id) ?? []
     const eventRowIdList = rowsByEvent.get(e.id) ?? []
     const allPhotosOk =
       eventRowIdList.length > 0 &&
       eventRowIdList.every((rowId) => (photoCountByRow.get(rowId) ?? 0) >= 3)
 
-    return {
-      no: i + 1,
-      id: e.id,
-      institutionId: e.institution_id,
-      region1: inst?.region1 ?? null,
-      region2: inst?.region2 ?? null,
-      category: inst?.institution_type ?? null,
-      institutionName: inst ? `${inst.name}${inst.is_deleted ? '(삭제됨)' : ''}` : null,
-      fieldAdminIds: e.field_admin_ids ?? [],
-      fieldAdminNames,
-      eventStartAt: e.event_start_at,
-      eventEndAt: e.event_end_at,
-      sessions: sessions.map((s) => ({ startAt: s.start_at, endAt: s.end_at })),
-      targetGrade: e.target_grade,
-      budget: e.budget,
-      contractType: e.contract_type,
-      contractStatus: e.contract_status,
-      contractDelivered: e.contract_delivered,
-      eventCheckStatus: e.event_check_status,
-      suppliesStatus: e.supplies_status,
-      preNoticeSent: e.pre_notice_sent,
-      commAdminId: e.comm_admin_id,
-      commAdminName: e.comm_admin_id ? (adminMap.get(e.comm_admin_id) ?? null) : null,
-      recruitStatus: e.recruit_status,
-      recruitDelivered: e.recruit_delivered,
-      institutionRequestDelivered: e.institution_request_delivered,
-      crimeCheckMethod: e.crime_check_method,
-      crimeCheckNotified: e.crime_check_notified,
-      crimeCheckStatus: e.crime_check_status,
-      adminDocsDelivered: e.admin_docs_delivered,
-      salesAdminId: e.sales_admin_id,
-      salesAdminName: e.sales_admin_id ? (adminMap.get(e.sales_admin_id) ?? null) : null,
-      estimateFileUrl: e.estimate_file_url,
-      teacherName: e.teacher_name,
-      remarks: e.remarks,
-      groupChatLink: e.group_chat_link,
-      inflowSource: e.inflow_source,
-      paymentConfirmed: e.payment_confirmed,
-      photoStatus: eventRowIdList.length === 0 ? null : allPhotosOk,
-      photoSent: e.photo_sent,
-      reportSent: e.report_sent,
-      startRecruitAt: e.start_recruit_at,
+    // 이론상 eventIdsInMonth에 포함된 행사는 항상 날짜가 하나 이상 있지만, 방어적으로 폴백을 둔다.
+    const dates = datesByEvent.get(e.id) ?? [{ key: e.id, iso: e.event_start_at }]
+
+    for (const date of dates) {
+      rows.push({
+        no: 0,
+        id: e.id,
+        rowKey: `${e.id}__${date.key}`,
+        institutionId: e.institution_id,
+        region1: inst?.region1 ?? null,
+        region2: inst?.region2 ?? null,
+        category: inst?.institution_type ?? null,
+        institutionName: inst ? `${inst.name}${inst.is_deleted ? '(삭제됨)' : ''}` : null,
+        fieldAdminIds: e.field_admin_ids ?? [],
+        fieldAdminNames,
+        eventDate: date.iso,
+        targetGrade: e.target_grade,
+        budget: e.budget,
+        contractType: e.contract_type,
+        contractStatus: e.contract_status,
+        contractDelivered: e.contract_delivered,
+        eventCheckStatus: e.event_check_status,
+        suppliesStatus: e.supplies_status,
+        preNoticeSent: e.pre_notice_sent,
+        commAdminId: e.comm_admin_id,
+        commAdminName: e.comm_admin_id ? (adminMap.get(e.comm_admin_id) ?? null) : null,
+        recruitStatus: e.recruit_status,
+        recruitDelivered: e.recruit_delivered,
+        institutionRequestDelivered: e.institution_request_delivered,
+        crimeCheckMethod: e.crime_check_method,
+        crimeCheckNotified: e.crime_check_notified,
+        crimeCheckStatus: e.crime_check_status,
+        adminDocsDelivered: e.admin_docs_delivered,
+        salesAdminId: e.sales_admin_id,
+        salesAdminName: e.sales_admin_id ? (adminMap.get(e.sales_admin_id) ?? null) : null,
+        estimateFileUrl: e.estimate_file_url,
+        teacherName: e.teacher_name,
+        remarks: e.remarks,
+        groupChatLink: e.group_chat_link,
+        inflowSource: e.inflow_source,
+        paymentConfirmed: e.payment_confirmed,
+        photoStatus: eventRowIdList.length === 0 ? null : allPhotosOk,
+        photoSent: e.photo_sent,
+        reportSent: e.report_sent,
+        startRecruitAt: e.start_recruit_at,
+      })
     }
-  })
+  }
+  rows.forEach((r, i) => { r.no = i + 1 })
 
   return (
     <EventOperationsClient

@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase'
 export type EventOperationRow = {
   no: number
   id: string
+  rowKey: string
   institutionId: string | null
   region1: string | null
   region2: string | null
@@ -22,9 +23,7 @@ export type EventOperationRow = {
   institutionName: string | null
   fieldAdminIds: string[]
   fieldAdminNames: string[]
-  eventStartAt: string | null
-  eventEndAt: string | null
-  sessions: { startAt: string; endAt: string | null }[]
+  eventDate: string | null
   targetGrade: string | null
   budget: number | null
   contractType: string | null
@@ -87,27 +86,6 @@ function fmtDate(iso: string | null) {
   if (!iso) return null
   const d = new Date(iso)
   return `${d.getMonth() + 1}/${d.getDate()}`
-}
-
-function fmtTime(iso: string | null) {
-  if (!iso) return null
-  const d = new Date(iso)
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-}
-
-function fmtSession(s: { startAt: string; endAt: string | null }) {
-  const date = fmtDate(s.startAt)
-  const start = fmtTime(s.startAt)
-  const end = s.endAt ? fmtTime(s.endAt) : null
-  return `${date} ${start}${end ? `~${end}` : ''}`
-}
-
-function fmtEventDateRange(startAt: string | null, endAt: string | null) {
-  if (!startAt) return '-'
-  const s = fmtDate(startAt)
-  const e = endAt ? fmtDate(endAt) : null
-  if (!e || s === e) return s ?? '-'
-  return `${s} ~ ${e}`
 }
 
 function recruitDanger(status: string | null, startAt: string | null) {
@@ -792,13 +770,10 @@ export function EventOperationsClient({
             ) : (
               rows.map((row) => {
                 const danger = recruitDanger(row.recruitStatus, row.startRecruitAt)
-                const dateDisplay =
-                  row.sessions.length > 0
-                    ? row.sessions.map(fmtSession).join('\n')
-                    : fmtEventDateRange(row.eventStartAt, row.eventEndAt)
+                const dateDisplay = fmtDate(row.eventDate) ?? '-'
 
                 return (
-                  <tr key={row.id} className="hover:bg-gray-50">
+                  <tr key={row.rowKey} className="hover:bg-gray-50">
                     <td className={td}>{row.no}</td>
                     <td className={td}>{row.region1 ?? '-'}</td>
                     <td className={td}>{row.region2 ?? '-'}</td>
