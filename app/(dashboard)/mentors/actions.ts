@@ -22,6 +22,9 @@ export type MentorOccupationProgramRow = {
   occupation_name: string
   field_id: string | null
   field_name: string | null
+  // 자격증은 프로그램(mop) 단위가 아니라 직종 단위로 첨부되므로, 같은 occupation_id를 가진
+  // 모든 행에 동일한 목록이 들어간다 (private 버킷 경로 목록).
+  certificate_file_urls: string[]
 }
 
 export type MentorWithPrograms = {
@@ -79,12 +82,34 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
     belongsToNameMap.set(m.id, m.name)
   }
 
-  const { data: mopRows } = await supabase
-    .from('mentor_occupation_programs')
-    .select('id, mentor_id, occupation_program_unit_id, ppt_file_url, profile_file_url, lecture_fee_payer_id, material_fee_payer_id, program_score, school_request_note')
-    .in('mentor_id', mentorIds)
+  const [{ data: mopRows }, { data: certRows }] = await Promise.all([
+    supabase
+      .from('mentor_occupation_programs')
+      .select('id, mentor_id, occupation_program_unit_id, ppt_file_url, profile_file_url, lecture_fee_payer_id, material_fee_payer_id, program_score, school_request_note')
+      .in('mentor_id', mentorIds),
+    supabase
+      .from('mentor_occupation_certificates')
+      .select('mentor_id, occupation_id, file_url')
+      .in('mentor_id', mentorIds),
+  ])
 
-  if (!mopRows?.length) {
+  const certMap = new Map<string, string[]>()
+  for (const c of certRows ?? []) {
+    const key = `${c.mentor_id}:${c.occupation_id}`
+    const arr = certMap.get(key) ?? []
+    arr.push(c.file_url)
+    certMap.set(key, arr)
+  }
+  // 자격증만 올려두고 아직 프로그램은 하나도 등록하지 않은 직종도, 관리자 페이지에서
+  // 자격증을 확인할 수 있어야 하므로 별도로 챙긴다.
+  const certOnlyOccupationIdsByMentor = new Map<string, Set<string>>()
+  for (const c of certRows ?? []) {
+    const set = certOnlyOccupationIdsByMentor.get(c.mentor_id) ?? new Set<string>()
+    set.add(c.occupation_id)
+    certOnlyOccupationIdsByMentor.set(c.mentor_id, set)
+  }
+
+  if (!mopRows?.length && !certRows?.length) {
     return mentors.map((m) => ({
       ...m,
       mentor_type: getMentorType(m.id, m.belongs_to, subordinateOwnerIds),
@@ -93,11 +118,11 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
     }))
   }
 
-  const unitIds = [...new Set(mopRows.map((r) => r.occupation_program_unit_id).filter(Boolean))] as string[]
+  const unitIds = [...new Set((mopRows ?? []).map((r) => r.occupation_program_unit_id).filter(Boolean))] as string[]
   const feePayerIds = [
     ...new Set([
-      ...mopRows.map((r) => r.lecture_fee_payer_id),
-      ...mopRows.map((r) => r.material_fee_payer_id),
+      ...(mopRows ?? []).map((r) => r.lecture_fee_payer_id),
+      ...(mopRows ?? []).map((r) => r.material_fee_payer_id),
     ].filter(Boolean)),
   ] as string[]
 
@@ -123,7 +148,10 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
   const programMap = new Map((programs ?? []).map((p) => [p.id, p]))
 
   const occupationIds = [
-    ...new Set((programs ?? []).map((p) => p.occupation_id).filter(Boolean)),
+    ...new Set([
+      ...(programs ?? []).map((p) => p.occupation_id).filter(Boolean),
+      ...(certRows ?? []).map((c) => c.occupation_id),
+    ]),
   ] as string[]
 
   const { data: occupations } = await supabase
@@ -146,8 +174,8 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
     for (const f of fields ?? []) fieldMap.set(f.id, f.name)
   }
 
-  const mopByMentor = new Map<string, typeof mopRows>()
-  for (const row of mopRows) {
+  const mopByMentor = new Map<string, NonNullable<typeof mopRows>>()
+  for (const row of mopRows ?? []) {
     const arr = mopByMentor.get(row.mentor_id) ?? []
     arr.push(row)
     mopByMentor.set(row.mentor_id, arr)
@@ -178,8 +206,38 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
         occupation_name: occ?.name ?? '-',
         field_id: occ?.field_id ?? null,
         field_name: occ?.field_id ? (fieldMap.get(occ.field_id) ?? null) : null,
+        certificate_file_urls: prog?.occupation_id ? (certMap.get(`${m.id}:${prog.occupation_id}`) ?? []) : [],
       }
     })
+
+    // 자격증만 올려두고 프로그램은 아직 하나도 등록하지 않은 직종을, 프로그램 0개짜리
+    // 가짜 행으로 추가한다 (mop_id가 없어서 화면에서 삭제 버튼은 뜨지 않는다).
+    const coveredOccupationIds = new Set(occupationPrograms.map((p) => p.occupation_id))
+    for (const occupationId of certOnlyOccupationIdsByMentor.get(m.id) ?? []) {
+      if (coveredOccupationIds.has(occupationId)) continue
+      const occ = occupationMap.get(occupationId)
+      occupationPrograms.push({
+        mop_id: '',
+        occupation_program_unit_id: '',
+        ppt_file_url: null,
+        profile_file_url: null,
+        lecture_fee_payer_id: null,
+        lecture_fee_payer_name: null,
+        material_fee_payer_id: null,
+        material_fee_payer_name: null,
+        program_score: 0,
+        school_request_note: null,
+        program_title: '(등록된 프로그램 없음)',
+        school_level: null,
+        mentor_material_cost: null,
+        prep_by: null,
+        occupation_id: occupationId,
+        occupation_name: occ?.name ?? '-',
+        field_id: occ?.field_id ?? null,
+        field_name: occ?.field_id ? (fieldMap.get(occ.field_id) ?? null) : null,
+        certificate_file_urls: certMap.get(`${m.id}:${occupationId}`) ?? [],
+      })
+    }
 
     return {
       ...m,
@@ -387,6 +445,16 @@ export async function addMentorOccupationProgram(
     fieldName = fieldData?.name ?? null
   }
 
+  let certificateFileUrls: string[] = []
+  if (occData?.id) {
+    const { data: certRows } = await supabase
+      .from('mentor_occupation_certificates')
+      .select('file_url')
+      .eq('mentor_id', mentorId)
+      .eq('occupation_id', occData.id)
+    certificateFileUrls = (certRows ?? []).map((c) => c.file_url)
+  }
+
   revalidatePath('/mentors')
 
   return {
@@ -412,6 +480,7 @@ export async function addMentorOccupationProgram(
     occupation_name: occData?.name ?? '-',
     field_id: occData?.field_id ?? null,
     field_name: fieldName,
+    certificate_file_urls: certificateFileUrls,
   }
 }
 

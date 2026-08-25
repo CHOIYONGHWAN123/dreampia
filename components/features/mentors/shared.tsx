@@ -273,6 +273,47 @@ export function SignedFileCell({ bucket, path }: { bucket: string; path: string 
   )
 }
 
+// 자격증처럼 한 항목에 여러 private 파일이 붙을 수 있는 경우용. 각 파일을 번호로 구분해
+// 클릭할 때마다 개별적으로 signed URL을 발급받아 연다.
+export function SignedFileListCell({ bucket, paths }: { bucket: string; paths: string[] }) {
+  const [loadingIndex, setLoadingIndex] = useState<number | null>(null)
+
+  if (paths.length === 0) {
+    return <span className="text-gray-300 text-xs">없음</span>
+  }
+
+  const handleView = async (index: number) => {
+    setLoadingIndex(index)
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(paths[index], 60 * 5)
+      if (error || !data) {
+        alert('파일을 불러오지 못했습니다.')
+        return
+      }
+      window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
+    } finally {
+      setLoadingIndex(null)
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      {paths.map((_, i) => (
+        <button
+          key={i}
+          type="button"
+          disabled={loadingIndex === i}
+          onClick={() => handleView(i)}
+          className="text-primary-600 underline text-xs disabled:opacity-50"
+        >
+          {loadingIndex === i ? '불러오는 중…' : `보기 ${i + 1}`}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function FileCell({
   url,
   uploading,

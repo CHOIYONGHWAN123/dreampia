@@ -23,7 +23,7 @@ import {
   getMentorEventCount,
   deleteMentor,
 } from '@/app/(dashboard)/mentors/actions'
-import { AreaSelector, MentorSearchSelect, FileCell, SignedFileCell, SignedFileCellWithUpload, uploadFile, uploadPrivateFile } from './shared'
+import { AreaSelector, MentorSearchSelect, FileCell, SignedFileCell, SignedFileCellWithUpload, SignedFileListCell, uploadFile, uploadPrivateFile } from './shared'
 import { BANK_OPTIONS } from '@/constants/banks'
 import { ProgramUnitPicker, type ProgramSelectionValue } from './ProgramUnitPicker'
 import { LevelFileInputs } from './LevelFileInputs'
@@ -34,6 +34,7 @@ type OccupationGroup = {
   occupation_id: string
   occupation_name: string
   field_name: string | null
+  certificate_file_urls: string[]
   programs: MentorOccupationProgramRow[]
 }
 
@@ -46,6 +47,7 @@ function groupByOccupation(programs: MentorOccupationProgramRow[]): OccupationGr
         occupation_id: p.occupation_id,
         occupation_name: p.occupation_name,
         field_name: p.field_name,
+        certificate_file_urls: p.certificate_file_urls,
         programs: [],
       })
     }
@@ -692,7 +694,7 @@ function MentorRows({
         <tr className="hover:bg-gray-50 border-t-2 border-gray-300">
           <td className={`${td} font-semibold`} rowSpan={2}>{index + 1}</td>
           <td className={`${td} font-medium text-gray-800`} rowSpan={2}>{mentor.name}</td>
-          <td colSpan={12} className="px-2 py-1.5 text-center text-xs text-gray-300 border-b border-r border-gray-100">
+          <td colSpan={13} className="px-2 py-1.5 text-center text-xs text-gray-300 border-b border-r border-gray-100">
             등록된 프로그램 없음
           </td>
           {mentorInfoCells}
@@ -722,7 +724,7 @@ function MentorRows({
 
       rows.push(
         <tr
-          key={`${mentor.id}-${prog.mop_id}`}
+          key={`${mentor.id}-${prog.mop_id || `cert-only-${prog.occupation_id}`}`}
           className={`hover:bg-gray-50 ${isFirstInMentor ? 'border-t-2 border-gray-300' : ''}`}
         >
           {/* NO & 이름 */}
@@ -737,6 +739,9 @@ function MentorRows({
             <>
               <td className={td} rowSpan={group.programs.length}>{group.field_name ?? '-'}</td>
               <td className={td} rowSpan={group.programs.length}>{group.occupation_name}</td>
+              <td className={td} rowSpan={group.programs.length}>
+                <SignedFileListCell bucket="certificate" paths={group.certificate_file_urls} />
+              </td>
             </>
           )}
           {/* 교급 */}
@@ -745,15 +750,17 @@ function MentorRows({
           <td className={tdL}>
             <div className="flex items-center justify-between gap-1">
               <span className="flex-1">{prog.program_title}</span>
-              <button
-                type="button"
-                disabled={deletePending}
-                onClick={() => handleDeleteProgram(prog.mop_id)}
-                className="text-red-400 hover:text-red-600 disabled:opacity-40 text-xs leading-none px-0.5 shrink-0"
-                title="삭제"
-              >
-                ✕
-              </button>
+              {prog.mop_id && (
+                <button
+                  type="button"
+                  disabled={deletePending}
+                  onClick={() => handleDeleteProgram(prog.mop_id)}
+                  className="text-red-400 hover:text-red-600 disabled:opacity-40 text-xs leading-none px-0.5 shrink-0"
+                  title="삭제"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           </td>
           {/* 프로그램 점수 */}
@@ -832,6 +839,7 @@ const THEAD = [
   { label: '이름', w: 64 },
   { label: '분야', w: 64 },
   { label: '직종', w: 96 },
+  { label: '자격증', w: 70 },
   { label: '교급', w: 56 },
   { label: '프로그램명', w: 128 },
   { label: '프로그램 점수', w: 72 },

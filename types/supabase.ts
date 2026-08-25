@@ -1087,6 +1087,45 @@ export type Database = {
         }
         Relationships: []
       }
+      mentor_occupation_certificates: {
+        Row: {
+          created_at: string
+          file_url: string
+          id: string
+          mentor_id: string
+          occupation_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_url: string
+          id?: string
+          mentor_id: string
+          occupation_id: string
+        }
+        Update: {
+          created_at?: string
+          file_url?: string
+          id?: string
+          mentor_id?: string
+          occupation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentor_occupation_certificates_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "mentors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentor_occupation_certificates_occupation_id_fkey"
+            columns: ["occupation_id"]
+            isOneToOne: false
+            referencedRelation: "occupations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mentor_occupation_programs: {
         Row: {
           id: string
