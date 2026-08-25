@@ -14,6 +14,7 @@ import {
   INSTITUTION_TYPES,
 } from '@/lib/validations/event'
 import { createEvent, updateEvent } from '@/app/(dashboard)/events/actions'
+import { institutionTypeToSchoolLevel } from '@/lib/school-level'
 import type { EventDetailData, EventScheduleRow, EventRowDetailData, EventRowPhoto } from '@/app/(dashboard)/events/actions'
 import {
   EventProgramUnitSection,
@@ -866,6 +867,7 @@ export function EventForm({
       <div className="mt-8">
         <EventProgramUnitSection
           eventCategoryId={watch('event_category_id') ?? null}
+          schoolLevel={institutionTypeToSchoolLevel(watch('institution_type'))}
           fields={fields}
           occupations={occupations}
           programs={programs}

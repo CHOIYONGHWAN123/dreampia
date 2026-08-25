@@ -107,6 +107,7 @@ function joinDateTime(date: string, time: string): string {
 // 전달받아 분야 목록을 필터링하는 데만 사용한다(이 섹션 안에서 다시 선택하지 않는다).
 export function EventProgramUnitSection({
   eventCategoryId,
+  schoolLevel,
   fields,
   occupations,
   programs,
@@ -119,6 +120,8 @@ export function EventProgramUnitSection({
   photosByRow = {},
 }: {
   eventCategoryId: string | null
+  // 기관 유형(institution_type)에서 매핑된 교급 — 지정되면 이 교급의 유닛만 검색/드릴다운에 노출한다.
+  schoolLevel?: string | null
   fields: FieldOption[]
   occupations: OccupationOption[]
   programs: ProgramOption[]
@@ -158,11 +161,16 @@ export function EventProgramUnitSection({
     }
   }
 
+  const schoolLevelFilteredUnits = useMemo(
+    () => (schoolLevel ? units.filter((u) => u.school_level === schoolLevel) : units),
+    [units, schoolLevel]
+  )
+
   const searchResults = useMemo(() => {
     const q = search.trim()
     if (!q) return []
-    return units.filter((u) => u.title.includes(q)).slice(0, 8)
-  }, [units, search])
+    return schoolLevelFilteredUnits.filter((u) => u.title.includes(q)).slice(0, 8)
+  }, [schoolLevelFilteredUnits, search])
 
   const filteredFields = useMemo(
     () => (eventCategoryId ? fields.filter((f) => f.event_category_ids.includes(eventCategoryId)) : []),
@@ -177,8 +185,8 @@ export function EventProgramUnitSection({
     [programs, occupationId]
   )
   const filteredUnits = useMemo(
-    () => units.filter((u) => u.occupation_programs_id === programId),
-    [units, programId]
+    () => schoolLevelFilteredUnits.filter((u) => u.occupation_programs_id === programId),
+    [schoolLevelFilteredUnits, programId]
   )
 
   // 동일한 프로그램 유닛을 여러 일정(예: 같은 프로그램을 여러 날짜에 진행)으로 중복 추가할 수 있어야 하므로
@@ -318,6 +326,9 @@ export function EventProgramUnitSection({
         또는 분야 &gt; 직종 &gt; 프로그램 &gt; 프로그램 유닛 순으로 선택
         {!eventCategoryId && (
           <span className="text-red-400"> (상단에서 행사구분을 먼저 선택해주세요)</span>
+        )}
+        {schoolLevel && (
+          <span className="text-primary-500"> ({schoolLevel} 프로그램만 표시 중)</span>
         )}
       </div>
 
