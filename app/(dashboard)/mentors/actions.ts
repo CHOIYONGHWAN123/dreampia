@@ -40,9 +40,11 @@ export type MentorWithPrograms = {
   bank: string | null
   bank_account: string | null
   agreement_file_url: string | null
-  // 신분증 사진은 다른 파일과 달리 private 버킷(id-card)에 저장되어, 여기엔 공개 URL이 아니라
-  // 버킷 내부 경로만 들어있다. 화면에서 열람하려면 createSignedUrl()로 서명된 URL을 따로 받아야 한다.
+  // 신분증 사진/통장사본은 다른 파일과 달리 private 버킷(id-card/bankbook)에 저장되어,
+  // 여기엔 공개 URL이 아니라 버킷 내부 경로만 들어있다. 화면에서 열람하려면
+  // createSignedUrl()로 서명된 URL을 따로 받아야 한다.
   id_card_file_url: string | null
+  bankbook_file_url: string | null
   terms_agreed_at: string | null
   mentor_unique_code: string
   mentor_type: '소속강사' | '소속대표' | '개인'
@@ -56,7 +58,7 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
   const { data: mentors, error: mentorError } = await supabase
     .from('mentors')
     .select(
-      'id, user_id, name, phone, address, available_areas, is_available, is_authenticated, score, created_at, belongs_to, id_number, bank, bank_account, agreement_file_url, id_card_file_url, terms_agreed_at, mentor_unique_code'
+      'id, user_id, name, phone, address, available_areas, is_available, is_authenticated, score, created_at, belongs_to, id_number, bank, bank_account, agreement_file_url, id_card_file_url, bankbook_file_url, terms_agreed_at, mentor_unique_code'
     )
     .order('created_at', { ascending: true })
 

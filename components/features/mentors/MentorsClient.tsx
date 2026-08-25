@@ -575,6 +575,9 @@ function MentorRows({
           placeholder="계좌번호"
         />
       </td>
+      <td className={td} rowSpan={totalRows}>
+        <SignedFileCell bucket="bankbook" path={mentor.bankbook_file_url} />
+      </td>
       <td className={td} rowSpan={totalRows} style={{ minWidth: 110 }}>
         <EditInput
           value={editFields.phone}
@@ -817,6 +820,7 @@ const THEAD = [
   { label: '신분증', w: 60 },
   { label: '은행', w: 100 },
   { label: '계좌번호', w: 140 },
+  { label: '통장사본', w: 60 },
   { label: '핸드폰번호', w: 120 },
   { label: '멘토등록일', w: 80 },
   { label: '동의서', w: 80 },

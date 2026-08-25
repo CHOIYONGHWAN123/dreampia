@@ -1,4 +1,3 @@
-WARN: config section [inbucket] is deprecated. Please use [local_smtp] instead.
 export type Json =
   | string
   | number
@@ -1174,6 +1173,7 @@ export type Database = {
           available_areas: string[] | null
           bank: string | null
           bank_account: string | null
+          bankbook_file_url: string | null
           belongs_to: string | null
           created_at: string
           detail_address: string | null
@@ -1198,6 +1198,7 @@ export type Database = {
           available_areas?: string[] | null
           bank?: string | null
           bank_account?: string | null
+          bankbook_file_url?: string | null
           belongs_to?: string | null
           created_at?: string
           detail_address?: string | null
@@ -1222,6 +1223,7 @@ export type Database = {
           available_areas?: string[] | null
           bank?: string | null
           bank_account?: string | null
+          bankbook_file_url?: string | null
           belongs_to?: string | null
           created_at?: string
           detail_address?: string | null
