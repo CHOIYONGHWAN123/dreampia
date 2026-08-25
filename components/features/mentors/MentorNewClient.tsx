@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createMentor, type AddProgramSelectData, type CreateMentorProgramInput } from '@/app/(dashboard)/mentors/actions'
-import { AreaSelector, MentorSearchSelect, FileDropZone, uploadFile } from './shared'
+import { AreaSelector, MentorSearchSelect, FileDropZone, uploadFile, uploadPrivateFile } from './shared'
 import { DaumAddressButton } from './DaumAddressButton'
 import { FieldSectionForm } from './FieldSectionForm'
 import { createFieldSection, type FieldSectionState } from './new-mentor-types'
@@ -32,7 +32,9 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
   const [bankAccountNumber, setBankAccountNumber] = useState('')
   const [belongsTo, setBelongsTo] = useState('')
   const [availableAreas, setAvailableAreas] = useState<string[]>([])
-  const [agreementFile, setAgreementFile] = useState<File | null>(null)
+  const [criminalRecordConsentFile, setCriminalRecordConsentFile] = useState<File | null>(null)
+  const [adminInfoConsentFile, setAdminInfoConsentFile] = useState<File | null>(null)
+  const [contractFile, setContractFile] = useState<File | null>(null)
 
   const [fieldSections, setFieldSections] = useState<FieldSectionState[]>([createFieldSection()])
   const [submitting, setSubmitting] = useState(false)
@@ -68,10 +70,15 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
 
     setSubmitting(true)
     try {
-      let agreementFileUrl: string | null = null
-      if (agreementFile) {
-        agreementFileUrl = await uploadFile('agreement-file', mentorId, agreementFile)
-      }
+      const criminalRecordConsentFileUrl = criminalRecordConsentFile
+        ? await uploadPrivateFile('consent-file', mentorId, criminalRecordConsentFile)
+        : null
+      const adminInfoConsentFileUrl = adminInfoConsentFile
+        ? await uploadPrivateFile('consent-file', mentorId, adminInfoConsentFile)
+        : null
+      const contractFileUrl = contractFile
+        ? await uploadPrivateFile('consent-file', mentorId, contractFile)
+        : null
 
       const programs: CreateMentorProgramInput[] = []
       for (const section of fieldSections) {
@@ -109,7 +116,9 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
         bankAccount: bankAccountNumber.trim() || null,
         belongsTo: belongsTo || null,
         availableAreas: availableAreas.length ? availableAreas : null,
-        agreementFileUrl,
+        criminalRecordConsentFileUrl,
+        adminInfoConsentFileUrl,
+        contractFileUrl,
         programs,
       })
 
@@ -252,21 +261,18 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
         </div>
 
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <label className={labelCls}>동의서</label>
-            <a
-              href="/templates/agreement-form.hwpx"
-              download="드림피아_동의서_양식.hwpx"
-              className="text-xs text-primary-600 hover:text-primary-800 underline whitespace-nowrap"
-            >
-              양식 다운로드
-            </a>
-          </div>
-          <FileDropZone
-            file={agreementFile}
-            onChange={setAgreementFile}
-            accept=".hwp,.hwpx,.pdf,.doc,.docx"
-          />
+          <label className={labelCls}>성범죄 및 아동학대관련범죄 전력 조회 동의서</label>
+          <FileDropZone file={criminalRecordConsentFile} onChange={setCriminalRecordConsentFile} accept=".pdf" />
+        </div>
+
+        <div>
+          <label className={labelCls}>행정정보 공동이용 사전동의서</label>
+          <FileDropZone file={adminInfoConsentFile} onChange={setAdminInfoConsentFile} accept=".pdf" />
+        </div>
+
+        <div>
+          <label className={labelCls}>강사계약서</label>
+          <FileDropZone file={contractFile} onChange={setContractFile} accept=".pdf" />
         </div>
 
         <div>

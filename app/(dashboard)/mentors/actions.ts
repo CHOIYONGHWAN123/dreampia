@@ -39,12 +39,14 @@ export type MentorWithPrograms = {
   id_number: string | null
   bank: string | null
   bank_account: string | null
-  agreement_file_url: string | null
-  // 신분증 사진/통장사본은 다른 파일과 달리 private 버킷(id-card/bankbook)에 저장되어,
-  // 여기엔 공개 URL이 아니라 버킷 내부 경로만 들어있다. 화면에서 열람하려면
-  // createSignedUrl()로 서명된 URL을 따로 받아야 한다.
+  // 신분증 사진/통장사본/동의서 3종은 다른 파일과 달리 private 버킷(id-card/bankbook/
+  // consent-file)에 저장되어, 여기엔 공개 URL이 아니라 버킷 내부 경로만 들어있다.
+  // 화면에서 열람하려면 createSignedUrl()로 서명된 URL을 따로 받아야 한다.
   id_card_file_url: string | null
   bankbook_file_url: string | null
+  criminal_record_consent_file_url: string | null
+  admin_info_consent_file_url: string | null
+  contract_file_url: string | null
   terms_agreed_at: string | null
   mentor_unique_code: string
   mentor_type: '소속강사' | '소속대표' | '개인'
@@ -58,7 +60,7 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
   const { data: mentors, error: mentorError } = await supabase
     .from('mentors')
     .select(
-      'id, user_id, name, phone, address, available_areas, is_available, is_authenticated, score, created_at, belongs_to, id_number, bank, bank_account, agreement_file_url, id_card_file_url, bankbook_file_url, terms_agreed_at, mentor_unique_code'
+      'id, user_id, name, phone, address, available_areas, is_available, is_authenticated, score, created_at, belongs_to, id_number, bank, bank_account, id_card_file_url, bankbook_file_url, criminal_record_consent_file_url, admin_info_consent_file_url, contract_file_url, terms_agreed_at, mentor_unique_code'
     )
     .order('created_at', { ascending: true })
 
@@ -243,11 +245,22 @@ export async function updateMentorFields(
   revalidatePath('/mentors')
 }
 
-export async function updateMentorAgreementUrl(mentorId: string, url: string): Promise<void> {
+const CONSENT_FILE_COLUMNS = [
+  'criminal_record_consent_file_url',
+  'admin_info_consent_file_url',
+  'contract_file_url',
+] as const
+export type ConsentFileColumn = (typeof CONSENT_FILE_COLUMNS)[number]
+
+export async function updateMentorConsentFileUrl(
+  mentorId: string,
+  column: ConsentFileColumn,
+  path: string
+): Promise<void> {
   const supabase = await createServerSupabaseClient()
   const { error } = await supabase
     .from('mentors')
-    .update({ agreement_file_url: url })
+    .update({ [column]: path })
     .eq('id', mentorId)
   if (error) throw new Error(error.message)
   revalidatePath('/mentors')
@@ -465,7 +478,9 @@ export interface CreateMentorInput {
   bankAccount: string | null
   belongsTo: string | null
   availableAreas: string[] | null
-  agreementFileUrl: string | null
+  criminalRecordConsentFileUrl: string | null
+  adminInfoConsentFileUrl: string | null
+  contractFileUrl: string | null
   programs: CreateMentorProgramInput[]
 }
 
@@ -535,7 +550,9 @@ export async function createMentor(input: CreateMentorInput): Promise<void> {
     bank_account: input.bankAccount,
     belongs_to: input.belongsTo,
     available_areas: input.availableAreas,
-    agreement_file_url: input.agreementFileUrl,
+    criminal_record_consent_file_url: input.criminalRecordConsentFileUrl,
+    admin_info_consent_file_url: input.adminInfoConsentFileUrl,
+    contract_file_url: input.contractFileUrl,
   })
   if (error) throw new Error(error.message)
 

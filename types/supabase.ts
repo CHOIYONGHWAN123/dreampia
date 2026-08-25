@@ -1169,13 +1169,15 @@ export type Database = {
       mentors: {
         Row: {
           address: string | null
-          agreement_file_url: string | null
+          admin_info_consent_file_url: string | null
           available_areas: string[] | null
           bank: string | null
           bank_account: string | null
           bankbook_file_url: string | null
           belongs_to: string | null
+          contract_file_url: string | null
           created_at: string
+          criminal_record_consent_file_url: string | null
           detail_address: string | null
           id: string
           id_card_file_url: string | null
@@ -1194,13 +1196,15 @@ export type Database = {
         }
         Insert: {
           address?: string | null
-          agreement_file_url?: string | null
+          admin_info_consent_file_url?: string | null
           available_areas?: string[] | null
           bank?: string | null
           bank_account?: string | null
           bankbook_file_url?: string | null
           belongs_to?: string | null
+          contract_file_url?: string | null
           created_at?: string
+          criminal_record_consent_file_url?: string | null
           detail_address?: string | null
           id?: string
           id_card_file_url?: string | null
@@ -1219,13 +1223,15 @@ export type Database = {
         }
         Update: {
           address?: string | null
-          agreement_file_url?: string | null
+          admin_info_consent_file_url?: string | null
           available_areas?: string[] | null
           bank?: string | null
           bank_account?: string | null
           bankbook_file_url?: string | null
           belongs_to?: string | null
+          contract_file_url?: string | null
           created_at?: string
+          criminal_record_consent_file_url?: string | null
           detail_address?: string | null
           id?: string
           id_card_file_url?: string | null

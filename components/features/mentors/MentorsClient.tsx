@@ -13,7 +13,7 @@ import {
   updateMentorAvailable,
   updateMentorAuthenticated,
   updateMentorFields,
-  updateMentorAgreementUrl,
+  updateMentorConsentFileUrl,
   updateMopPptUrl,
   updateMopProfileUrl,
   updateMopProgramScore,
@@ -23,7 +23,7 @@ import {
   getMentorEventCount,
   deleteMentor,
 } from '@/app/(dashboard)/mentors/actions'
-import { AreaSelector, MentorSearchSelect, FileCell, SignedFileCell, uploadFile } from './shared'
+import { AreaSelector, MentorSearchSelect, FileCell, SignedFileCell, SignedFileCellWithUpload, uploadFile, uploadPrivateFile } from './shared'
 import { BANK_OPTIONS } from '@/constants/banks'
 import { ProgramUnitPicker, type ProgramSelectionValue } from './ProgramUnitPicker'
 import { LevelFileInputs } from './LevelFileInputs'
@@ -379,8 +379,10 @@ function MentorRows({
     Object.fromEntries(mentor.occupation_programs.map((p) => [p.mop_id, p.profile_file_url]))
   )
 
-  const [agreementUrl, setAgreementUrl] = useState(mentor.agreement_file_url)
-  const [uploadingAgreement, setUploadingAgreement] = useState(false)
+  const [criminalRecordConsentPath, setCriminalRecordConsentPath] = useState(mentor.criminal_record_consent_file_url)
+  const [adminInfoConsentPath, setAdminInfoConsentPath] = useState(mentor.admin_info_consent_file_url)
+  const [contractPath, setContractPath] = useState(mentor.contract_file_url)
+  const [uploadingConsent, setUploadingConsent] = useState({ criminalRecord: false, adminInfo: false, contract: false })
   const [uploadingPpt, setUploadingPpt] = useState<Record<string, boolean>>({})
   const [uploadingProfile, setUploadingProfile] = useState<Record<string, boolean>>({})
   const [showAddModal, setShowAddModal] = useState(false)
@@ -482,14 +484,19 @@ function MentorRows({
     }
   }
 
-  const handleAgreementUpload = async (file: File) => {
-    setUploadingAgreement(true)
+  const handleConsentUpload = async (
+    key: 'criminalRecord' | 'adminInfo' | 'contract',
+    column: 'criminal_record_consent_file_url' | 'admin_info_consent_file_url' | 'contract_file_url',
+    setPath: (path: string) => void,
+    file: File
+  ) => {
+    setUploadingConsent((prev) => ({ ...prev, [key]: true }))
     try {
-      const url = await uploadFile('agreement-file', mentor.id, file)
-      await updateMentorAgreementUrl(mentor.id, url)
-      setAgreementUrl(url)
+      const path = await uploadPrivateFile('consent-file', mentor.id, file)
+      await updateMentorConsentFileUrl(mentor.id, column, path)
+      setPath(path)
     } finally {
-      setUploadingAgreement(false)
+      setUploadingConsent((prev) => ({ ...prev, [key]: false }))
     }
   }
 
@@ -589,7 +596,32 @@ function MentorRows({
         {mentor.created_at ? mentor.created_at.slice(0, 10) : '-'}
       </td>
       <td className={td} rowSpan={totalRows}>
-        <FileCell url={agreementUrl} uploading={uploadingAgreement} onUpload={handleAgreementUpload} />
+        <SignedFileCellWithUpload
+          bucket="consent-file"
+          path={criminalRecordConsentPath}
+          uploading={uploadingConsent.criminalRecord}
+          onUpload={(file) =>
+            handleConsentUpload('criminalRecord', 'criminal_record_consent_file_url', setCriminalRecordConsentPath, file)
+          }
+        />
+      </td>
+      <td className={td} rowSpan={totalRows}>
+        <SignedFileCellWithUpload
+          bucket="consent-file"
+          path={adminInfoConsentPath}
+          uploading={uploadingConsent.adminInfo}
+          onUpload={(file) =>
+            handleConsentUpload('adminInfo', 'admin_info_consent_file_url', setAdminInfoConsentPath, file)
+          }
+        />
+      </td>
+      <td className={td} rowSpan={totalRows}>
+        <SignedFileCellWithUpload
+          bucket="consent-file"
+          path={contractPath}
+          uploading={uploadingConsent.contract}
+          onUpload={(file) => handleConsentUpload('contract', 'contract_file_url', setContractPath, file)}
+        />
       </td>
       <td className={td} rowSpan={totalRows}>
         <input
@@ -823,7 +855,9 @@ const THEAD = [
   { label: '통장사본', w: 60 },
   { label: '핸드폰번호', w: 120 },
   { label: '멘토등록일', w: 80 },
-  { label: '동의서', w: 80 },
+  { label: '성범죄조회동의서', w: 90 },
+  { label: '행정정보동의서', w: 90 },
+  { label: '강사계약서', w: 90 },
   { label: '강의가능', w: 60 },
   { label: '멘토등록', w: 60 },
   { label: '수정', w: 64 },
