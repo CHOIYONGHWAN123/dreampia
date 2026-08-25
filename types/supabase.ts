@@ -48,6 +48,7 @@ export type Database = {
           id: string
           is_authenticated: boolean
           is_comm: boolean
+          is_deleted: boolean
           is_sales: boolean
           is_super: boolean
           name: string
@@ -61,6 +62,7 @@ export type Database = {
           id: string
           is_authenticated?: boolean
           is_comm?: boolean
+          is_deleted?: boolean
           is_sales?: boolean
           is_super?: boolean
           name: string
@@ -74,6 +76,7 @@ export type Database = {
           id?: string
           is_authenticated?: boolean
           is_comm?: boolean
+          is_deleted?: boolean
           is_sales?: boolean
           is_super?: boolean
           name?: string

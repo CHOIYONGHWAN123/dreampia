@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { approveAdmin, updateAdminFields, deactivateAdmin, type AdminRow } from '@/app/(dashboard)/admins/actions'
+import { approveAdmin, updateAdminFields, deleteAdmin, restoreAdmin, type AdminRow } from '@/app/(dashboard)/admins/actions'
 
 function fmtDate(iso: string | null) {
   if (!iso) return '-'
@@ -14,6 +14,12 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [showDeleted, setShowDeleted] = useState(false)
+
+  const visibleAdmins = useMemo(
+    () => (showDeleted ? admins : admins.filter((a) => !a.isDeleted)),
+    [admins, showDeleted]
+  )
 
   const runAction = (id: string, action: () => Promise<void>) => {
     setBusyId(id)
@@ -42,9 +48,13 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
     runAction(id, () => updateAdminFields(id, { [field]: value }))
   }
 
-  const handleDeactivate = (id: string, name: string) => {
-    if (!confirm(`"${name}" 관리자를 비활성화하시겠습니까?\n로그인 및 시스템 접근이 즉시 차단됩니다. (승인여부를 다시 체크하면 되돌릴 수 있습니다)`)) return
-    runAction(id, () => deactivateAdmin(id))
+  const handleDelete = (id: string, name: string) => {
+    if (!confirm(`"${name}" 관리자를 삭제하시겠습니까?\n로그인 및 시스템 접근이 즉시 차단되고 목록에서 제외됩니다. ("삭제된 관리자 보기"에서 복구할 수 있습니다)`)) return
+    runAction(id, () => deleteAdmin(id))
+  }
+
+  const handleRestore = (id: string) => {
+    runAction(id, () => restoreAdmin(id))
   }
 
   const td = 'px-4 py-2.5 text-center text-gray-800 border-b border-gray-100'
@@ -56,9 +66,18 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">관리자 관리</h1>
           <p className="text-sm text-gray-400 mt-1">
-            등록된 관리자 <span className="font-bold text-primary-600">{admins.length}</span>명
+            등록된 관리자 <span className="font-bold text-primary-600">{visibleAdmins.length}</span>명
           </p>
         </div>
+        <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={showDeleted}
+            onChange={(e) => setShowDeleted(e.target.checked)}
+            className="cursor-pointer accent-primary-600"
+          />
+          삭제된 관리자 보기
+        </label>
       </div>
 
       <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
@@ -75,18 +94,18 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
               <th className={th}>승인자</th>
               <th className={th}>승인일</th>
               <th className={th}>가입일</th>
-              <th className={th}>비활성화</th>
+              <th className={th}>삭제</th>
             </tr>
           </thead>
           <tbody>
-            {admins.length === 0 ? (
+            {visibleAdmins.length === 0 ? (
               <tr>
                 <td colSpan={11} className="py-16 text-center text-gray-400">
                   등록된 관리자가 없습니다.
                 </td>
               </tr>
             ) : (
-              admins.map((a) => {
+              visibleAdmins.map((a) => {
                 const isSelf = a.id === currentAdminId
                 const busy = isPending && busyId === a.id
                 return (
@@ -94,6 +113,7 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
                     <td className={`${td} text-left font-medium text-gray-900`}>
                       {a.name}
                       {isSelf && <span className="ml-1 text-xs text-gray-400">(나)</span>}
+                      {a.isDeleted && <span className="ml-1 text-xs text-red-400">(삭제됨)</span>}
                     </td>
                     <td className={`${td} text-left`}>{a.email}</td>
                     <td className={td}>{a.phone ?? '-'}</td>
@@ -150,16 +170,23 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
                     <td className={td}>
                       {isSelf ? (
                         <span className="text-xs text-gray-300">-</span>
-                      ) : !a.isAuthenticated ? (
-                        <span className="text-xs text-gray-300">비활성 상태</span>
+                      ) : a.isDeleted ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => handleRestore(a.id)}
+                          className="px-2 py-0.5 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 disabled:opacity-50 whitespace-nowrap"
+                        >
+                          복구
+                        </button>
                       ) : (
                         <button
                           type="button"
                           disabled={busy}
-                          onClick={() => handleDeactivate(a.id, a.name)}
+                          onClick={() => handleDelete(a.id, a.name)}
                           className="px-2 py-0.5 text-xs border border-red-300 text-red-500 rounded-full hover:bg-red-50 disabled:opacity-50 whitespace-nowrap"
                         >
-                          비활성화
+                          삭제
                         </button>
                       )}
                     </td>
