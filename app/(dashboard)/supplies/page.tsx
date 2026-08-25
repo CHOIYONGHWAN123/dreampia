@@ -8,7 +8,7 @@ export default async function SuppliesPage() {
     supabase.from('fields').select('id, name').order('name'),
     supabase.from('occupations').select('id, name, field_id').order('name'),
     supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
-    supabase.from('occupation_program_unit').select('id, title, occupation_programs_id').order('title'),
+    supabase.from('occupation_program_unit').select('id, title, school_level, occupation_programs_id').order('title'),
     supabase.from('supplies').select('id, occupation_program_unit_id, qty_per_person, kit_threshold, max_daily_stock, is_consumable, memo'),
     supabase.from('supply_logs').select('supply_id, stock_type, delta'),
     supabase.from('event_rows').select('occupation_program_unit_id, headcount, events(event_start_at, event_end_at)'),
@@ -69,6 +69,7 @@ export default async function SuppliesPage() {
     return {
       id: u.id,
       title: u.title,
+      schoolLevel: u.school_level,
       fieldId: field?.id ?? '',
       fieldName: field?.name ?? '-',
       occupationId: occ?.id ?? '',

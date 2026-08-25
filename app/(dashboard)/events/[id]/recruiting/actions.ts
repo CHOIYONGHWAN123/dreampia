@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { revalidatePath } from 'next/cache'
+import { formatUnitTitle } from '@/lib/format-unit-title'
 
 export type RecruitingEventRow = {
   id: string
@@ -77,8 +78,10 @@ export async function getRecruitingData(eventId: string): Promise<RecruitingData
 
   const [unitsRes, programsRes, mopRes, invEventRowsRes] = await Promise.all([
     unitIds.length > 0
-      ? supabase.from('occupation_program_unit').select('id, title, occupation_programs_id').in('id', unitIds)
-      : Promise.resolve({ data: [] as { id: string; title: string; occupation_programs_id: string | null }[] }),
+      ? supabase.from('occupation_program_unit').select('id, title, school_level, occupation_programs_id').in('id', unitIds)
+      : Promise.resolve({
+          data: [] as { id: string; title: string; school_level: string | null; occupation_programs_id: string | null }[],
+        }),
     unitIds.length > 0
       ? supabase.from('occupation_programs').select('id, occupation_id')
       : Promise.resolve({ data: [] as { id: string; occupation_id: string | null }[] }),
@@ -247,7 +250,7 @@ export async function getRecruitingData(eventId: string): Promise<RecruitingData
       target: r.target,
       headcount: r.headcount,
       unitId: r.occupation_program_unit_id,
-      unitTitle: unit?.title ?? '-',
+      unitTitle: unit ? formatUnitTitle(unit.title, unit.school_level) : '-',
       occupationName: occupation?.name ?? '-',
       mentorId: r.mentor_id,
       mentorName: r.mentor_id ? mentorMap.get(r.mentor_id)?.name ?? null : null,

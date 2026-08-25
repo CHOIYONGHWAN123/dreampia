@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { generateId } from '@/lib/generate-id'
 import { formatScoreWithGrade } from '@/lib/mentor-grade'
+import { formatUnitTitle } from '@/lib/format-unit-title'
 
 export type EventCategoryOption = { id: string; name: string }
 export type FieldOption = { id: string; name: string; event_category_ids: string[] }
@@ -12,6 +13,7 @@ export type UnitOption = {
   id: string
   title: string
   occupation_programs_id: string | null
+  school_level: string | null
   school_request_note: string | null
   final_product_available: boolean | null
   is_delivery_available: boolean | null
@@ -34,6 +36,7 @@ export type SelectedProgramUnit = {
   rowId: string | null
   unitId: string
   title: string
+  schoolLevel: string | null
   fieldName: string
   occupationName: string
   programName: string
@@ -188,6 +191,7 @@ export function EventProgramUnitSection({
         rowId: null,
         unitId: unit.id,
         title: unit.title,
+        schoolLevel: unit.school_level,
         ...buildPath(unit),
         schoolRequestNote: unit.school_request_note,
         schoolRequestResponse: '',
@@ -299,7 +303,7 @@ export function EventProgramUnitSection({
                   }}
                   className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
                 >
-                  <div className="font-medium text-gray-800">{u.title}</div>
+                  <div className="font-medium text-gray-800">{formatUnitTitle(u.title, u.school_level)}</div>
                   <div className="text-xs text-gray-400 mt-0.5">
                     {path.fieldName} &gt; {path.occupationName} &gt; {path.programName}
                   </div>
@@ -372,7 +376,7 @@ export function EventProgramUnitSection({
         >
           <option value="">프로그램 유닛</option>
           {filteredUnits.map((u) => (
-            <option key={u.id} value={u.id}>{u.title}</option>
+            <option key={u.id} value={u.id}>{formatUnitTitle(u.title, u.school_level)}</option>
           ))}
         </select>
         <button
@@ -541,7 +545,7 @@ export function EventProgramUnitSection({
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">{v.occupationName}</td>
                     <td className="px-2 py-1.5 align-top">
-                      <div className="font-medium text-gray-800">{v.title}</div>
+                      <div className="font-medium text-gray-800">{formatUnitTitle(v.title, v.schoolLevel)}</div>
                       <div className="text-xs text-gray-400">
                         {v.fieldName} &gt; {v.programName}
                       </div>

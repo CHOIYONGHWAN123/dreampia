@@ -100,6 +100,7 @@ function buildInitialProgramUnits(
       rowId: r.id,
       unitId: r.occupation_program_unit_id ?? '',
       title: unit?.title ?? '-',
+      schoolLevel: unit?.school_level ?? null,
       ...path,
       schoolRequestNote: unit?.school_request_note ?? null,
       schoolRequestResponse: r.school_request_response ?? '',

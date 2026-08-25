@@ -21,7 +21,7 @@ export default async function CounterPage() {
     supabase.from('institutions').select('id, name, created_at').eq('is_deleted', false),
     supabase.from('events').select('id, name, event_category_id, event_start_at'),
     supabase.from('event_rows').select('id, event_id, occupation_program_unit_id'),
-    supabase.from('occupation_program_unit').select('id, title, occupation_programs_id'),
+    supabase.from('occupation_program_unit').select('id, title, school_level, occupation_programs_id'),
     supabase.from('occupation_programs').select('id, name, occupation_id'),
     supabase.from('occupations').select('id, name, field_id'),
     supabase.from('fields').select('id, name'),

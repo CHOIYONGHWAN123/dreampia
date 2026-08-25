@@ -84,6 +84,7 @@ export type EventProgramSelectData = {
     id: string
     title: string
     occupation_programs_id: string | null
+    school_level: string | null
     school_request_note: string | null
     final_product_available: boolean | null
     is_delivery_available: boolean | null
@@ -202,7 +203,7 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
     supabase
       .from('occupation_program_unit')
       .select(
-        'id, title, occupation_programs_id, school_request_note, final_product_available, is_delivery_available, mentor_material_cost, dreampia_material_cost'
+        'id, title, occupation_programs_id, school_level, school_request_note, final_product_available, is_delivery_available, mentor_material_cost, dreampia_material_cost'
       )
       .order('title'),
     supabase

@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { SupplyLogsClient } from '@/components/features/supplies/SupplyLogsClient'
+import { formatUnitTitle } from '@/lib/format-unit-title'
 
 export default async function SupplyLogsPage({
   searchParams,
@@ -21,11 +22,13 @@ export default async function SupplyLogsPage({
   const [logsRes, suppliesRes, unitsRes] = await Promise.all([
     logsQuery,
     supabase.from('supplies').select('id, occupation_program_unit_id'),
-    supabase.from('occupation_program_unit').select('id, title'),
+    supabase.from('occupation_program_unit').select('id, title, school_level'),
   ])
 
   // ── 기본 맵 구성 ─────────────────────────────────────────────────
-  const unitMap = new Map((unitsRes.data ?? []).map((u) => [u.id, u.title]))
+  const unitMap = new Map(
+    (unitsRes.data ?? []).map((u) => [u.id, formatUnitTitle(u.title, u.school_level)])
+  )
   const supplyToUnitId = new Map((suppliesRes.data ?? []).map((s) => [s.id, s.occupation_program_unit_id]))
 
   // ── event_row_id가 있는 로그만 event_rows 조회 ──────────────────

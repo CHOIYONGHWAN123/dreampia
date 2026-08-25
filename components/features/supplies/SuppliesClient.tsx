@@ -4,10 +4,12 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { SupplyFormPopup } from "./SupplyFormPopup";
 import { StockAdjustPopup } from "./StockAdjustPopup";
+import { formatUnitTitle } from "@/lib/format-unit-title";
 
 export type UnitWithSupply = {
   id: string;
   title: string;
+  schoolLevel: string | null;
   fieldId: string;
   fieldName: string;
   occupationId: string;
@@ -303,7 +305,7 @@ export function SuppliesClient({ units, fields }: Props) {
                     <td className={td}>{u.occupationName}</td>
                     <td className={td}>{u.programName}</td>
                     <td className={`${td} text-left font-medium text-gray-800`}>
-                      {u.title}
+                      {formatUnitTitle(u.title, u.schoolLevel)}
                     </td>
 
                     {hasSup ? (
@@ -357,7 +359,7 @@ export function SuppliesClient({ units, fields }: Props) {
                           onClick={() =>
                             setAdjustPopup({
                               supplyId: u.supply!.id,
-                              unitTitle: u.title,
+                              unitTitle: formatUnitTitle(u.title, u.schoolLevel),
                               totalStock: u.totalStock,
                               kitStock: u.kitStock,
                             })
@@ -375,7 +377,7 @@ export function SuppliesClient({ units, fields }: Props) {
                         onClick={() =>
                           setPopup({
                             unitId: u.id,
-                            unitTitle: u.title,
+                            unitTitle: formatUnitTitle(u.title, u.schoolLevel),
                             supply: u.supply,
                           })
                         }

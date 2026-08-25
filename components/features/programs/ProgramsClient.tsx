@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { formatUnitTitle } from '@/lib/format-unit-title'
 import {
   getEventCategories,
   createEventCategory,
@@ -366,7 +367,7 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
                   key={unit.id}
                   className="flex items-start justify-between gap-2 px-3 py-2 border-b border-gray-100 last:border-b-0"
                 >
-                  <span className="text-sm flex-1 min-w-0">{unit.title}</span>
+                  <span className="text-sm flex-1 min-w-0">{formatUnitTitle(unit.title, unit.school_level)}</span>
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => setUnitPopup({ open: true, unit })}

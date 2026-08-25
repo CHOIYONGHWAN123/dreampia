@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { formatUnitTitle } from '@/lib/format-unit-title'
 
 type EventRow = { id: string; event_category_id: string | null; event_start_at: string | null }
 type EventRowRow = { id: string; event_id: string | null; occupation_program_unit_id: string | null }
-type UnitRow = { id: string; title: string; occupation_programs_id: string | null }
+type UnitRow = { id: string; title: string; school_level: string | null; occupation_programs_id: string | null }
 type ProgramRow = { id: string; name: string; occupation_id: string | null }
 type OccupationRow = { id: string; name: string; field_id: string | null }
 type FieldRow = { id: string; name: string }
@@ -95,7 +96,7 @@ export function CategoryDrilldownChart({
           programId: program.id,
           programName: program.name,
           unitId: unit.id,
-          unitName: unit.title,
+          unitName: formatUnitTitle(unit.title, unit.school_level),
         },
       ]
     })
