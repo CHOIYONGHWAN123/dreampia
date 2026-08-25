@@ -37,6 +37,8 @@ interface Props {
   fields: NavOption[];
 }
 
+const PAGE_SIZE = 50;
+
 const STATUS_CLS = {
   safe: "inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-primary-50 text-primary-600",
   danger: "inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-50 text-red-500",
@@ -74,6 +76,7 @@ export function SuppliesClient({ units, fields }: Props) {
   const [filterFieldId, setFilterFieldId] = useState("");
   const [filterOccupationId, setFilterOccupationId] = useState("");
   const [filterProgramId, setFilterProgramId] = useState("");
+  const [page, setPage] = useState(1);
   const [popup, setPopup] = useState<{
     unitId: string;
     unitTitle: string;
@@ -146,6 +149,18 @@ export function SuppliesClient({ units, fields }: Props) {
     });
   }, [units, search, filterFieldId, filterOccupationId, filterProgramId]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage]
+  );
+
+  const changeFilter = (fn: () => void) => {
+    fn();
+    setPage(1);
+  };
+
   const thCls =
     "px-3 py-2.5 text-xs font-bold text-primary-700 text-center bg-primary-50 border-b border-r border-primary-100 whitespace-nowrap";
   const td =
@@ -169,18 +184,20 @@ export function SuppliesClient({ units, fields }: Props) {
         <input
           type="text"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => changeFilter(() => setSearch(e.target.value))}
           placeholder="분야 / 직종 / 프로그램 / 유닛명 검색"
           className="border border-gray-200 rounded-full px-4 py-1.5 text-sm outline-none focus:border-primary-400 w-64"
         />
 
         <select
           value={filterFieldId}
-          onChange={(e) => {
-            setFilterFieldId(e.target.value);
-            setFilterOccupationId("");
-            setFilterProgramId("");
-          }}
+          onChange={(e) =>
+            changeFilter(() => {
+              setFilterFieldId(e.target.value);
+              setFilterOccupationId("");
+              setFilterProgramId("");
+            })
+          }
           className="border border-gray-200 rounded-full px-3 py-1.5 text-sm bg-white outline-none focus:border-primary-400"
         >
           <option value="">분야 전체</option>
@@ -193,10 +210,12 @@ export function SuppliesClient({ units, fields }: Props) {
 
         <select
           value={filterOccupationId}
-          onChange={(e) => {
-            setFilterOccupationId(e.target.value);
-            setFilterProgramId("");
-          }}
+          onChange={(e) =>
+            changeFilter(() => {
+              setFilterOccupationId(e.target.value);
+              setFilterProgramId("");
+            })
+          }
           disabled={!filterFieldId}
           className="border border-gray-200 rounded-full px-3 py-1.5 text-sm bg-white outline-none focus:border-primary-400 disabled:bg-gray-50 disabled:text-gray-400"
         >
@@ -210,7 +229,7 @@ export function SuppliesClient({ units, fields }: Props) {
 
         <select
           value={filterProgramId}
-          onChange={(e) => setFilterProgramId(e.target.value)}
+          onChange={(e) => changeFilter(() => setFilterProgramId(e.target.value))}
           disabled={!filterOccupationId}
           className="border border-gray-200 rounded-full px-3 py-1.5 text-sm bg-white outline-none focus:border-primary-400 disabled:bg-gray-50 disabled:text-gray-400"
         >
@@ -295,12 +314,12 @@ export function SuppliesClient({ units, fields }: Props) {
                 </td>
               </tr>
             ) : (
-              filtered.map((u, i) => {
+              paginated.map((u, i) => {
                 const freeStock = u.totalStock - u.kitStock;
                 const hasSup = !!u.supply;
                 return (
                   <tr key={u.id} className="hover:bg-gray-50">
-                    <td className={td}>{i + 1}</td>
+                    <td className={td}>{(currentPage - 1) * PAGE_SIZE + i + 1}</td>
                     <td className={td}>{u.fieldName}</td>
                     <td className={td}>{u.occupationName}</td>
                     <td className={td}>{u.programName}</td>
@@ -393,6 +412,47 @@ export function SuppliesClient({ units, fields }: Props) {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1 mt-6">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="inline-flex items-center justify-center w-9 h-9 text-sm border rounded-full transition-colors border-gray-200 text-gray-600 hover:bg-gray-50 disabled:border-gray-100 disabled:text-gray-300 disabled:pointer-events-none"
+          >
+            ‹
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+            .map((p, idx, arr) => (
+              <span key={p} className="flex items-center">
+                {idx > 0 && arr[idx - 1] !== p - 1 && (
+                  <span className="px-1 text-gray-400 text-sm">···</span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPage(p)}
+                  className={`inline-flex items-center justify-center w-9 h-9 text-sm border rounded-full transition-colors ${
+                    p === currentPage
+                      ? "bg-primary-500 text-white border-primary-500 font-bold"
+                      : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {p}
+                </button>
+              </span>
+            ))}
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="inline-flex items-center justify-center w-9 h-9 text-sm border rounded-full transition-colors border-gray-200 text-gray-600 hover:bg-gray-50 disabled:border-gray-100 disabled:text-gray-300 disabled:pointer-events-none"
+          >
+            ›
+          </button>
+        </div>
+      )}
 
       {popup && (
         <SupplyFormPopup
