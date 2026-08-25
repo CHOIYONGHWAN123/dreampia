@@ -42,6 +42,7 @@ import {
 import type { PptTemplateData } from '@/app/(dashboard)/ppt-templates/actions'
 import { NameColumn } from './NameColumn'
 import { FieldColumn } from './FieldColumn'
+import { EventCategoryColumn } from './EventCategoryColumn'
 import { UnitFormPopup } from './UnitFormPopup'
 
 interface Props {
@@ -121,12 +122,21 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
   }
 
   // ── 행사구분 ──
-  const handleAddEventCategory = async (name: string) => {
-    await createEventCategory(name)
+  const handleAddEventCategory = async (
+    name: string,
+    elementaryPptTemplateId: string | null,
+    secondaryPptTemplateId: string | null
+  ) => {
+    await createEventCategory(name, elementaryPptTemplateId, secondaryPptTemplateId)
     setEventCategories(await getEventCategories())
   }
-  const handleEditEventCategory = async (id: string, name: string) => {
-    await updateEventCategory(id, name)
+  const handleEditEventCategory = async (
+    id: string,
+    name: string,
+    elementaryPptTemplateId: string | null,
+    secondaryPptTemplateId: string | null
+  ) => {
+    await updateEventCategory(id, name, elementaryPptTemplateId, secondaryPptTemplateId)
     setEventCategories(await getEventCategories())
   }
   const handleDeleteEventCategory = async (id: string) => {
@@ -280,9 +290,10 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
 
       <div className="flex gap-4 overflow-x-auto pb-2">
         <div className="flex flex-col w-72 shrink-0">
-          <NameColumn
+          <EventCategoryColumn
             title="행사구분"
             items={eventCategories}
+            pptTemplates={pptTemplates}
             selectedId={viewingUnassigned ? null : selectedEventCategoryId}
             onSelect={selectEventCategory}
             onAdd={handleAddEventCategory}

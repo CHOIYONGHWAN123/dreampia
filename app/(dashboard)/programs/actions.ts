@@ -8,6 +8,8 @@ import { revalidatePath } from 'next/cache'
 export interface EventCategoryData {
   id: string
   name: string
+  elementary_ppt_template_id: string | null
+  secondary_ppt_template_id: string | null
 }
 
 export interface FieldData {
@@ -63,21 +65,44 @@ export interface UnitFormPayload {
 
 export async function getEventCategories(): Promise<EventCategoryData[]> {
   const supabase = await createServerSupabaseClient()
-  const { data, error } = await supabase.from('event_categories').select('id, name').order('sort_order')
+  const { data, error } = await supabase
+    .from('event_categories')
+    .select('id, name, elementary_ppt_template_id, secondary_ppt_template_id')
+    .order('sort_order')
   if (error) throw new Error(error.message)
   return data || []
 }
 
-export async function createEventCategory(name: string): Promise<void> {
+export async function createEventCategory(
+  name: string,
+  elementaryPptTemplateId: string | null,
+  secondaryPptTemplateId: string | null
+): Promise<void> {
   const supabase = await createServerSupabaseClient()
-  const { error } = await supabase.from('event_categories').insert({ name })
+  const { error } = await supabase.from('event_categories').insert({
+    name,
+    elementary_ppt_template_id: elementaryPptTemplateId,
+    secondary_ppt_template_id: secondaryPptTemplateId,
+  })
   if (error) throw new Error(error.message)
   revalidatePath('/programs')
 }
 
-export async function updateEventCategory(id: string, name: string): Promise<void> {
+export async function updateEventCategory(
+  id: string,
+  name: string,
+  elementaryPptTemplateId: string | null,
+  secondaryPptTemplateId: string | null
+): Promise<void> {
   const supabase = await createServerSupabaseClient()
-  const { error } = await supabase.from('event_categories').update({ name }).eq('id', id)
+  const { error } = await supabase
+    .from('event_categories')
+    .update({
+      name,
+      elementary_ppt_template_id: elementaryPptTemplateId,
+      secondary_ppt_template_id: secondaryPptTemplateId,
+    })
+    .eq('id', id)
   if (error) throw new Error(error.message)
   revalidatePath('/programs')
 }
