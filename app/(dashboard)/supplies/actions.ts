@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { revalidatePath } from 'next/cache'
 
 export async function createSupply(payload: {
-  occupation_program_unit_id: string
+  occupation_programs_id: string
   qty_per_person: number
   kit_threshold: number | null
   max_daily_stock: number | null
@@ -18,7 +18,7 @@ export async function createSupply(payload: {
   const { data: supply, error } = await supabase
     .from('supplies')
     .insert({
-      occupation_program_unit_id: payload.occupation_program_unit_id,
+      occupation_programs_id: payload.occupation_programs_id,
       qty_per_person: payload.qty_per_person,
       kit_threshold: payload.kit_threshold,
       max_daily_stock: payload.max_daily_stock,

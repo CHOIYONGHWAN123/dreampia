@@ -4,18 +4,16 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { SupplyFormPopup } from "./SupplyFormPopup";
 import { StockAdjustPopup } from "./StockAdjustPopup";
-import { formatUnitTitle } from "@/lib/format-unit-title";
 
-export type UnitWithSupply = {
+// 재고는 occupation_programs(프로그램) 단위로 관리된다 — 같은 프로그램의 유닛들
+// (예: 초등/중고등)이 강의를 나갈 때마다 이 재고를 함께 소진한다.
+export type ProgramWithSupply = {
   id: string;
-  title: string;
-  schoolLevel: string | null;
+  programName: string;
   fieldId: string;
   fieldName: string;
   occupationId: string;
   occupationName: string;
-  programId: string;
-  programName: string;
   supply: {
     id: string;
     qty_per_person: number;
@@ -33,7 +31,7 @@ export type UnitWithSupply = {
 type NavOption = { id: string; name: string };
 
 interface Props {
-  units: UnitWithSupply[];
+  programs: ProgramWithSupply[];
   fields: NavOption[];
 }
 
@@ -45,10 +43,10 @@ const STATUS_CLS = {
 };
 
 // 키트 재고 상태가 "위험"인지 여부 - StockStatus의 판정 로직과 동일하게 맞춘다.
-function isKitStockDanger(u: UnitWithSupply): boolean {
-  const threshold = u.supply?.kit_threshold ?? null;
+function isKitStockDanger(p: ProgramWithSupply): boolean {
+  const threshold = p.supply?.kit_threshold ?? null;
   if (threshold === null) return false;
-  return u.kitStock < threshold;
+  return p.kitStock < threshold;
 }
 
 function StockStatus({
@@ -70,7 +68,7 @@ function StockStatus({
   );
 }
 
-export function SuppliesClient({ units, fields }: Props) {
+export function SuppliesClient({ programs, fields }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [filterFieldId, setFilterFieldId] = useState("");
@@ -78,54 +76,50 @@ export function SuppliesClient({ units, fields }: Props) {
   const [filterProgramId, setFilterProgramId] = useState("");
   const [page, setPage] = useState(1);
   const [popup, setPopup] = useState<{
-    unitId: string;
-    unitTitle: string;
-    supply: UnitWithSupply["supply"];
+    programId: string;
+    programLabel: string;
+    supply: ProgramWithSupply["supply"];
   } | null>(null);
   const [adjustPopup, setAdjustPopup] = useState<{
     supplyId: string;
-    unitTitle: string;
+    programLabel: string;
     totalStock: number;
     kitStock: number;
   } | null>(null);
 
   const occupations = useMemo(() => {
     const seen = new Map<string, NavOption>();
-    units.forEach((u) => {
-      if (!filterFieldId || u.fieldId === filterFieldId) {
-        if (!seen.has(u.occupationId))
-          seen.set(u.occupationId, {
-            id: u.occupationId,
-            name: u.occupationName,
+    programs.forEach((p) => {
+      if (!filterFieldId || p.fieldId === filterFieldId) {
+        if (!seen.has(p.occupationId))
+          seen.set(p.occupationId, {
+            id: p.occupationId,
+            name: p.occupationName,
           });
       }
     });
     return Array.from(seen.values());
-  }, [units, filterFieldId]);
+  }, [programs, filterFieldId]);
 
-  const programs = useMemo(() => {
-    const seen = new Map<string, NavOption>();
-    units.forEach((u) => {
-      if (
-        (!filterFieldId || u.fieldId === filterFieldId) &&
-        (!filterOccupationId || u.occupationId === filterOccupationId)
-      ) {
-        if (!seen.has(u.programId))
-          seen.set(u.programId, { id: u.programId, name: u.programName });
-      }
-    });
-    return Array.from(seen.values());
-  }, [units, filterFieldId, filterOccupationId]);
+  const programOptions = useMemo(() => {
+    return programs
+      .filter(
+        (p) =>
+          (!filterFieldId || p.fieldId === filterFieldId) &&
+          (!filterOccupationId || p.occupationId === filterOccupationId)
+      )
+      .map((p) => ({ id: p.id, name: p.programName }));
+  }, [programs, filterFieldId, filterOccupationId]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const result = units.filter((u) => {
-      if (filterFieldId && u.fieldId !== filterFieldId) return false;
-      if (filterOccupationId && u.occupationId !== filterOccupationId)
+    const result = programs.filter((p) => {
+      if (filterFieldId && p.fieldId !== filterFieldId) return false;
+      if (filterOccupationId && p.occupationId !== filterOccupationId)
         return false;
-      if (filterProgramId && u.programId !== filterProgramId) return false;
+      if (filterProgramId && p.id !== filterProgramId) return false;
       if (q) {
-        const haystack = [u.title, u.programName, u.occupationName, u.fieldName]
+        const haystack = [p.programName, p.occupationName, p.fieldName]
           .join(" ")
           .toLowerCase();
         if (!haystack.includes(q)) return false;
@@ -147,7 +141,7 @@ export function SuppliesClient({ units, fields }: Props) {
       if (b.nextEventStartAt) return 1;
       return 0;
     });
-  }, [units, search, filterFieldId, filterOccupationId, filterProgramId]);
+  }, [programs, search, filterFieldId, filterOccupationId, filterProgramId]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -185,7 +179,7 @@ export function SuppliesClient({ units, fields }: Props) {
           type="text"
           value={search}
           onChange={(e) => changeFilter(() => setSearch(e.target.value))}
-          placeholder="분야 / 직종 / 프로그램 / 유닛명 검색"
+          placeholder="분야 / 직종 / 프로그램명 검색"
           className="border border-gray-200 rounded-full px-4 py-1.5 text-sm outline-none focus:border-primary-400 w-64"
         />
 
@@ -234,7 +228,7 @@ export function SuppliesClient({ units, fields }: Props) {
           className="border border-gray-200 rounded-full px-3 py-1.5 text-sm bg-white outline-none focus:border-primary-400 disabled:bg-gray-50 disabled:text-gray-400"
         >
           <option value="">프로그램 전체</option>
-          {programs.map((p) => (
+          {programOptions.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
             </option>
@@ -252,7 +246,7 @@ export function SuppliesClient({ units, fields }: Props) {
       <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
         <table
           className="text-xs border-collapse w-full"
-          style={{ minWidth: "960px" }}
+          style={{ minWidth: "900px" }}
         >
           <thead>
             <tr>
@@ -265,11 +259,8 @@ export function SuppliesClient({ units, fields }: Props) {
               <th className={thCls} style={{ width: 100 }}>
                 직종
               </th>
-              <th className={thCls} style={{ width: 120 }}>
+              <th className={thCls} style={{ width: 180 }}>
                 프로그램
-              </th>
-              <th className={thCls} style={{ width: 140 }}>
-                프로그램 유닛
               </th>
               <th className={thCls} style={{ width: 72 }}>
                 총 재고
@@ -307,47 +298,47 @@ export function SuppliesClient({ units, fields }: Props) {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={14} className="py-16 text-center text-gray-400">
+                <td colSpan={13} className="py-16 text-center text-gray-400">
                   {search || filterFieldId
                     ? "검색 결과가 없습니다."
-                    : "등록된 프로그램 유닛이 없습니다."}
+                    : "등록된 프로그램이 없습니다."}
                 </td>
               </tr>
             ) : (
-              paginated.map((u, i) => {
-                const freeStock = u.totalStock - u.kitStock;
-                const hasSup = !!u.supply;
+              paginated.map((p, i) => {
+                const freeStock = p.totalStock - p.kitStock;
+                const hasSup = !!p.supply;
+                const programLabel = p.programName;
                 return (
-                  <tr key={u.id} className="hover:bg-gray-50">
+                  <tr key={p.id} className="hover:bg-gray-50">
                     <td className={td}>{(currentPage - 1) * PAGE_SIZE + i + 1}</td>
-                    <td className={td}>{u.fieldName}</td>
-                    <td className={td}>{u.occupationName}</td>
-                    <td className={td}>{u.programName}</td>
+                    <td className={td}>{p.fieldName}</td>
+                    <td className={td}>{p.occupationName}</td>
                     <td className={`${td} text-left font-medium text-gray-800`}>
-                      {formatUnitTitle(u.title, u.schoolLevel)}
+                      {programLabel}
                     </td>
 
                     {hasSup ? (
                       <>
-                        <td className={td}>{u.totalStock.toLocaleString()}</td>
+                        <td className={td}>{p.totalStock.toLocaleString()}</td>
                         <td className={td}>{freeStock.toLocaleString()}</td>
-                        <td className={td}>{u.kitStock.toLocaleString()}</td>
+                        <td className={td}>{p.kitStock.toLocaleString()}</td>
                         <td className={td}>
                           <StockStatus
-                            current={u.kitStock}
-                            threshold={u.supply!.kit_threshold}
+                            current={p.kitStock}
+                            threshold={p.supply!.kit_threshold}
                             dangerWhenBelow
                           />
                         </td>
                         <td className={td}>
-                          {u.supply!.max_daily_stock != null
-                            ? u.supply!.max_daily_stock.toLocaleString()
+                          {p.supply!.max_daily_stock != null
+                            ? p.supply!.max_daily_stock.toLocaleString()
                             : "-"}
                         </td>
                         <td className={td}>
                           <StockStatus
-                            current={u.maxActiveHeadcount}
-                            threshold={u.supply!.max_daily_stock}
+                            current={p.maxActiveHeadcount}
+                            threshold={p.supply!.max_daily_stock}
                             dangerWhenBelow={false}
                           />
                         </td>
@@ -363,7 +354,7 @@ export function SuppliesClient({ units, fields }: Props) {
                     {hasSup && (
                       <td className={td}>
                         <a
-                          href={`/supplies/logs?supplyId=${u.supply!.id}`}
+                          href={`/supplies/logs?supplyId=${p.supply!.id}`}
                           className="px-2.5 py-0.5 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap"
                         >
                           현황 보기
@@ -377,10 +368,10 @@ export function SuppliesClient({ units, fields }: Props) {
                           type="button"
                           onClick={() =>
                             setAdjustPopup({
-                              supplyId: u.supply!.id,
-                              unitTitle: formatUnitTitle(u.title, u.schoolLevel),
-                              totalStock: u.totalStock,
-                              kitStock: u.kitStock,
+                              supplyId: p.supply!.id,
+                              programLabel,
+                              totalStock: p.totalStock,
+                              kitStock: p.kitStock,
                             })
                           }
                           className="px-2.5 py-0.5 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap"
@@ -395,9 +386,9 @@ export function SuppliesClient({ units, fields }: Props) {
                         type="button"
                         onClick={() =>
                           setPopup({
-                            unitId: u.id,
-                            unitTitle: formatUnitTitle(u.title, u.schoolLevel),
-                            supply: u.supply,
+                            programId: p.id,
+                            programLabel,
+                            supply: p.supply,
                           })
                         }
                         className="px-2.5 py-0.5 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors"
@@ -456,8 +447,8 @@ export function SuppliesClient({ units, fields }: Props) {
 
       {popup && (
         <SupplyFormPopup
-          unitId={popup.unitId}
-          unitTitle={popup.unitTitle}
+          programId={popup.programId}
+          programLabel={popup.programLabel}
           initial={popup.supply}
           onClose={() => setPopup(null)}
           onSaved={() => router.refresh()}
@@ -467,7 +458,7 @@ export function SuppliesClient({ units, fields }: Props) {
       {adjustPopup && (
         <StockAdjustPopup
           supplyId={adjustPopup.supplyId}
-          unitTitle={adjustPopup.unitTitle}
+          unitTitle={adjustPopup.programLabel}
           totalStock={adjustPopup.totalStock}
           kitStock={adjustPopup.kitStock}
           onClose={() => setAdjustPopup(null)}

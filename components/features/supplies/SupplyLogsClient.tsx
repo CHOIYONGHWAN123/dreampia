@@ -10,7 +10,7 @@ export type LogRow = {
   delta: number;
   reason: string | null;
   eventRowId: string | null;
-  unitTitle: string;
+  programTitle: string;
   region1: string | null;
   region2: string | null;
   institutionName: string | null;
@@ -21,7 +21,7 @@ export type LogRow = {
   createdAt: string;
 };
 
-type SupplyOption = { id: string; unitTitle: string };
+type SupplyOption = { id: string; programTitle: string };
 
 interface Props {
   logs: LogRow[];
@@ -95,7 +95,7 @@ export function SupplyLogsClient({
     const headers = [
       "NO",
       "일시",
-      "프로그램 유닛",
+      "프로그램",
       "재고 유형",
       "변동량",
       "사유",
@@ -110,7 +110,7 @@ export function SupplyLogsClient({
     const rows = filtered.map((log, i) => [
       i + 1,
       formatDateTime(log.createdAt),
-      log.unitTitle,
+      log.programTitle,
       STOCK_TYPE_LABEL[log.stockType],
       log.delta,
       log.reason ?? "",
@@ -153,7 +153,7 @@ export function SupplyLogsClient({
           </h1>
           {filterSupplyId && (
             <p className="text-sm text-gray-400 mt-1">
-              {supplyOptions.find((s) => s.id === filterSupplyId)?.unitTitle ??
+              {supplyOptions.find((s) => s.id === filterSupplyId)?.programTitle ??
                 ""}{" "}
               필터 적용 중
             </p>
@@ -189,16 +189,16 @@ export function SupplyLogsClient({
           </div>
         </div>
         <div>
-          <p className="text-xs text-gray-500 mb-1">프로그램 유닛</p>
+          <p className="text-xs text-gray-500 mb-1">프로그램</p>
           <select
             value={filterSupplyId}
             onChange={(e) => setFilterSupplyId(e.target.value)}
             className="border border-gray-300 rounded-full px-2 py-1.5 text-sm bg-white outline-none focus:border-primary-400 w-52"
           >
-            <option value="">전체 유닛</option>
+            <option value="">전체 프로그램</option>
             {supplyOptions.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.unitTitle}
+                {s.programTitle}
               </option>
             ))}
           </select>
@@ -285,7 +285,7 @@ export function SupplyLogsClient({
                 일시
               </th>
               <th className={thCls} style={{ width: 140 }}>
-                프로그램 유닛
+                프로그램
               </th>
               <th className={thCls} style={{ width: 72 }}>
                 재고 유형
@@ -338,7 +338,7 @@ export function SupplyLogsClient({
                     <td className={td}>{i + 1}</td>
                     <td className={td}>{formatDateTime(log.createdAt)}</td>
                     <td className={`${td} font-medium text-gray-800 text-left`}>
-                      {log.unitTitle}
+                      {log.programTitle}
                     </td>
                     <td className={td}>
                       <span

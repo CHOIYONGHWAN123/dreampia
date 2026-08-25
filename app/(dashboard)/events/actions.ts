@@ -7,23 +7,41 @@ import { revalidatePath } from 'next/cache'
 
 type Supabase = Awaited<ReturnType<typeof createServerSupabaseClient>>
 
-/** is_consumable=true인 준비물을 unitId 기준 Map으로 반환 */
+/**
+ * is_consumable=true인 준비물을 unitId 기준 Map으로 반환.
+ * 재고는 occupation_programs(프로그램) 단위로 관리되므로, unitId → 소속 program →
+ * supply 순으로 역매핑한다. 같은 프로그램의 유닛(예: 초등/중고등)은 같은 supply를
+ * 가리키게 되어 자연히 재고를 공유한다.
+ */
 async function fetchConsumableSupplyMap(
   supabase: Supabase,
   unitIds: string[]
 ): Promise<Map<string, { id: string; qty_per_person: number }>> {
   if (unitIds.length === 0) return new Map()
-  const { data } = await supabase
+
+  const { data: units } = await supabase
+    .from('occupation_program_unit')
+    .select('id, occupation_programs_id')
+    .in('id', unitIds)
+  const programIds = [...new Set((units ?? []).map((u) => u.occupation_programs_id).filter(Boolean))] as string[]
+  if (programIds.length === 0) return new Map()
+
+  const { data: supplies } = await supabase
     .from('supplies')
-    .select('id, occupation_program_unit_id, qty_per_person')
-    .in('occupation_program_unit_id', unitIds)
+    .select('id, occupation_programs_id, qty_per_person')
+    .in('occupation_programs_id', programIds)
     .eq('is_consumable', true)
-  return new Map(
-    (data ?? []).map((s) => [
-      s.occupation_program_unit_id,
-      { id: s.id, qty_per_person: s.qty_per_person },
-    ])
+  const supplyByProgram = new Map(
+    (supplies ?? []).map((s) => [s.occupation_programs_id, { id: s.id, qty_per_person: s.qty_per_person }])
   )
+
+  const result = new Map<string, { id: string; qty_per_person: number }>()
+  for (const u of units ?? []) {
+    if (!u.occupation_programs_id) continue
+    const supply = supplyByProgram.get(u.occupation_programs_id)
+    if (supply) result.set(u.id, supply)
+  }
+  return result
 }
 
 type SupplyLogEntry = {

@@ -155,6 +155,7 @@ export async function deleteEventCategoryCascade(id: string): Promise<void> {
         const { data: programs } = await supabase.from('occupation_programs').select('id').in('occupation_id', occIds)
         if (programs?.length) {
           const progIds = programs.map((p) => p.id)
+          await deleteSuppliesForPrograms(supabase, progIds)
           const { data: units } = await supabase.from('occupation_program_unit').select('id').in('occupation_programs_id', progIds)
           if (units?.length) await cascadeDeleteUnits(supabase, units.map((u) => u.id))
           await supabase.from('occupation_programs').delete().in('id', progIds)
@@ -247,6 +248,7 @@ export async function deleteFieldCascade(id: string): Promise<void> {
     const { data: programs } = await supabase.from('occupation_programs').select('id').in('occupation_id', occIds)
     if (programs?.length) {
       const progIds = programs.map((p) => p.id)
+      await deleteSuppliesForPrograms(supabase, progIds)
       const { data: units } = await supabase.from('occupation_program_unit').select('id').in('occupation_programs_id', progIds)
       if (units?.length) await cascadeDeleteUnits(supabase, units.map((u) => u.id))
       await supabase.from('occupation_programs').delete().in('id', progIds)
@@ -308,6 +310,7 @@ export async function deleteOccupationCascade(id: string): Promise<void> {
   const { data: programs } = await supabase.from('occupation_programs').select('id').eq('occupation_id', id)
   if (programs?.length) {
     const progIds = programs.map((p) => p.id)
+    await deleteSuppliesForPrograms(supabase, progIds)
     const { data: units } = await supabase.from('occupation_program_unit').select('id').in('occupation_programs_id', progIds)
     if (units?.length) await cascadeDeleteUnits(supabase, units.map((u) => u.id))
     await supabase.from('occupation_programs').delete().in('id', progIds)
@@ -367,6 +370,8 @@ export async function deleteOccupationProgram(id: string): Promise<void> {
 
 export async function deleteOccupationProgramCascade(id: string): Promise<void> {
   const supabase = await createServerSupabaseClient()
+
+  await deleteSuppliesForPrograms(supabase, [id])
 
   const { data: units } = await supabase.from('occupation_program_unit').select('id').eq('occupation_programs_id', id)
   if (units?.length) await cascadeDeleteUnits(supabase, units.map((u) => u.id))
@@ -438,6 +443,20 @@ export async function updateUnit(id: string, payload: UnitFormPayload): Promise<
   revalidatePath('/programs')
 }
 
+// 프로그램 ID 배열을 받아 재고(supplies)와 그 변동 이력(supply_logs)을 삭제하는 내부 헬퍼.
+// 재고는 occupation_programs 단위로 관리되므로(같은 프로그램의 여러 유닛이 재고를 공유),
+// 유닛이 아니라 프로그램이 삭제될 때만 함께 지운다.
+async function deleteSuppliesForPrograms(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  programIds: string[]
+): Promise<void> {
+  if (!programIds.length) return
+  const { data: supplies } = await supabase.from('supplies').select('id').in('occupation_programs_id', programIds)
+  if (!supplies?.length) return
+  await supabase.from('supply_logs').delete().in('supply_id', supplies.map((s) => s.id))
+  await supabase.from('supplies').delete().in('id', supplies.map((s) => s.id))
+}
+
 // 유닛 ID 배열을 받아 관련 데이터 포함 삭제 (내부 헬퍼)
 async function cascadeDeleteUnits(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
@@ -454,12 +473,6 @@ async function cascadeDeleteUnits(
   }
 
   await supabase.from('mentor_occupation_programs').delete().in('occupation_program_unit_id', unitIds)
-
-  const { data: supplies } = await supabase.from('supplies').select('id').in('occupation_program_unit_id', unitIds)
-  if (supplies?.length) {
-    await supabase.from('supply_logs').delete().in('supply_id', supplies.map((s) => s.id))
-    await supabase.from('supplies').delete().in('id', supplies.map((s) => s.id))
-  }
 
   await supabase.from('occupation_program_unit').delete().in('id', unitIds)
 }

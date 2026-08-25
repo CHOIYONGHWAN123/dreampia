@@ -13,14 +13,14 @@ type SupplyData = {
 }
 
 interface Props {
-  unitId: string
-  unitTitle: string
+  programId: string
+  programLabel: string
   initial: SupplyData | null
   onClose: () => void
   onSaved: () => void
 }
 
-export function SupplyFormPopup({ unitId, unitTitle, initial, onClose, onSaved }: Props) {
+export function SupplyFormPopup({ programId, programLabel, initial, onClose, onSaved }: Props) {
   const isEdit = !!initial
   const [isPending, startTransition] = useTransition()
 
@@ -52,7 +52,7 @@ export function SupplyFormPopup({ unitId, unitTitle, initial, onClose, onSaved }
           const freeStock = Number(form.initial_free_stock) || 0
           const kitStock = Number(form.initial_kit_stock) || 0
           await createSupply({
-            occupation_program_unit_id: unitId,
+            occupation_programs_id: programId,
             qty_per_person: Number(form.qty_per_person) || 1,
             kit_threshold: toInt(form.kit_threshold),
             max_daily_stock: toInt(form.max_daily_stock),
@@ -86,7 +86,7 @@ export function SupplyFormPopup({ unitId, unitTitle, initial, onClose, onSaved }
         <h2 className="text-base font-extrabold text-gray-900 mb-1">
           {isEdit ? '준비물 수정' : '준비물 추가'}
         </h2>
-        <p className="text-xs text-gray-400 mb-5">{unitTitle}</p>
+        <p className="text-xs text-gray-400 mb-5">{programLabel}</p>
 
         <div className="space-y-4">
           {/* 기본 설정 */}

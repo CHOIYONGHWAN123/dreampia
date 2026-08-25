@@ -1,6 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { SupplyLogsClient } from '@/components/features/supplies/SupplyLogsClient'
-import { formatUnitTitle } from '@/lib/format-unit-title'
 
 export default async function SupplyLogsPage({
   searchParams,
@@ -19,17 +18,15 @@ export default async function SupplyLogsPage({
 
   if (supplyId) logsQuery.eq('supply_id', supplyId)
 
-  const [logsRes, suppliesRes, unitsRes] = await Promise.all([
+  const [logsRes, suppliesRes, programsRes] = await Promise.all([
     logsQuery,
-    supabase.from('supplies').select('id, occupation_program_unit_id'),
-    supabase.from('occupation_program_unit').select('id, title, school_level'),
+    supabase.from('supplies').select('id, occupation_programs_id'),
+    supabase.from('occupation_programs').select('id, name'),
   ])
 
   // ── 기본 맵 구성 ─────────────────────────────────────────────────
-  const unitMap = new Map(
-    (unitsRes.data ?? []).map((u) => [u.id, formatUnitTitle(u.title, u.school_level)])
-  )
-  const supplyToUnitId = new Map((suppliesRes.data ?? []).map((s) => [s.id, s.occupation_program_unit_id]))
+  const programMap = new Map((programsRes.data ?? []).map((p) => [p.id, p.name]))
+  const supplyToProgramId = new Map((suppliesRes.data ?? []).map((s) => [s.id, s.occupation_programs_id]))
 
   // ── event_row_id가 있는 로그만 event_rows 조회 ──────────────────
   const eventRowIds = [
@@ -109,8 +106,8 @@ export default async function SupplyLogsPage({
 
   // ── 최종 로그 데이터 합성 ─────────────────────────────────────────
   const logs = (logsRes.data ?? []).map((log) => {
-    const unitId = supplyToUnitId.get(log.supply_id ?? '')
-    const unitTitle = unitId ? (unitMap.get(unitId) ?? '-') : '-'
+    const programId = supplyToProgramId.get(log.supply_id ?? '')
+    const programTitle = programId ? (programMap.get(programId) ?? '-') : '-'
     const eventRow = log.event_row_id ? eventRowMap.get(log.event_row_id) : null
     const eventId = eventRow?.eventId ?? null
 
@@ -121,7 +118,7 @@ export default async function SupplyLogsPage({
       delta: log.delta,
       reason: log.reason,
       eventRowId: log.event_row_id,
-      unitTitle,
+      programTitle,
       // 행사 상세
       region1: eventId ? (institutionMap.get(eventId)?.region1 ?? null) : null,
       region2: eventId ? (institutionMap.get(eventId)?.region2 ?? null) : null,
@@ -137,9 +134,9 @@ export default async function SupplyLogsPage({
   const supplyOptions = (suppliesRes.data ?? [])
     .map((s) => ({
       id: s.id,
-      unitTitle: s.occupation_program_unit_id ? (unitMap.get(s.occupation_program_unit_id) ?? '-') : '-',
+      programTitle: s.occupation_programs_id ? (programMap.get(s.occupation_programs_id) ?? '-') : '-',
     }))
-    .sort((a, b) => a.unitTitle.localeCompare(b.unitTitle))
+    .sort((a, b) => a.programTitle.localeCompare(b.programTitle))
 
   return (
     <SupplyLogsClient

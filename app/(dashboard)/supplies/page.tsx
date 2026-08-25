@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { SuppliesClient, type UnitWithSupply } from '@/components/features/supplies/SuppliesClient'
+import { SuppliesClient, type ProgramWithSupply } from '@/components/features/supplies/SuppliesClient'
 
 export default async function SuppliesPage() {
   const supabase = await createServerSupabaseClient()
@@ -8,16 +8,22 @@ export default async function SuppliesPage() {
     supabase.from('fields').select('id, name').order('name'),
     supabase.from('occupations').select('id, name, field_id').order('name'),
     supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
-    supabase.from('occupation_program_unit').select('id, title, school_level, occupation_programs_id').order('title'),
-    supabase.from('supplies').select('id, occupation_program_unit_id, qty_per_person, kit_threshold, max_daily_stock, is_consumable, memo'),
+    supabase.from('occupation_program_unit').select('id, occupation_programs_id'),
+    supabase.from('supplies').select('id, occupation_programs_id, qty_per_person, kit_threshold, max_daily_stock, is_consumable, memo'),
     supabase.from('supply_logs').select('supply_id, stock_type, delta'),
     supabase.from('event_rows').select('occupation_program_unit_id, headcount, events(event_start_at, event_end_at)'),
   ])
 
   const fieldMap = new Map((fieldsRes.data ?? []).map((f) => [f.id, f]))
   const occMap = new Map((occsRes.data ?? []).map((o) => [o.id, o]))
-  const progMap = new Map((progsRes.data ?? []).map((p) => [p.id, p]))
-  const supplyByUnitId = new Map((suppliesRes.data ?? []).map((s) => [s.occupation_program_unit_id, s]))
+  const supplyByProgramId = new Map((suppliesRes.data ?? []).map((s) => [s.occupation_programs_id, s]))
+
+  // event_rows가 참조하는 unitId → programId 역매핑 (재고는 프로그램 단위로 관리되므로)
+  const programIdByUnitId = new Map<string, string>()
+  for (const u of unitsRes.data ?? []) {
+    if (!u.occupation_programs_id) continue
+    programIdByUnitId.set(u.id, u.occupation_programs_id)
+  }
 
   // supply_logs 집계: supply_id별 stock_type별 delta 합산
   const stockMap = new Map<string, { total: number; kit: number }>()
@@ -29,15 +35,17 @@ export default async function SuppliesPage() {
     stockMap.set(log.supply_id, cur)
   }
 
-  // 아직 끝나지 않은(예정 또는 진행 중) 행사의 event_rows 중 유닛별 최대 인원수 집계
-  // → "일 최대 수용" 초과 위험 판단에 사용 (지나간 행사는 제외)
-  // 같은 조건(아직 끝나지 않은 행사)에서 유닛별 가장 임박한 행사 시작일시도 함께 집계해
-  // 목록 정렬(임박한 행사가 있는 유닛을 위로)에 사용한다.
+  // 아직 끝나지 않은(예정 또는 진행 중) 행사의 event_rows 중 프로그램별(같은 프로그램의
+  // 모든 유닛을 합쳐) 최대 인원수 집계 → "일 최대 수용" 초과 위험 판단에 사용.
+  // 같은 조건에서 프로그램별 가장 임박한 행사 시작일시도 함께 집계해 목록 정렬에 사용한다.
   const now = Date.now()
-  const maxActiveHeadcountByUnit = new Map<string, number>()
-  const nextEventStartByUnit = new Map<string, string>()
+  const maxActiveHeadcountByProgram = new Map<string, number>()
+  const nextEventStartByProgram = new Map<string, string>()
   for (const row of eventRowsRes.data ?? []) {
     if (!row.occupation_program_unit_id) continue
+    const programId = programIdByUnitId.get(row.occupation_program_unit_id)
+    if (!programId) continue
+
     const eventRef = row.events as unknown
     const event = (Array.isArray(eventRef) ? eventRef[0] : eventRef) as {
       event_start_at: string | null
@@ -47,35 +55,31 @@ export default async function SuppliesPage() {
     if (!isActive) continue
 
     if (row.headcount != null) {
-      const curHeadcount = maxActiveHeadcountByUnit.get(row.occupation_program_unit_id) ?? 0
-      if (row.headcount > curHeadcount) maxActiveHeadcountByUnit.set(row.occupation_program_unit_id, row.headcount)
+      const curHeadcount = maxActiveHeadcountByProgram.get(programId) ?? 0
+      if (row.headcount > curHeadcount) maxActiveHeadcountByProgram.set(programId, row.headcount)
     }
 
     if (event?.event_start_at) {
-      const curNext = nextEventStartByUnit.get(row.occupation_program_unit_id)
+      const curNext = nextEventStartByProgram.get(programId)
       if (!curNext || event.event_start_at < curNext) {
-        nextEventStartByUnit.set(row.occupation_program_unit_id, event.event_start_at)
+        nextEventStartByProgram.set(programId, event.event_start_at)
       }
     }
   }
 
-  const units: UnitWithSupply[] = (unitsRes.data ?? []).map((u) => {
-    const prog = u.occupation_programs_id ? progMap.get(u.occupation_programs_id) : null
-    const occ = prog?.occupation_id ? occMap.get(prog.occupation_id) : null
+  const programs: ProgramWithSupply[] = (progsRes.data ?? []).map((p) => {
+    const occ = p.occupation_id ? occMap.get(p.occupation_id) : null
     const field = occ?.field_id ? fieldMap.get(occ.field_id) : null
-    const supply = supplyByUnitId.get(u.id) ?? null
+    const supply = supplyByProgramId.get(p.id) ?? null
     const stock = supply ? (stockMap.get(supply.id) ?? { total: 0, kit: 0 }) : { total: 0, kit: 0 }
 
     return {
-      id: u.id,
-      title: u.title,
-      schoolLevel: u.school_level,
+      id: p.id,
+      programName: p.name,
       fieldId: field?.id ?? '',
       fieldName: field?.name ?? '-',
       occupationId: occ?.id ?? '',
       occupationName: occ?.name ?? '-',
-      programId: prog?.id ?? '',
-      programName: prog?.name ?? '-',
       supply: supply
         ? {
             id: supply.id,
@@ -88,14 +92,14 @@ export default async function SuppliesPage() {
         : null,
       totalStock: stock.total,
       kitStock: stock.kit,
-      maxActiveHeadcount: maxActiveHeadcountByUnit.get(u.id) ?? 0,
-      nextEventStartAt: nextEventStartByUnit.get(u.id) ?? null,
+      maxActiveHeadcount: maxActiveHeadcountByProgram.get(p.id) ?? 0,
+      nextEventStartAt: nextEventStartByProgram.get(p.id) ?? null,
     }
   })
 
   return (
     <SuppliesClient
-      units={units}
+      programs={programs}
       fields={(fieldsRes.data ?? []).map((f) => ({ id: f.id, name: f.name }))}
     />
   )
