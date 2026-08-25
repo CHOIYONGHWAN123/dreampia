@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { approveAdmin, updateAdminFields, deleteAdmin, type AdminRow } from '@/app/(dashboard)/admins/actions'
+import { approveAdmin, updateAdminFields, deactivateAdmin, type AdminRow } from '@/app/(dashboard)/admins/actions'
 
 function fmtDate(iso: string | null) {
   if (!iso) return '-'
@@ -42,9 +42,9 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
     runAction(id, () => updateAdminFields(id, { [field]: value }))
   }
 
-  const handleDelete = (id: string, name: string) => {
-    if (!confirm(`"${name}" 관리자를 삭제하시겠습니까?`)) return
-    runAction(id, () => deleteAdmin(id))
+  const handleDeactivate = (id: string, name: string) => {
+    if (!confirm(`"${name}" 관리자를 비활성화하시겠습니까?\n로그인 및 시스템 접근이 즉시 차단됩니다. (승인여부를 다시 체크하면 되돌릴 수 있습니다)`)) return
+    runAction(id, () => deactivateAdmin(id))
   }
 
   const td = 'px-4 py-2.5 text-center text-gray-800 border-b border-gray-100'
@@ -75,7 +75,7 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
               <th className={th}>승인자</th>
               <th className={th}>승인일</th>
               <th className={th}>가입일</th>
-              <th className={th}>삭제</th>
+              <th className={th}>비활성화</th>
             </tr>
           </thead>
           <tbody>
@@ -150,14 +150,16 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
                     <td className={td}>
                       {isSelf ? (
                         <span className="text-xs text-gray-300">-</span>
+                      ) : !a.isAuthenticated ? (
+                        <span className="text-xs text-gray-300">비활성 상태</span>
                       ) : (
                         <button
                           type="button"
                           disabled={busy}
-                          onClick={() => handleDelete(a.id, a.name)}
+                          onClick={() => handleDeactivate(a.id, a.name)}
                           className="px-2 py-0.5 text-xs border border-red-300 text-red-500 rounded-full hover:bg-red-50 disabled:opacity-50 whitespace-nowrap"
                         >
-                          삭제
+                          비활성화
                         </button>
                       )}
                     </td>

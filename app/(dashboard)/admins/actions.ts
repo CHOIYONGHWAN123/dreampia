@@ -103,12 +103,17 @@ export async function updateAdminFields(
   revalidatePath('/admins')
 }
 
-export async function deleteAdmin(id: string): Promise<void> {
+// 관리자를 실제로 지우지 않고 is_authenticated만 false로 내린다(소프트 삭제).
+// events.sales_admin_id/comm_admin_id, work_logs.admin_id 등 관리자를 참조하는 실제
+// 업무 기록이 많아 하드 삭제는 FK 제약에 걸리기 쉽다. is_authenticated_admin() RLS
+// 헬퍼가 is_authenticated=true인지만 확인하므로, false로 내리면 슈퍼관리자 여부와
+// 무관하게 로그인·데이터 접근이 즉시 전부 차단된다(승인 대기 상태와 동일한 메커니즘).
+export async function deactivateAdmin(id: string): Promise<void> {
   const supabase = await createServerSupabaseClient()
   const { userId } = await getCurrentAdmin(supabase)
 
   if (id === userId) {
-    throw new Error('본인 계정은 삭제할 수 없습니다.')
+    throw new Error('본인 계정은 비활성화할 수 없습니다.')
   }
 
   const { data: target } = await supabase.from('admins').select('is_super').eq('id', id).single()
@@ -116,7 +121,7 @@ export async function deleteAdmin(id: string): Promise<void> {
     await assertKeepsAtLeastOneSuperAdmin(supabase, id)
   }
 
-  const { error } = await supabase.from('admins').delete().eq('id', id)
+  const { error } = await supabase.from('admins').update({ is_authenticated: false }).eq('id', id)
   if (error) throw new Error(error.message)
   revalidatePath('/admins')
 }
