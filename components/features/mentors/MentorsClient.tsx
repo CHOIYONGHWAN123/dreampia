@@ -23,7 +23,7 @@ import {
   getMentorEventCount,
   deleteMentor,
 } from '@/app/(dashboard)/mentors/actions'
-import { AreaSelector, MentorSearchSelect, FileCell, uploadFile } from './shared'
+import { AreaSelector, MentorSearchSelect, FileCell, SignedFileCell, uploadFile } from './shared'
 import { BANK_OPTIONS } from '@/constants/banks'
 import { ProgramUnitPicker, type ProgramSelectionValue } from './ProgramUnitPicker'
 import { LevelFileInputs } from './LevelFileInputs'
@@ -551,6 +551,9 @@ function MentorRows({
           placeholder="주민번호"
         />
       </td>
+      <td className={td} rowSpan={totalRows}>
+        <SignedFileCell bucket="id-card" path={mentor.id_card_file_url} />
+      </td>
       <td className={td} rowSpan={totalRows} style={{ minWidth: 100 }}>
         <select
           value={editFields.bank}
@@ -811,6 +814,7 @@ const THEAD = [
   { label: '고유코드', w: 70 },
   { label: '소속', w: 80 },
   { label: '주민번호', w: 120 },
+  { label: '신분증', w: 60 },
   { label: '은행', w: 100 },
   { label: '계좌번호', w: 140 },
   { label: '핸드폰번호', w: 120 },

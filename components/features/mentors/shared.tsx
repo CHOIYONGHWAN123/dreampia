@@ -228,6 +228,42 @@ export async function uploadFile(bucket: string, dir: string, file: File): Promi
   return data.publicUrl
 }
 
+// private 버킷(id-card 등)에 저장된 파일용. 공개 URL이 없어서 클릭할 때마다
+// createSignedUrl()로 잠깐 유효한 링크를 새로 발급받아 연다 (열람 전용, 업로드는 멘토 앱에서만).
+export function SignedFileCell({ bucket, path }: { bucket: string; path: string | null }) {
+  const [loading, setLoading] = useState(false)
+
+  if (!path) {
+    return <span className="text-gray-300 text-xs">없음</span>
+  }
+
+  const handleView = async () => {
+    setLoading(true)
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 5)
+      if (error || !data) {
+        alert('파일을 불러오지 못했습니다.')
+        return
+      }
+      window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={loading}
+      onClick={handleView}
+      className="text-primary-600 underline text-xs disabled:opacity-50"
+    >
+      {loading ? '불러오는 중…' : '보기'}
+    </button>
+  )
+}
+
 export function FileCell({
   url,
   uploading,
