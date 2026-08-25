@@ -15,6 +15,7 @@ import {
 } from '@/lib/validations/event'
 import { createEvent, updateEvent } from '@/app/(dashboard)/events/actions'
 import { institutionTypeToSchoolLevel } from '@/lib/school-level'
+import { generateId } from '@/lib/generate-id'
 import type { EventDetailData, EventScheduleRow, EventRowDetailData, EventRowPhoto } from '@/app/(dashboard)/events/actions'
 import {
   EventProgramUnitSection,
@@ -124,19 +125,31 @@ function buildInitialProgramUnits(
   })
 }
 
+type ScheduleEntry = { key: string; label: string; startTime: string; endTime: string }
+
+const DEFAULT_SCHEDULE_LABELS = ['1교시', '2교시', '점심시간']
+
+function buildInitialSchedules(initialSchedules: EventScheduleRow[] | undefined): ScheduleEntry[] {
+  if (initialSchedules && initialSchedules.length > 0) {
+    return initialSchedules.map((s) => ({
+      key: generateId(),
+      label: s.label,
+      startTime: s.start_time,
+      endTime: s.end_time,
+    }))
+  }
+  // 신규 등록 시 기존과 동일하게 1교시/2교시/점심시간 빈 행을 기본으로 보여준다.
+  return DEFAULT_SCHEDULE_LABELS.map((label) => ({ key: generateId(), label, startTime: '', endTime: '' }))
+}
+
 function buildDefaultValues(
   initialEvent: EventDetailData | undefined,
-  initialSchedules: EventScheduleRow[] | undefined,
   today: string
 ): Partial<EventFormData> {
   if (!initialEvent) return { reception_date: today, institution_id: null }
 
   const start = splitDateTime(initialEvent.event_start_at)
   const end = splitDateTime(initialEvent.event_end_at)
-  const findSchedule = (label: string) => initialSchedules?.find((s) => s.label === label)
-  const s1 = findSchedule('1교시')
-  const s2 = findSchedule('2교시')
-  const lunch = findSchedule('점심시간')
 
   return {
     reception_date: initialEvent.created_at.split('T')[0],
@@ -162,12 +175,6 @@ function buildDefaultValues(
     prep_note: initialEvent.prep_note,
     memo: initialEvent.memo,
     school_request_note: initialEvent.school_request_note,
-    schedule_1_start: s1?.start_time ?? '',
-    schedule_1_end: s1?.end_time ?? '',
-    schedule_2_start: s2?.start_time ?? '',
-    schedule_2_end: s2?.end_time ?? '',
-    schedule_lunch_start: lunch?.start_time ?? '',
-    schedule_lunch_end: lunch?.end_time ?? '',
     contact_name: initialEvent.contact_name,
     contact_email: initialEvent.contact_email,
     contact_phone: initialEvent.contact_phone,
@@ -216,6 +223,19 @@ export function EventForm({
   const [programUnits, setProgramUnits] = useState<SelectedProgramUnit[]>(() =>
     buildInitialProgramUnits(initialEventRows, units, programs, occupations, fields)
   )
+  const [scheduleEntries, setScheduleEntries] = useState<ScheduleEntry[]>(() =>
+    buildInitialSchedules(initialSchedules)
+  )
+
+  const addSchedule = () => {
+    setScheduleEntries((prev) => [...prev, { key: generateId(), label: '', startTime: '', endTime: '' }])
+  }
+  const removeSchedule = (key: string) => {
+    setScheduleEntries((prev) => prev.filter((s) => s.key !== key))
+  }
+  const updateSchedule = (key: string, patch: Partial<ScheduleEntry>) => {
+    setScheduleEntries((prev) => prev.map((s) => (s.key === key ? { ...s, ...patch } : s)))
+  }
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -227,7 +247,7 @@ export function EventForm({
     formState: { errors },
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
-    defaultValues: buildDefaultValues(initialEvent, initialSchedules, today),
+    defaultValues: buildDefaultValues(initialEvent, today),
   })
 
   // 신규 등록 시 기관 정보를 폼에 자동 입력
@@ -312,16 +332,9 @@ export function EventForm({
       const eventStartAt = buildTimestamp(data.event_start_date, data.event_start_at_time)
       const eventEndAt = buildTimestamp(data.event_end_date, data.event_end_at_time)
 
-      const schedules = []
-      if (data.schedule_1_start || data.schedule_1_end) {
-        schedules.push({ label: '1교시', start_time: data.schedule_1_start ?? '', end_time: data.schedule_1_end ?? '', sort_order: 1 })
-      }
-      if (data.schedule_2_start || data.schedule_2_end) {
-        schedules.push({ label: '2교시', start_time: data.schedule_2_start ?? '', end_time: data.schedule_2_end ?? '', sort_order: 2 })
-      }
-      if (data.schedule_lunch_start || data.schedule_lunch_end) {
-        schedules.push({ label: '점심시간', start_time: data.schedule_lunch_start ?? '', end_time: data.schedule_lunch_end ?? '', sort_order: 3 })
-      }
+      const schedules = scheduleEntries
+        .filter((s) => s.label.trim() && (s.startTime || s.endTime))
+        .map((s, i) => ({ label: s.label.trim(), start_time: s.startTime, end_time: s.endTime, sort_order: i + 1 }))
 
       const payload = {
         reception_date: data.reception_date,
@@ -703,30 +716,55 @@ export function EventForm({
         <div className="min-w-0 overflow-x-auto">
         <table className={tableCls}>
           <tbody>
-            {[
-              { label: '1교시', startKey: 'schedule_1_start', endKey: 'schedule_1_end' },
-              { label: '2교시', startKey: 'schedule_2_start', endKey: 'schedule_2_end' },
-              { label: '점심시간', startKey: 'schedule_lunch_start', endKey: 'schedule_lunch_end' },
-            ].map(({ label, startKey, endKey }) => (
-              <tr key={label}>
-                <td className={cellLabelCls}>{label}</td>
+            {scheduleEntries.map((s) => (
+              <tr key={s.key}>
+                <td className={cellLabelCls}>
+                  <input
+                    type="text"
+                    value={s.label}
+                    onChange={(e) => updateSchedule(s.key, { label: e.target.value })}
+                    placeholder="예: 1교시, 쉬는시간"
+                    className="w-full bg-transparent text-sm font-bold text-primary-700 outline-none placeholder:font-normal placeholder:text-primary-300"
+                  />
+                </td>
                 <td className={cellValueCls}>
-                  <div className="grid grid-cols-[1fr_auto_1fr] gap-1 items-center">
+                  <div className="grid grid-cols-[1fr_auto_1fr_auto] gap-1 items-center">
                     <input
                       type="time"
-                      {...register(startKey as keyof EventFormData)}
+                      value={s.startTime}
+                      onChange={(e) => updateSchedule(s.key, { startTime: e.target.value })}
                       className={`${cellInputCls} min-w-0`}
                     />
                     <span className="text-gray-400 text-sm">~</span>
                     <input
                       type="time"
-                      {...register(endKey as keyof EventFormData)}
+                      value={s.endTime}
+                      onChange={(e) => updateSchedule(s.key, { endTime: e.target.value })}
                       className={`${cellInputCls} min-w-0`}
                     />
+                    <button
+                      type="button"
+                      onClick={() => removeSchedule(s.key)}
+                      className="text-xs text-red-400 hover:text-red-600 px-1"
+                      title="삭제"
+                    >
+                      ✕
+                    </button>
                   </div>
                 </td>
               </tr>
             ))}
+            <tr>
+              <td colSpan={2} className={`${cellValueCls} text-center`}>
+                <button
+                  type="button"
+                  onClick={addSchedule}
+                  className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors"
+                >
+                  + 교시 추가
+                </button>
+              </td>
+            </tr>
 
             <tr>
               <td className={cellLabelCls}>담당자 성함</td>
