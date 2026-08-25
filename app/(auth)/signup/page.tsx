@@ -21,7 +21,44 @@ export default function SignupPage() {
 
   const onSubmit = async (data: SignupFormData) => {
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
+
+    // 멘토 앱과 auth.users를 공유하므로, 입력한 이메일이 이미 멘토로 가입된 계정일 수 있다.
+    // 이 경우 로그인이 먼저 성공한다 — admins 행만 없는 것이므로 새로 만들어 관리자를 겸직시킨다.
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    })
+
+    if (!signInError && signInData.user) {
+      const { data: existingAdmin } = await supabase
+        .from('admins')
+        .select('id')
+        .eq('id', signInData.user.id)
+        .maybeSingle()
+
+      if (existingAdmin) {
+        // 이미 관리자로도 가입되어 있음 — 그냥 로그인된 것으로 처리한다.
+        router.push('/')
+        return
+      }
+
+      const { error: insertError } = await supabase.from('admins').insert({
+        id: signInData.user.id,
+        name: data.name,
+        email: signInData.user.email,
+        is_authenticated: false,
+      })
+
+      if (insertError) {
+        setError('root', { message: insertError.message })
+        return
+      }
+
+      router.push('/pending')
+      return
+    }
+
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
@@ -33,10 +70,17 @@ export default function SignupPage() {
 
     if (error) {
       if (error.message.includes('already registered')) {
-        setError('email', { message: '이미 사용 중인 이메일입니다.' })
+        setError('email', { message: '이미 사용 중인 이메일입니다. 비밀번호가 다르다면 로그인 페이지에서 비밀번호를 재설정해주세요.' })
       } else {
         setError('root', { message: error.message })
       }
+      return
+    }
+
+    // 이메일 확인이 켜져 있으면 이미 가입된 이메일이어도 signUp()이 에러 없이
+    // "빈 identities"를 담아 응답한다(보안상 계정 존재 여부를 숨기기 위함) — 이 경우도 감지해야 한다.
+    if (signUpData.user && signUpData.user.identities?.length === 0) {
+      setError('email', { message: '이미 사용 중인 이메일입니다. 비밀번호가 다르다면 로그인 페이지에서 비밀번호를 재설정해주세요.' })
       return
     }
 
