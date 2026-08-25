@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { createServerSupabaseClient, getCurrentAdmin } from '@/lib/supabase-server'
+import { getCurrentAdmin } from '@/lib/supabase-server'
 import { getDashboardSummary } from './actions'
 
 function fmtDate(iso: string | null) {
@@ -15,13 +15,8 @@ function recruitStatusStyle(status: string | null) {
 }
 
 export default async function DashboardPage() {
-  const supabase = await createServerSupabaseClient()
-  const { id, isSuper } = await getCurrentAdmin(supabase)
-  const [{ data: adminRow }, summary] = await Promise.all([
-    supabase.from('admins').select('name').eq('id', id).single(),
-    getDashboardSummary(isSuper),
-  ])
-  const name = adminRow?.name ?? ''
+  const { name, isSuper } = await getCurrentAdmin()
+  const summary = await getDashboardSummary(isSuper)
 
   const stats = [
     { label: '진행중인 행사', value: `${summary.ongoingEventCount}건`, tint: 'bg-primary-50', iconColor: 'text-primary-500' },

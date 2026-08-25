@@ -3,7 +3,7 @@ import { EstimateTaskClient, type EstimateTaskRow } from '@/components/features/
 
 export default async function EstimateTaskPage() {
   const supabase = await createServerSupabaseClient()
-  const { id: adminId, isSuper } = await getCurrentAdmin(supabase)
+  const { id: adminId, isSuper } = await getCurrentAdmin()
 
   // 영업담당자 또는 소통담당자로 지정된 행사 중, 아직 견적서를 올리지 않은 것만 표시.
   // 슈퍼관리자는 담당자 여부와 무관하게 전체 조회.

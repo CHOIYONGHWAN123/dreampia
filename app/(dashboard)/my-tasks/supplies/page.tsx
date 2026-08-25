@@ -3,7 +3,7 @@ import { SuppliesTaskClient, type SuppliesTaskRow } from '@/components/features/
 
 export default async function SuppliesTaskPage() {
   const supabase = await createServerSupabaseClient()
-  const { id: adminId, isSuper } = await getCurrentAdmin(supabase)
+  const { id: adminId, isSuper } = await getCurrentAdmin()
 
   // 영업담당자 또는 소통담당자로 지정된 행사 중, 준비물이 아직 "준비 완료"가 아닌 것만 표시.
   // 슈퍼관리자는 담당자 여부와 무관하게 전체 조회.

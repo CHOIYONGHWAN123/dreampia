@@ -3,7 +3,7 @@ import { PreNoticeClient, type PreNoticeRow } from '@/components/features/my-tas
 
 export default async function PreNoticePage() {
   const supabase = await createServerSupabaseClient()
-  const { id: adminId, isSuper } = await getCurrentAdmin(supabase)
+  const { id: adminId, isSuper } = await getCurrentAdmin()
 
   // 영업담당자 또는 소통담당자로 지정된 행사 중, 아직 행사 안내를 보내지 않은 것만 표시.
   // 슈퍼관리자는 담당자 여부와 무관하게 전체 조회.

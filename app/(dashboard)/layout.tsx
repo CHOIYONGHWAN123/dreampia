@@ -1,5 +1,4 @@
-import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { redirect } from 'next/navigation'
+import { getCurrentAdmin } from '@/lib/supabase-server'
 import { LogoutButton } from '@/components/ui/LogoutButton'
 import { NavMenu } from '@/components/ui/NavMenu'
 
@@ -8,18 +7,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createServerSupabaseClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
-
-  const { data: admin } = await supabase
-    .from('admins')
-    .select('name, email, is_super')
-    .eq('id', user.id)
-    .single()
+  const admin = await getCurrentAdmin()
 
   return (
     <div className="h-screen overflow-hidden bg-gray-50 flex">
@@ -33,14 +21,14 @@ export default async function DashboardLayout({
           <p className="text-xs text-gray-400 font-medium">관리자 시스템</p>
         </div>
         <div className="h-px bg-gray-100 mx-6 mb-2" />
-        <NavMenu isSuperAdmin={admin?.is_super ?? false} />
+        <NavMenu isSuperAdmin={admin.isSuper} />
         <div className="p-4 border-t border-gray-100 flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-full bg-gold-100 text-gold-700 flex items-center justify-center text-sm font-bold shrink-0">
-            {admin?.name?.[0] ?? '?'}
+            {admin.name[0] ?? '?'}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-gray-800 truncate">{admin?.name}</p>
-            <p className="text-xs text-gray-400 truncate">{admin?.email}</p>
+            <p className="text-sm font-semibold text-gray-800 truncate">{admin.name}</p>
+            <p className="text-xs text-gray-400 truncate">{admin.email}</p>
           </div>
         </div>
         <div className="px-4 pb-4">

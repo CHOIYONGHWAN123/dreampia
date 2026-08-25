@@ -3,7 +3,7 @@ import { RecruitingClient, type RecruitingRow } from '@/components/features/my-t
 
 export default async function RecruitingPage() {
   const supabase = await createServerSupabaseClient()
-  const { id: adminId, isSuper } = await getCurrentAdmin(supabase)
+  const { id: adminId, isSuper } = await getCurrentAdmin()
 
   // 영업담당자 또는 소통담당자로 지정된, 아직 섭외가 끝나지 않은(대기/진행중) 행사만 표시.
   // 슈퍼관리자는 담당자 여부와 무관하게 전체 조회.
