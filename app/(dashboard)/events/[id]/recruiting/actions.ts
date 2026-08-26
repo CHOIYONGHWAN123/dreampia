@@ -480,6 +480,8 @@ export async function cancelInvitation(eventId: string, invitationId: string): P
 // mentor_id/preparing/attendance만 초기화하고, 해당 배정의 근거가 된 초대(invitation_mentors)의
 // 수락 기록은 건드리지 않는다 — 초대 단위라 되돌리면 같은 초대로 받은 다른 일정 상태까지 꼬일 수 있다.
 // 관리자용이라 멘토 RPC와 달리 지난 일정도 취소를 허용한다.
+// recruit_status 동기화는 event_rows_sync_recruit_status 트리거가 mentor_id
+// 변경 시(배정 경로와 무관하게) 자동으로 처리한다.
 export async function cancelAssignment(eventId: string, eventRowId: string): Promise<void> {
   const supabase = await createServerSupabaseClient()
   const { error } = await supabase
@@ -487,28 +489,7 @@ export async function cancelAssignment(eventId: string, eventRowId: string): Pro
     .update({ mentor_id: null, preparing: false, attendance: false })
     .eq('id', eventRowId)
   if (error) throw new Error(error.message)
-  await syncRecruitStatusAfterAssignmentChange(supabase, eventId)
   revalidatePath(`/events/${eventId}/recruiting`)
-}
-
-// 일정이 전부 배정되면 '섭외완료'로, 취소 등으로 다시 미배정 일정이 생기면 '섭외완료'에서
-// '섭외진행중'으로 되돌린다. 직접배정/배정취소 양쪽에서 공통으로 사용.
-async function syncRecruitStatusAfterAssignmentChange(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  eventId: string
-): Promise<void> {
-  const { data: eventRows } = await supabase.from('event_rows').select('mentor_id').eq('event_id', eventId)
-  if (!eventRows || eventRows.length === 0) return
-
-  const { data: event } = await supabase.from('events').select('recruit_status').eq('id', eventId).single()
-  if (!event) return
-
-  const allAssigned = eventRows.every((r) => r.mentor_id)
-  if (allAssigned && event.recruit_status !== '섭외완료') {
-    await supabase.from('events').update({ recruit_status: '섭외완료' }).eq('id', eventId)
-  } else if (!allAssigned && event.recruit_status === '섭외완료') {
-    await supabase.from('events').update({ recruit_status: '섭외진행중' }).eq('id', eventId)
-  }
 }
 
 // 관리자가 초대(수락 대기) 절차 없이 즉시 특정 강사를 배정한다. 강사에게 별도 알림은
@@ -573,8 +554,6 @@ export async function assignMentorDirectly(eventId: string, eventRowId: string, 
   if (user) {
     await supabase.from('work_logs').insert({ admin_id: user.id, event_id: eventId, task_type: '강사 섭외' })
   }
-
-  await syncRecruitStatusAfterAssignmentChange(supabase, eventId)
 
   revalidatePath(`/events/${eventId}/recruiting`)
   revalidatePath('/my-tasks/recruiting')
