@@ -72,6 +72,7 @@ interface Props {
   initialSchedules?: EventScheduleRow[]
   initialEventRows?: EventRowDetailData[]
   initialEstimateFileUrl?: string | null
+  initialTransactionStatementFileUrl?: string | null
   initialPhotosByRow?: Record<string, EventRowPhoto[]>
 }
 
@@ -214,12 +215,14 @@ export function EventForm({
   initialSchedules,
   initialEventRows,
   initialEstimateFileUrl,
+  initialTransactionStatementFileUrl,
   initialPhotosByRow,
 }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isUploading, setIsUploading] = useState(false)
   const [estimateFile, setEstimateFile] = useState<File | null>(null)
+  const [transactionStatementFile, setTransactionStatementFile] = useState<File | null>(null)
   const [floorMapFile, setFloorMapFile] = useState<File | null>(null)
   const floorMapInputRef = useRef<HTMLInputElement>(null)
   const [programUnits, setProgramUnits] = useState<SelectedProgramUnit[]>(() =>
@@ -284,6 +287,15 @@ export function EventForm({
     return path
   }
 
+  async function uploadTransactionStatementFile(file: File): Promise<string> {
+    const supabase = createClient()
+    const ext = file.name.includes('.') ? file.name.split('.').pop() : ''
+    const path = `transaction-statements/${Date.now()}${ext ? `.${ext}` : ''}`
+    const { error } = await supabase.storage.from('events').upload(path, file)
+    if (error) throw new Error(error.message)
+    return path
+  }
+
   // 학교 배치도는 기관 정보의 배치도와 같은 성격(민감정보 아님)이라, institutions와 동일하게
   // 공개 버킷 + 공개 URL로 저장한다(견적서처럼 signed URL 변환이 필요 없음).
   async function uploadFloorMap(file: File): Promise<string> {
@@ -308,6 +320,22 @@ export function EventForm({
           estimateFileUrl = await uploadEstimateFile(estimateFile)
         } catch (e) {
           alert('파일 업로드에 실패했습니다.')
+          setIsUploading(false)
+          return
+        }
+        setIsUploading(false)
+      }
+
+      // 새 파일을 업로드하지 않으면 기존 거래명세서 경로를 그대로 유지한다.
+      let transactionStatementFileUrl: string | undefined = eventId
+        ? initialEvent?.transaction_statement_file_url ?? undefined
+        : undefined
+      if (transactionStatementFile) {
+        setIsUploading(true)
+        try {
+          transactionStatementFileUrl = await uploadTransactionStatementFile(transactionStatementFile)
+        } catch (e) {
+          alert('거래명세서 파일 업로드에 실패했습니다.')
           setIsUploading(false)
           return
         }
@@ -369,6 +397,7 @@ export function EventForm({
         budget: data.budget,
         final_budget: data.final_budget,
         estimate_file_url: estimateFileUrl,
+        transaction_statement_file_url: transactionStatementFileUrl,
         comm_admin_id: data.comm_admin_id,
         schedules,
         eventRows: programUnits.map((u) => ({
@@ -884,6 +913,32 @@ export function EventForm({
                       className="mt-0.5 inline-block text-xs text-primary-600 hover:underline"
                     >
                       현재 견적서 보기
+                    </a>
+                  )
+                )}
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>거래명세서</td>
+              <td className={cellValueCls}>
+                <input
+                  type="file"
+                  accept=".pdf,.hwp,.xlsx,.xls,.doc,.docx"
+                  onChange={(e) => setTransactionStatementFile(e.target.files?.[0] ?? null)}
+                  className="w-full text-xs text-gray-600 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border file:border-gray-300 file:text-xs file:bg-white file:text-gray-700 hover:file:bg-gray-50 cursor-pointer"
+                />
+                {transactionStatementFile ? (
+                  <p className="mt-0.5 text-xs text-gray-500">{transactionStatementFile.name}</p>
+                ) : (
+                  initialTransactionStatementFileUrl && (
+                    <a
+                      href={initialTransactionStatementFileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-0.5 inline-block text-xs text-primary-600 hover:underline"
+                    >
+                      현재 거래명세서 보기
                     </a>
                   )
                 )}

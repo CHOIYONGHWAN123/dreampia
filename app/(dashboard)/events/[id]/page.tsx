@@ -16,6 +16,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
     { data: commAdmins },
     programSelectData,
     signedResult,
+    transactionStatementSignedResult,
   ] = await Promise.all([
     detail.event.institution_id
       ? supabase.from('institutions').select('id, name, address, institution_type, contact_name, contact_email, contact_phone, instructor_waiting_room, admin_contact, has_elevator, floor_map_url, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, teacher_name, is_deleted').eq('id', detail.event.institution_id).single()
@@ -25,6 +26,9 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
     getEventProgramSelectData(),
     detail.event.estimate_file_url
       ? supabase.storage.from('events').createSignedUrl(detail.event.estimate_file_url, 60 * 60)
+      : Promise.resolve({ data: null }),
+    detail.event.transaction_statement_file_url
+      ? supabase.storage.from('events').createSignedUrl(detail.event.transaction_statement_file_url, 60 * 60)
       : Promise.resolve({ data: null }),
   ])
 
@@ -44,6 +48,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       initialSchedules={detail.schedules}
       initialEventRows={detail.eventRows}
       initialEstimateFileUrl={signedResult.data?.signedUrl ?? null}
+      initialTransactionStatementFileUrl={transactionStatementSignedResult.data?.signedUrl ?? null}
       initialPhotosByRow={detail.photosByRow}
     />
   )

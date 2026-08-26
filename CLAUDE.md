@@ -319,6 +319,7 @@ contact_email varchar [note: '담당자 이메일']
 contact_phone varchar [note: '담당자 연락처']
 inflow_source inflow_source [note: '유입경로']
 estimate_file_url varchar [note: '견적서 파일 URL']
+transaction_statement_file_url varchar [note: '거래명세서 파일 URL']
 recruit_start_date date
 comm_content text [note: '소통 내용']
 contract_status contract_status

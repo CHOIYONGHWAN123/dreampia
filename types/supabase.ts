@@ -525,6 +525,7 @@ export type Database = {
           supplies_status: Database["public"]["Enums"]["supplies_status"] | null
           target_grade: string | null
           teacher_name: string | null
+          transaction_statement_file_url: string | null
         }
         Insert: {
           admin_contact?: string | null
@@ -598,6 +599,7 @@ export type Database = {
             | null
           target_grade?: string | null
           teacher_name?: string | null
+          transaction_statement_file_url?: string | null
         }
         Update: {
           admin_contact?: string | null
@@ -671,6 +673,7 @@ export type Database = {
             | null
           target_grade?: string | null
           teacher_name?: string | null
+          transaction_statement_file_url?: string | null
         }
         Relationships: [
           {
