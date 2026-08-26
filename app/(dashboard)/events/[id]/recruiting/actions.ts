@@ -262,14 +262,18 @@ export async function getRecruitingData(eventId: string): Promise<RecruitingData
   return { eventName: event.name, rows, mentorsByUnit, invitations }
 }
 
+// 반환값을 던지지 않고 {error?}로 돌려주는 이유: Next.js는 프로덕션에서 서버
+// 액션이 던진 예외의 실제 메시지를 클라이언트로 보내지 않고 안내 문구로 가린다
+// (보안을 위한 기본 동작). "선택한 일정끼리 시간이 겹칩니다"처럼 사용자가 봐야 하는
+// 안내 메시지는 예외가 아니라 정상 반환값으로 내려줘야 화면에 그대로 노출된다.
 export async function createInvitation(input: {
   eventId: string
   eventRowIds: string[]
   isAllApprovalRequired: boolean
   mentorIds: string[]
-}): Promise<void> {
-  if (input.eventRowIds.length === 0) throw new Error('선택된 일정이 없습니다.')
-  if (input.mentorIds.length === 0) throw new Error('초대할 강사를 선택해주세요.')
+}): Promise<{ error?: string }> {
+  if (input.eventRowIds.length === 0) return { error: '선택된 일정이 없습니다.' }
+  if (input.mentorIds.length === 0) return { error: '초대할 강사를 선택해주세요.' }
 
   const supabase = await createServerSupabaseClient()
 
@@ -280,7 +284,7 @@ export async function createInvitation(input: {
       .from('event_rows')
       .select('id, start_time, end_time')
       .in('id', input.eventRowIds)
-    if (rowsCheckErr) throw new Error(rowsCheckErr.message)
+    if (rowsCheckErr) return { error: rowsCheckErr.message }
 
     const rows = (selectedRows ?? []).map((r) => ({
       id: r.id,
@@ -293,7 +297,7 @@ export async function createInvitation(input: {
         const b = rows[j]
         if (a.start === null || a.end === null || b.start === null || b.end === null) continue
         if (a.start < b.end && a.end > b.start) {
-          throw new Error('선택한 일정끼리 시간이 겹쳐 모든수락으로 초대할 수 없습니다.')
+          return { error: '선택한 일정끼리 시간이 겹쳐 모든수락으로 초대할 수 없습니다.' }
         }
       }
     }
@@ -311,31 +315,31 @@ export async function createInvitation(input: {
     })
     .select('id')
     .single()
-  if (invErr) throw new Error(invErr.message)
+  if (invErr) return { error: invErr.message }
 
   const { error: rowsErr } = await supabase
     .from('invitation_event_rows')
     .insert(input.eventRowIds.map((event_row_id) => ({ invitation_id: invitation.id, event_row_id })))
-  if (rowsErr) throw new Error(rowsErr.message)
+  if (rowsErr) return { error: rowsErr.message }
 
   const now = new Date().toISOString()
   const { error: mentorsErr } = await supabase
     .from('invitation_mentors')
     .insert(input.mentorIds.map((mentor_id) => ({ invitation_id: invitation.id, mentor_id, notified_at: now })))
-  if (mentorsErr) throw new Error(mentorsErr.message)
+  if (mentorsErr) return { error: mentorsErr.message }
 
   // 수동으로든 자동으로든 섭외를 시작했으니 이 행사는 더 이상 "섭외대기"가 아니다.
   const { error: statusErr } = await supabase
     .from('events')
     .update({ recruit_status: '섭외진행중' })
     .eq('id', input.eventId)
-  if (statusErr) throw new Error(statusErr.message)
+  if (statusErr) return { error: statusErr.message }
 
   if (user) {
     const { error: logErr } = await supabase
       .from('work_logs')
       .insert({ admin_id: user.id, event_id: input.eventId, task_type: '강사 섭외' })
-    if (logErr) throw new Error(logErr.message)
+    if (logErr) return { error: logErr.message }
   }
 
   // 초대된 멘토에게 푸시 알림 발송은 invitation_mentors insert 트리거
@@ -343,6 +347,7 @@ export async function createInvitation(input: {
 
   revalidatePath(`/events/${input.eventId}/recruiting`)
   revalidatePath('/my-tasks/recruiting')
+  return {}
 }
 
 // 자동 섭외: 가능한(등록+시간충돌없음+활동가능) 멘토 중 점수 1등에게만 발송하고,
@@ -354,8 +359,8 @@ export async function createAutoInvitation(
   eventId: string,
   eventRowIds: string[],
   isAllApprovalRequired: boolean
-): Promise<void> {
-  if (eventRowIds.length === 0) throw new Error('선택된 일정이 없습니다.')
+): Promise<{ error?: string }> {
+  if (eventRowIds.length === 0) return { error: '선택된 일정이 없습니다.' }
 
   const supabase = await createServerSupabaseClient()
 
@@ -366,7 +371,7 @@ export async function createAutoInvitation(
       .from('event_rows')
       .select('id, start_time, end_time')
       .in('id', eventRowIds)
-    if (rowsCheckErr) throw new Error(rowsCheckErr.message)
+    if (rowsCheckErr) return { error: rowsCheckErr.message }
 
     const rows = (selectedRows ?? []).map((r) => ({
       start: r.start_time ? new Date(r.start_time).getTime() : null,
@@ -378,7 +383,7 @@ export async function createAutoInvitation(
         const b = rows[j]
         if (a.start === null || a.end === null || b.start === null || b.end === null) continue
         if (a.start < b.end && a.end > b.start) {
-          throw new Error('선택한 일정끼리 시간이 겹쳐 모든수락으로 초대할 수 없습니다.')
+          return { error: '선택한 일정끼리 시간이 겹쳐 모든수락으로 초대할 수 없습니다.' }
         }
       }
     }
@@ -388,14 +393,14 @@ export async function createAutoInvitation(
     p_event_row_ids: eventRowIds,
     p_is_all_approval_required: isAllApprovalRequired,
   })
-  if (error) throw new Error(error.message)
+  if (error) return { error: error.message }
 
   // 자동 섭외를 시작했으니 이 행사는 더 이상 "섭외대기"가 아니다.
   const { error: statusErr } = await supabase
     .from('events')
     .update({ recruit_status: '섭외진행중' })
     .eq('id', eventId)
-  if (statusErr) throw new Error(statusErr.message)
+  if (statusErr) return { error: statusErr.message }
 
   const {
     data: { user },
@@ -404,11 +409,12 @@ export async function createAutoInvitation(
     const { error: logErr } = await supabase
       .from('work_logs')
       .insert({ admin_id: user.id, event_id: eventId, task_type: '강사 섭외' })
-    if (logErr) throw new Error(logErr.message)
+    if (logErr) return { error: logErr.message }
   }
 
   revalidatePath(`/events/${eventId}/recruiting`)
   revalidatePath('/my-tasks/recruiting')
+  return {}
 }
 
 export type BundlePlanGroup = {

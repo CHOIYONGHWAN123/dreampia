@@ -230,12 +230,16 @@ export function EventRecruitingClient({
     setError(null)
     startTransition(async () => {
       try {
-        await createInvitation({
+        const result = await createInvitation({
           eventId,
           eventRowIds: [...selectedRowIds],
           isAllApprovalRequired: pendingType === 'all',
           mentorIds: [...selectedMentorIds],
         })
+        if (result.error) {
+          setError(result.error)
+          return
+        }
         setSelectedRowIds(new Set())
         closePicker()
         router.refresh()
@@ -289,10 +293,18 @@ export function EventRecruitingClient({
     startAutoTransition(async () => {
       try {
         for (const group of autoPreview.manual) {
-          await createAutoInvitation(eventId, group.rowIds, true)
+          const result = await createAutoInvitation(eventId, group.rowIds, true)
+          if (result.error) {
+            setAutoError(result.error)
+            return
+          }
         }
         for (const bundle of autoPreview.planned) {
-          await createAutoInvitation(eventId, bundle.eventRowIds, bundle.eventRowIds.length > 1)
+          const result = await createAutoInvitation(eventId, bundle.eventRowIds, bundle.eventRowIds.length > 1)
+          if (result.error) {
+            setAutoError(result.error)
+            return
+          }
         }
         setSelectedRowIds(new Set())
         setManualGroups([])
