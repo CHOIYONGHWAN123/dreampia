@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   graphql_public: {
     Tables: {
@@ -161,23 +161,44 @@ export type Database = {
       event_categories: {
         Row: {
           created_at: string
+          elementary_ppt_template_id: string | null
           id: string
           name: string
+          secondary_ppt_template_id: string | null
           sort_order: number | null
         }
         Insert: {
           created_at?: string
+          elementary_ppt_template_id?: string | null
           id?: string
           name: string
+          secondary_ppt_template_id?: string | null
           sort_order?: number | null
         }
         Update: {
           created_at?: string
+          elementary_ppt_template_id?: string | null
           id?: string
           name?: string
+          secondary_ppt_template_id?: string | null
           sort_order?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "event_categories_elementary_ppt_template_id_fkey"
+            columns: ["elementary_ppt_template_id"]
+            isOneToOne: false
+            referencedRelation: "ppt_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_categories_secondary_ppt_template_id_fkey"
+            columns: ["secondary_ppt_template_id"]
+            isOneToOne: false
+            referencedRelation: "ppt_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       event_photos: {
         Row: {
@@ -1317,14 +1338,10 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
-          dreampia_material_cost: number | null
           final_product_available: boolean | null
           id: string
           is_delivery_available: boolean
-          mentor_material_cost: number | null
           occupation_programs_id: string | null
-          ppt_template_id: string | null
-          prep_by: Database["public"]["Enums"]["prep_by"] | null
           school_level: Database["public"]["Enums"]["school_level"] | null
           school_request_note: string | null
           syllabus: string | null
@@ -1333,14 +1350,10 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
-          dreampia_material_cost?: number | null
           final_product_available?: boolean | null
           id?: string
           is_delivery_available?: boolean
-          mentor_material_cost?: number | null
           occupation_programs_id?: string | null
-          ppt_template_id?: string | null
-          prep_by?: Database["public"]["Enums"]["prep_by"] | null
           school_level?: Database["public"]["Enums"]["school_level"] | null
           school_request_note?: string | null
           syllabus?: string | null
@@ -1349,14 +1362,10 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
-          dreampia_material_cost?: number | null
           final_product_available?: boolean | null
           id?: string
           is_delivery_available?: boolean
-          mentor_material_cost?: number | null
           occupation_programs_id?: string | null
-          ppt_template_id?: string | null
-          prep_by?: Database["public"]["Enums"]["prep_by"] | null
           school_level?: Database["public"]["Enums"]["school_level"] | null
           school_request_note?: string | null
           syllabus?: string | null
@@ -1370,30 +1379,32 @@ export type Database = {
             referencedRelation: "occupation_programs"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "occupation_program_unit_ppt_template_id_fkey"
-            columns: ["ppt_template_id"]
-            isOneToOne: false
-            referencedRelation: "ppt_templates"
-            referencedColumns: ["id"]
-          },
         ]
       }
       occupation_programs: {
         Row: {
+          dreampia_material_cost: number | null
           id: string
+          mentor_material_cost: number | null
           name: string
           occupation_id: string | null
+          prep_by: Database["public"]["Enums"]["prep_by"] | null
         }
         Insert: {
+          dreampia_material_cost?: number | null
           id?: string
+          mentor_material_cost?: number | null
           name: string
           occupation_id?: string | null
+          prep_by?: Database["public"]["Enums"]["prep_by"] | null
         }
         Update: {
+          dreampia_material_cost?: number | null
           id?: string
+          mentor_material_cost?: number | null
           name?: string
           occupation_id?: string | null
+          prep_by?: Database["public"]["Enums"]["prep_by"] | null
         }
         Relationships: [
           {
@@ -1520,7 +1531,7 @@ export type Database = {
           kit_threshold: number | null
           max_daily_stock: number | null
           memo: string | null
-          occupation_program_unit_id: string | null
+          occupation_programs_id: string | null
           qty_per_person: number
           updated_at: string
         }
@@ -1530,7 +1541,7 @@ export type Database = {
           kit_threshold?: number | null
           max_daily_stock?: number | null
           memo?: string | null
-          occupation_program_unit_id?: string | null
+          occupation_programs_id?: string | null
           qty_per_person?: number
           updated_at?: string
         }
@@ -1540,30 +1551,16 @@ export type Database = {
           kit_threshold?: number | null
           max_daily_stock?: number | null
           memo?: string | null
-          occupation_program_unit_id?: string | null
+          occupation_programs_id?: string | null
           qty_per_person?: number
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "supplies_occupation_program_unit_id_fkey"
-            columns: ["occupation_program_unit_id"]
-            isOneToOne: true
-            referencedRelation: "mentor_event_row_detail"
-            referencedColumns: ["unit_id"]
-          },
-          {
-            foreignKeyName: "supplies_occupation_program_unit_id_fkey"
-            columns: ["occupation_program_unit_id"]
-            isOneToOne: true
-            referencedRelation: "mentor_invitation_requests"
-            referencedColumns: ["unit_id"]
-          },
-          {
-            foreignKeyName: "supplies_occupation_program_unit_id_fkey"
-            columns: ["occupation_program_unit_id"]
-            isOneToOne: true
-            referencedRelation: "occupation_program_unit"
+            foreignKeyName: "supplies_occupation_programs_id_fkey"
+            columns: ["occupation_programs_id"]
+            isOneToOne: false
+            referencedRelation: "occupation_programs"
             referencedColumns: ["id"]
           },
         ]

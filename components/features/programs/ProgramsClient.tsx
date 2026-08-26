@@ -37,12 +37,14 @@ import {
   type OccupationData,
   type OccupationProgramData,
   type OccupationProgramUnitData,
+  type ProgramFormPayload,
   type UnitFormPayload,
 } from '@/app/(dashboard)/programs/actions'
 import type { PptTemplateData } from '@/app/(dashboard)/ppt-templates/actions'
 import { NameColumn } from './NameColumn'
 import { FieldColumn } from './FieldColumn'
 import { EventCategoryColumn } from './EventCategoryColumn'
+import { ProgramColumn } from './ProgramColumn'
 import { UnitFormPopup } from './UnitFormPopup'
 
 interface Props {
@@ -224,13 +226,13 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
   }
 
   // ── 직업 프로그램 ──
-  const handleAddProgram = async (name: string) => {
+  const handleAddProgram = async (payload: ProgramFormPayload) => {
     if (!selectedOccupationId) return
-    await createOccupationProgram(selectedOccupationId, name)
+    await createOccupationProgram(selectedOccupationId, payload)
     setPrograms(await getOccupationProgramsByOccupationId(selectedOccupationId))
   }
-  const handleEditProgram = async (id: string, name: string) => {
-    await updateOccupationProgram(id, name)
+  const handleEditProgram = async (id: string, payload: ProgramFormPayload) => {
+    await updateOccupationProgram(id, payload)
     if (selectedOccupationId) setPrograms(await getOccupationProgramsByOccupationId(selectedOccupationId))
   }
   const handleDeleteProgram = async (id: string) => {
@@ -342,7 +344,7 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
           disabledMessage="분야를 먼저 선택해주세요."
         />
 
-        <NameColumn
+        <ProgramColumn
           title="프로그램"
           items={programs}
           selectedId={selectedProgramId}
@@ -415,7 +417,6 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
         <UnitFormPopup
           initial={unitPopup.unit}
           occupationProgramId={selectedProgramId}
-          pptTemplates={pptTemplates}
           onClose={() => setUnitPopup({ open: false, unit: null })}
           onSubmit={handleSubmitUnit}
         />

@@ -44,7 +44,7 @@ export interface MonthlyRevenueData {
 }
 
 // 수익 = 계약금(events.budget) - 강의료(event_rows.lecture_fee 합) - 재료비.
-// 재료비는 프로그램 유닛의 준비 주체(prep_by)에 따라 단가를 나눠 headcount를 곱한다:
+// 재료비는 프로그램의 준비 주체(prep_by)에 따라 단가를 나눠 headcount를 곱한다:
 // 드림피아가 준비하면 dreampia_material_cost, 그 외(강사/모두가능)는 mentor_material_cost.
 // "모두가능"은 실제 준비 주체를 개별 기록하지 않아 강사 준비로 간주한다.
 export async function getMonthlyRevenue(year: number, month: number): Promise<MonthlyRevenueData> {
@@ -83,10 +83,16 @@ export async function getMonthlyRevenue(year: number, month: number): Promise<Mo
 
   const { data: unitsData } =
     unitIds.length > 0
+      ? await supabase.from('occupation_program_unit').select('id, occupation_programs_id').in('id', unitIds)
+      : { data: [] as { id: string; occupation_programs_id: string | null }[] }
+
+  const programIds = [...new Set((unitsData ?? []).map((u) => u.occupation_programs_id).filter(Boolean))] as string[]
+  const { data: programsData } =
+    programIds.length > 0
       ? await supabase
-          .from('occupation_program_unit')
+          .from('occupation_programs')
           .select('id, prep_by, mentor_material_cost, dreampia_material_cost')
-          .in('id', unitIds)
+          .in('id', programIds)
       : {
           data: [] as {
             id: string
@@ -96,7 +102,10 @@ export async function getMonthlyRevenue(year: number, month: number): Promise<Mo
           }[],
         }
 
-  const unitMap = new Map((unitsData ?? []).map((u) => [u.id, u]))
+  const programMap = new Map((programsData ?? []).map((p) => [p.id, p]))
+  const unitMap = new Map(
+    (unitsData ?? []).map((u) => [u.id, u.occupation_programs_id ? programMap.get(u.occupation_programs_id) : undefined])
+  )
   const institutionMap = new Map((institutionsRes.data ?? []).map((i) => [i.id, i.name]))
 
   const rowsByEvent = new Map<string, typeof eventRows>()
@@ -113,9 +122,9 @@ export async function getMonthlyRevenue(year: number, month: number): Promise<Mo
     let materialCostTotal = 0
     for (const r of rowsForEvent) {
       lectureFeeTotal += r.lecture_fee ?? 0
-      const unit = r.occupation_program_unit_id ? unitMap.get(r.occupation_program_unit_id) : undefined
-      if (unit) {
-        const unitCost = unit.prep_by === '드림피아' ? (unit.dreampia_material_cost ?? 0) : (unit.mentor_material_cost ?? 0)
+      const prog = r.occupation_program_unit_id ? unitMap.get(r.occupation_program_unit_id) : undefined
+      if (prog) {
+        const unitCost = prog.prep_by === '드림피아' ? (prog.dreampia_material_cost ?? 0) : (prog.mentor_material_cost ?? 0)
         materialCostTotal += unitCost * (r.headcount ?? 0)
       }
     }

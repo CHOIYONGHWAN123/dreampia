@@ -224,11 +224,14 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
     supabase.from('fields').select('id, name').order('name'),
     supabase.from('field_event_categories').select('field_id, event_category_id'),
     supabase.from('occupations').select('id, name, field_id').order('name'),
-    supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),
+    supabase
+      .from('occupation_programs')
+      .select('id, name, occupation_id, mentor_material_cost, dreampia_material_cost')
+      .order('name'),
     supabase
       .from('occupation_program_unit')
       .select(
-        'id, title, occupation_programs_id, school_level, school_request_note, final_product_available, is_delivery_available, mentor_material_cost, dreampia_material_cost'
+        'id, title, occupation_programs_id, school_level, school_request_note, final_product_available, is_delivery_available'
       )
       .order('title'),
     supabase
@@ -263,12 +266,26 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
     eventCategoryIdsByField.set(l.field_id, list)
   }
 
+  // 재료비는 프로그램(occupation_programs) 단위로 관리되므로, 유닛에는 소속 프로그램의
+  // 재료비를 그대로 병합해서 내려준다 (units[].mentor_material_cost/dreampia_material_cost
+  // 출력 형태는 유지).
+  const programCostMap = new Map(
+    (progsRes.data ?? []).map((p) => [p.id, { mentor: p.mentor_material_cost, dreampia: p.dreampia_material_cost }])
+  )
+
   return {
     eventCategories: eventCategoriesRes.data ?? [],
     fields: (fieldsRes.data ?? []).map((f) => ({ ...f, event_category_ids: eventCategoryIdsByField.get(f.id) ?? [] })),
     occupations: (occsRes.data ?? []) as { id: string; name: string; field_id: string | null }[],
     programs: (progsRes.data ?? []) as { id: string; name: string; occupation_id: string | null }[],
-    units: unitsRes.data ?? [],
+    units: (unitsRes.data ?? []).map((u) => {
+      const cost = u.occupation_programs_id ? programCostMap.get(u.occupation_programs_id) : undefined
+      return {
+        ...u,
+        mentor_material_cost: cost?.mentor ?? null,
+        dreampia_material_cost: cost?.dreampia ?? null,
+      }
+    }),
     mentorsByUnit,
   }
 }

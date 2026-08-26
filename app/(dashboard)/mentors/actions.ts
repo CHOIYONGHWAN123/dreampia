@@ -129,7 +129,7 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
   const [unitsRes, feePayersRes] = await Promise.all([
     supabase
       .from('occupation_program_unit')
-      .select('id, title, occupation_programs_id, school_level, mentor_material_cost, prep_by')
+      .select('id, title, occupation_programs_id, school_level')
       .in('id', unitIds),
     feePayerIds.length
       ? supabase.from('mentors').select('id, name').in('id', feePayerIds)
@@ -143,7 +143,10 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
     ...new Set((unitsRes.data ?? []).map((u) => u.occupation_programs_id).filter(Boolean)),
   ] as string[]
   const { data: programs } = programIds.length
-    ? await supabase.from('occupation_programs').select('id, name, occupation_id').in('id', programIds)
+    ? await supabase
+        .from('occupation_programs')
+        .select('id, name, occupation_id, mentor_material_cost, prep_by')
+        .in('id', programIds)
     : { data: [] }
   const programMap = new Map((programs ?? []).map((p) => [p.id, p]))
 
@@ -200,8 +203,8 @@ export async function getMentorsWithPrograms(): Promise<MentorWithPrograms[]> {
         school_request_note: r.school_request_note,
         program_title: unit?.title ?? '-',
         school_level: unit?.school_level ?? null,
-        mentor_material_cost: unit?.mentor_material_cost ?? null,
-        prep_by: unit?.prep_by ?? null,
+        mentor_material_cost: prog?.mentor_material_cost ?? null,
+        prep_by: prog?.prep_by ?? null,
         occupation_id: prog?.occupation_id ?? '',
         occupation_name: occ?.name ?? '-',
         field_id: occ?.field_id ?? null,
@@ -402,7 +405,7 @@ export async function addMentorOccupationProgram(
   const [unitRes, payersRes] = await Promise.all([
     supabase
       .from('occupation_program_unit')
-      .select('id, title, occupation_programs_id, school_level, mentor_material_cost, prep_by')
+      .select('id, title, occupation_programs_id, school_level')
       .eq('id', occupationProgramUnitId)
       .single(),
     payerIds.length
@@ -415,11 +418,17 @@ export async function addMentorOccupationProgram(
     (payersRes.data ?? []).map((m: { id: string; name: string }) => [m.id, m.name])
   )
 
-  let prog: { id: string; name: string; occupation_id: string | null } | null = null
+  let prog: {
+    id: string
+    name: string
+    occupation_id: string | null
+    mentor_material_cost: number | null
+    prep_by: string | null
+  } | null = null
   if (unit?.occupation_programs_id) {
     const { data } = await supabase
       .from('occupation_programs')
-      .select('id, name, occupation_id')
+      .select('id, name, occupation_id, mentor_material_cost, prep_by')
       .eq('id', unit.occupation_programs_id)
       .single()
     prog = data
@@ -474,8 +483,8 @@ export async function addMentorOccupationProgram(
     school_request_note: mop.school_request_note,
     program_title: unit?.title ?? '-',
     school_level: unit?.school_level ?? null,
-    mentor_material_cost: unit?.mentor_material_cost ?? null,
-    prep_by: unit?.prep_by ?? null,
+    mentor_material_cost: prog?.mentor_material_cost ?? null,
+    prep_by: prog?.prep_by ?? null,
     occupation_id: prog?.occupation_id ?? '',
     occupation_name: occData?.name ?? '-',
     field_id: occData?.field_id ?? null,

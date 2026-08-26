@@ -28,37 +28,39 @@ export interface OccupationProgramData {
   id: string
   name: string
   occupation_id: string
+  mentor_material_cost: number | null
+  dreampia_material_cost: number | null
+  prep_by: string | null
+}
+
+export interface ProgramFormPayload {
+  name: string
+  mentorMaterialCost: number | null
+  dreampiaMaterialCost: number | null
+  prepBy: string | null
 }
 
 export interface OccupationProgramUnitData {
   id: string
   occupation_programs_id: string
   title: string
-  mentor_material_cost: number | null
-  dreampia_material_cost: number | null
-  prep_by: string | null
   school_request_note: string | null
   final_product_available: boolean | null
   description: string | null
   is_delivery_available: boolean
   school_level: string | null
   syllabus: string | null
-  ppt_template_id: string | null
   created_at: string
 }
 
 export interface UnitFormPayload {
   title: string
-  mentorMaterialCost: number | null
-  dreampiaMaterialCost: number | null
-  prepBy: string | null
   schoolRequestNote: string | null
   finalProductAvailable: boolean | null
   description: string | null
   isDeliveryAvailable: boolean
   schoolLevel: string | null
   syllabus: string | null
-  pptTemplateId: string | null
 }
 
 // ── 행사 구분 (event_categories) ────────────────────────────────────
@@ -354,25 +356,40 @@ export async function getOccupationProgramsByOccupationId(
   const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase
     .from('occupation_programs')
-    .select('id, name, occupation_id')
+    .select('id, name, occupation_id, mentor_material_cost, dreampia_material_cost, prep_by')
     .eq('occupation_id', occupationId)
     .order('name')
   if (error) throw new Error(error.message)
   return data || []
 }
 
-export async function createOccupationProgram(occupationId: string, name: string): Promise<void> {
+export async function createOccupationProgram(
+  occupationId: string,
+  payload: ProgramFormPayload
+): Promise<void> {
   const supabase = await createServerSupabaseClient()
-  const { error } = await supabase
-    .from('occupation_programs')
-    .insert({ occupation_id: occupationId, name })
+  const { error } = await supabase.from('occupation_programs').insert({
+    occupation_id: occupationId,
+    name: payload.name,
+    mentor_material_cost: payload.mentorMaterialCost,
+    dreampia_material_cost: payload.dreampiaMaterialCost,
+    prep_by: payload.prepBy,
+  })
   if (error) throw new Error(error.message)
   revalidatePath('/programs')
 }
 
-export async function updateOccupationProgram(id: string, name: string): Promise<void> {
+export async function updateOccupationProgram(id: string, payload: ProgramFormPayload): Promise<void> {
   const supabase = await createServerSupabaseClient()
-  const { error } = await supabase.from('occupation_programs').update({ name }).eq('id', id)
+  const { error } = await supabase
+    .from('occupation_programs')
+    .update({
+      name: payload.name,
+      mentor_material_cost: payload.mentorMaterialCost,
+      dreampia_material_cost: payload.dreampiaMaterialCost,
+      prep_by: payload.prepBy,
+    })
+    .eq('id', id)
   if (error) throw new Error(error.message)
   revalidatePath('/programs')
 }
@@ -415,7 +432,7 @@ export async function getUnitsByOccupationProgramId(
   const { data, error } = await supabase
     .from('occupation_program_unit')
     .select(
-      'id, occupation_programs_id, title, mentor_material_cost, dreampia_material_cost, prep_by, school_request_note, final_product_available, description, is_delivery_available, school_level, syllabus, ppt_template_id, created_at'
+      'id, occupation_programs_id, title, school_request_note, final_product_available, description, is_delivery_available, school_level, syllabus, created_at'
     )
     .eq('occupation_programs_id', occupationProgramId)
     .order('created_at')
@@ -431,16 +448,12 @@ export async function createUnit(
   const { error } = await supabase.from('occupation_program_unit').insert({
     occupation_programs_id: occupationProgramId,
     title: payload.title,
-    mentor_material_cost: payload.mentorMaterialCost,
-    dreampia_material_cost: payload.dreampiaMaterialCost,
-    prep_by: payload.prepBy,
     school_request_note: payload.schoolRequestNote,
     final_product_available: payload.finalProductAvailable,
     description: payload.description,
     is_delivery_available: payload.isDeliveryAvailable,
     school_level: payload.schoolLevel,
     syllabus: payload.syllabus,
-    ppt_template_id: payload.pptTemplateId,
   })
   if (error) throw new Error(error.message)
   revalidatePath('/programs')
@@ -452,16 +465,12 @@ export async function updateUnit(id: string, payload: UnitFormPayload): Promise<
     .from('occupation_program_unit')
     .update({
       title: payload.title,
-      mentor_material_cost: payload.mentorMaterialCost,
-      dreampia_material_cost: payload.dreampiaMaterialCost,
-      prep_by: payload.prepBy,
       school_request_note: payload.schoolRequestNote,
       final_product_available: payload.finalProductAvailable,
       description: payload.description,
       is_delivery_available: payload.isDeliveryAvailable,
       school_level: payload.schoolLevel,
       syllabus: payload.syllabus,
-      ppt_template_id: payload.pptTemplateId,
     })
     .eq('id', id)
   if (error) throw new Error(error.message)
