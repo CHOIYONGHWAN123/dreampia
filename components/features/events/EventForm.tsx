@@ -17,6 +17,7 @@ import {
 import { createEvent, updateEvent } from '@/app/(dashboard)/events/actions'
 import { institutionTypeToSchoolLevel } from '@/lib/school-level'
 import { generateId } from '@/lib/generate-id'
+import { formatThousands, parseThousands } from '@/lib/format-number'
 import type { EventDetailData, EventScheduleRow, EventRowDetailData, EventRowPhoto } from '@/app/(dashboard)/events/actions'
 import {
   EventProgramUnitSection,
@@ -479,13 +480,6 @@ export function EventForm({
         <table className={tableCls}>
           <tbody>
             <tr>
-              <td className={cellLabelCls}>접수일</td>
-              <td className={cellValueCls}>
-                <input type="date" {...register('reception_date')} className={cellInputCls} />
-              </td>
-            </tr>
-
-            <tr>
               <td className={cellLabelCls}>
                 행사명 <span className="text-red-500">*</span>
               </td>
@@ -530,225 +524,12 @@ export function EventForm({
             </tr>
 
             <tr>
-              <td className={cellLabelCls}>시작일시</td>
-              <td className={cellValueCls}>
-                <div className="grid grid-cols-[1.3fr_1fr] gap-1">
-                  <input type="date" {...register('event_start_date')} className={`${cellInputCls} min-w-0`} />
-                  <input type="time" {...register('event_start_at_time')} className={`${cellInputCls} min-w-0`} />
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td className={cellLabelCls}>종료일시</td>
-              <td className={cellValueCls}>
-                <div className="grid grid-cols-[1.3fr_1fr] gap-1">
-                  <input type="date" {...register('event_end_date')} className={`${cellInputCls} min-w-0`} />
-                  <input type="time" {...register('event_end_at_time')} className={`${cellInputCls} min-w-0`} />
-                </div>
-              </td>
-            </tr>
-
-            <tr>
               <td className={cellLabelCls}>대상학년</td>
               <td className={cellValueCls}>
                 <input type="text" {...register('target_grade')} placeholder="예: 1~3학년" className={cellInputCls} />
               </td>
             </tr>
 
-            <tr>
-              <td className={cellLabelCls}>강사대기실</td>
-              <td className={cellValueCls}>
-                <input
-                  type="text"
-                  {...register('instructor_waiting_room')}
-                  placeholder="예: 2층 2학년 학년연구실"
-                  className={cellInputCls}
-                />
-              </td>
-            </tr>
-
-            <tr>
-              <td className={cellLabelCls}>계약담당 행정실 연락처</td>
-              <td className={cellValueCls}>
-                <input type="text" {...register('admin_contact')} placeholder="예: 051-123-4567" className={cellInputCls} />
-              </td>
-            </tr>
-
-            <tr>
-              <td className={cellLabelCls}>노트북/와이파이</td>
-              <td className={cellValueCls}>
-                <input type="text" {...register('laptop_wifi_note')} className={cellInputCls} />
-              </td>
-            </tr>
-
-            <tr>
-              <td className={cellLabelCls}>범죄경력 진행방식</td>
-              <td className={cellValueCls}>
-                <select
-                  {...register('crime_check_method', { setValueAs: (v) => v || null })}
-                  className={cellSelectCls}
-                >
-                  <option value="">선택</option>
-                  {CRIME_CHECK_METHODS.map((m) => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
-              </td>
-            </tr>
-
-            <tr>
-              <td className={cellLabelCls}>범죄경력회보서</td>
-              <td className={cellValueCls}>
-                <input
-                  type="text"
-                  {...register('crime_check_info')}
-                  placeholder="기관아이디/검증번호"
-                  className={cellInputCls}
-                />
-              </td>
-            </tr>
-
-            <tr>
-              <td className={cellLabelCls}>실내화(내빈화)위치</td>
-              <td className={cellValueCls}>
-                <input type="text" {...register('indoor_shoes_note')} className={cellInputCls} />
-              </td>
-            </tr>
-
-            <tr>
-              <td className={cellLabelCls}>주차 및 엘리베이터</td>
-              <td className={cellValueCls}>
-                <input type="text" {...register('parking_note')} className={cellInputCls} />
-              </td>
-            </tr>
-
-            <tr>
-              <td className={cellLabelCls}>엘리베이터 유무</td>
-              <td className={cellValueCls}>
-                <div className="flex items-center gap-2">
-                  {ELEVATOR_STATUSES.map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => setValue('has_elevator', status)}
-                      className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
-                        watch('has_elevator') === status
-                          ? status === '확인필요'
-                            ? 'bg-amber-500 text-white border-amber-500'
-                            : 'bg-primary-500 text-white border-primary-500'
-                          : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td className={cellLabelCls}>학교 배치도</td>
-              <td className={cellValueCls}>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="file"
-                    ref={floorMapInputRef}
-                    className="hidden"
-                    accept=".pdf,.jpg,.jpeg,.png,.hwp"
-                    onChange={(e) => setFloorMapFile(e.target.files?.[0] ?? null)}
-                  />
-                  {watch('floor_map_url') && !floorMapFile && (
-                    <a
-                      href={watch('floor_map_url')}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary-600 underline whitespace-nowrap"
-                    >
-                      현재 파일 보기
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => floorMapInputRef.current?.click()}
-                    className="px-2.5 py-1 text-xs border border-gray-300 rounded-full hover:bg-gray-50 transition-colors whitespace-nowrap"
-                  >
-                    {watch('floor_map_url') || floorMapFile ? '재업로드' : '파일 선택'}
-                  </button>
-                  {floorMapFile && (
-                    <span className="text-xs text-gray-500 truncate max-w-40">{floorMapFile.name}</span>
-                  )}
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td className={cellLabelCls}>학생변경 여부</td>
-              <td className={cellValueCls}>
-                <select
-                  {...register('student_rotation', { setValueAs: (v) => v || null })}
-                  className={cellSelectCls}
-                >
-                  <option value="">선택</option>
-                  {STUDENT_ROTATIONS.map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
-              </td>
-            </tr>
-
-            <tr>
-              <td className={cellLabelCls}>공지사항</td>
-              <td className={cellValueCls}>
-                <textarea
-                  {...register('notice')}
-                  rows={2}
-                  className={`${cellInputCls} resize-none`}
-                />
-              </td>
-            </tr>
-
-            <tr>
-              <td className={cellLabelCls}>준비사항(드림피아)</td>
-              <td className={cellValueCls}>
-                <textarea
-                  {...register('prep_note')}
-                  rows={2}
-                  className={`${cellInputCls} resize-none`}
-                />
-              </td>
-            </tr>
-
-            <tr>
-              <td className={cellLabelCls}>메모</td>
-              <td className={cellValueCls}>
-                <textarea
-                  {...register('memo')}
-                  rows={2}
-                  className={`${cellInputCls} resize-none`}
-                />
-              </td>
-            </tr>
-
-            <tr>
-              <td className={cellLabelCls}>학교요청사항(행사 전체)</td>
-              <td className={cellValueCls}>
-                <textarea
-                  {...register('school_request_note')}
-                  rows={2}
-                  placeholder="이 행사 전체에 공통으로 적용되는 학교 요청사항"
-                  className={`${cellInputCls} resize-none`}
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        </div>
-
-        {/* ── 오른쪽 표 ── */}
-        <div className="min-w-0 overflow-x-auto">
-        <table className={tableCls}>
-          <tbody>
             {scheduleEntries.map((s) => (
               <tr key={s.key}>
                 <td className={cellLabelCls}>
@@ -800,28 +581,173 @@ export function EventForm({
             </tr>
 
             <tr>
-              <td className={cellLabelCls}>담당자 성함</td>
+              <td className={cellLabelCls}>강사대기실</td>
               <td className={cellValueCls}>
                 <input
                   type="text"
-                  {...register('contact_name')}
-                  placeholder="예: 3학년 부장 홍길동"
+                  {...register('instructor_waiting_room')}
+                  placeholder="예: 2층 2학년 학년연구실"
                   className={cellInputCls}
                 />
               </td>
             </tr>
 
             <tr>
-              <td className={cellLabelCls}>담당자 이메일</td>
+              <td className={cellLabelCls}>학교 배치도</td>
               <td className={cellValueCls}>
-                <input type="email" {...register('contact_email')} className={cellInputCls} />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    ref={floorMapInputRef}
+                    className="hidden"
+                    accept=".pdf,.jpg,.jpeg,.png,.hwp"
+                    onChange={(e) => setFloorMapFile(e.target.files?.[0] ?? null)}
+                  />
+                  {watch('floor_map_url') && !floorMapFile && (
+                    <a
+                      href={watch('floor_map_url')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary-600 underline whitespace-nowrap"
+                    >
+                      현재 파일 보기
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => floorMapInputRef.current?.click()}
+                    className="px-2.5 py-1 text-xs border border-gray-300 rounded-full hover:bg-gray-50 transition-colors whitespace-nowrap"
+                  >
+                    {watch('floor_map_url') || floorMapFile ? '재업로드' : '파일 선택'}
+                  </button>
+                  {floorMapFile && (
+                    <span className="text-xs text-gray-500 truncate max-w-40">{floorMapFile.name}</span>
+                  )}
+                </div>
               </td>
             </tr>
 
             <tr>
-              <td className={cellLabelCls}>담당자 연락처</td>
+              <td className={cellLabelCls}>엘리베이터 유무</td>
               <td className={cellValueCls}>
-                <input type="tel" {...register('contact_phone')} className={cellInputCls} />
+                <div className="flex items-center gap-2">
+                  {ELEVATOR_STATUSES.map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => setValue('has_elevator', status)}
+                      className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                        watch('has_elevator') === status
+                          ? status === '확인필요'
+                            ? 'bg-amber-500 text-white border-amber-500'
+                            : 'bg-primary-500 text-white border-primary-500'
+                          : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>주차 및 엘리베이터</td>
+              <td className={cellValueCls}>
+                <input type="text" {...register('parking_note')} className={cellInputCls} />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>노트북/와이파이</td>
+              <td className={cellValueCls}>
+                <input type="text" {...register('laptop_wifi_note')} className={cellInputCls} />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>실내화(내빈화)위치</td>
+              <td className={cellValueCls}>
+                <input type="text" {...register('indoor_shoes_note')} className={cellInputCls} />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>범죄경력 진행방식</td>
+              <td className={cellValueCls}>
+                <select
+                  {...register('crime_check_method', { setValueAs: (v) => v || null })}
+                  className={cellSelectCls}
+                >
+                  <option value="">선택</option>
+                  {CRIME_CHECK_METHODS.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>범죄경력회보서</td>
+              <td className={cellValueCls}>
+                <input
+                  type="text"
+                  {...register('crime_check_info')}
+                  placeholder="기관아이디/검증번호"
+                  className={cellInputCls}
+                />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>학생변경 여부</td>
+              <td className={cellValueCls}>
+                <select
+                  {...register('student_rotation', { setValueAs: (v) => v || null })}
+                  className={cellSelectCls}
+                >
+                  <option value="">선택</option>
+                  {STUDENT_ROTATIONS.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>공지사항</td>
+              <td className={cellValueCls}>
+                <textarea
+                  {...register('notice')}
+                  rows={2}
+                  className={`${cellInputCls} resize-none`}
+                />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>학교요청사항(행사 전체)</td>
+              <td className={cellValueCls}>
+                <textarea
+                  {...register('school_request_note')}
+                  rows={2}
+                  placeholder="이 행사 전체에 공통으로 적용되는 학교 요청사항"
+                  className={`${cellInputCls} resize-none`}
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+
+        {/* ── 오른쪽 표 ── */}
+        <div className="min-w-0 overflow-x-auto">
+        <table className={tableCls}>
+          <tbody>
+            <tr>
+              <td className={cellLabelCls}>접수일</td>
+              <td className={cellValueCls}>
+                <input type="date" {...register('reception_date')} className={cellInputCls} />
               </td>
             </tr>
 
@@ -856,6 +782,59 @@ export function EventForm({
             </tr>
 
             <tr>
+              <td className={cellLabelCls}>담당자 성함</td>
+              <td className={cellValueCls}>
+                <input
+                  type="text"
+                  {...register('contact_name')}
+                  placeholder="예: 3학년 부장 홍길동"
+                  className={cellInputCls}
+                />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>담당자 이메일</td>
+              <td className={cellValueCls}>
+                <input type="email" {...register('contact_email')} className={cellInputCls} />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>담당자 연락처</td>
+              <td className={cellValueCls}>
+                <input type="tel" {...register('contact_phone')} className={cellInputCls} />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>계약담당 행정실 연락처</td>
+              <td className={cellValueCls}>
+                <input type="text" {...register('admin_contact')} placeholder="예: 051-123-4567" className={cellInputCls} />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>시작일시</td>
+              <td className={cellValueCls}>
+                <div className="grid grid-cols-[1.3fr_1fr] gap-1">
+                  <input type="date" {...register('event_start_date')} className={`${cellInputCls} min-w-0`} />
+                  <input type="time" {...register('event_start_at_time')} className={`${cellInputCls} min-w-0`} />
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>종료일시</td>
+              <td className={cellValueCls}>
+                <div className="grid grid-cols-[1.3fr_1fr] gap-1">
+                  <input type="date" {...register('event_end_date')} className={`${cellInputCls} min-w-0`} />
+                  <input type="time" {...register('event_end_at_time')} className={`${cellInputCls} min-w-0`} />
+                </div>
+              </td>
+            </tr>
+
+            <tr>
               <td className={cellLabelCls}>영업담당자</td>
               <td className={cellValueCls}>
                 <select
@@ -874,13 +853,12 @@ export function EventForm({
               <td className={cellLabelCls}>예산 (원)</td>
               <td className={cellValueCls}>
                 <input
-                  type="number"
-                  {...register('budget', {
-                    setValueAs: (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
-                  })}
+                  type="text"
+                  inputMode="numeric"
+                  value={formatThousands(watch('budget'))}
+                  onChange={(e) => setValue('budget', parseThousands(e.target.value), { shouldValidate: true })}
                   placeholder="예산을 입력하세요"
                   className={cellInputCls}
-                  min={0}
                 />
               </td>
             </tr>
@@ -889,13 +867,12 @@ export function EventForm({
               <td className={cellLabelCls}>최종 예산 (원)</td>
               <td className={cellValueCls}>
                 <input
-                  type="number"
-                  {...register('final_budget', {
-                    setValueAs: (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
-                  })}
+                  type="text"
+                  inputMode="numeric"
+                  value={formatThousands(watch('final_budget'))}
+                  onChange={(e) => setValue('final_budget', parseThousands(e.target.value), { shouldValidate: true })}
                   placeholder="최종 확정된 예산을 입력하세요"
                   className={cellInputCls}
-                  min={0}
                 />
               </td>
             </tr>
@@ -953,6 +930,17 @@ export function EventForm({
             </tr>
 
             <tr>
+              <td className={cellLabelCls}>준비사항(드림피아)</td>
+              <td className={cellValueCls}>
+                <textarea
+                  {...register('prep_note')}
+                  rows={2}
+                  className={`${cellInputCls} resize-none`}
+                />
+              </td>
+            </tr>
+
+            <tr>
               <td className={cellLabelCls}>섭외시작일</td>
               <td className={`${cellValueCls} bg-gray-50 text-gray-400`}>섭외 시작 시 자동 등록</td>
             </tr>
@@ -977,6 +965,17 @@ export function EventForm({
               <td className={cellValueCls}>
                 <textarea
                   {...register('comm_content')}
+                  rows={10}
+                  className={`${cellInputCls} resize-none`}
+                />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>메모</td>
+              <td className={cellValueCls}>
+                <textarea
+                  {...register('memo')}
                   rows={10}
                   className={`${cellInputCls} resize-none`}
                 />

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { generateId } from '@/lib/generate-id'
+import { formatThousands, parseThousands } from '@/lib/format-number'
 import { formatScoreWithGrade } from '@/lib/mentor-grade'
 import { formatUnitTitle } from '@/lib/format-unit-title'
 import { SignedFileCellWithUpload, uploadPrivateFile } from '@/components/features/mentors/shared'
@@ -501,11 +502,11 @@ export function EventProgramUnitSection({
           </div>
           <div className="flex items-center gap-2">
             <input
-              type="number"
-              value={bulkLectureFee ?? ''}
-              onChange={(e) => setBulkLectureFee(e.target.value === '' ? null : Number(e.target.value))}
+              type="text"
+              inputMode="numeric"
+              value={formatThousands(bulkLectureFee)}
+              onChange={(e) => setBulkLectureFee(parseThousands(e.target.value))}
               placeholder="강의료"
-              min={0}
               className={`${fieldInputCls} max-w-50`}
             />
             <button
@@ -531,6 +532,7 @@ export function EventProgramUnitSection({
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36">대상</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">요청직업군</th>
               <th className="px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">프로그램</th>
+              <th className="px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">특이사항</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40">강사 배정</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강사 연락처</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의실</th>
@@ -548,7 +550,6 @@ export function EventProgramUnitSection({
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">재료비 입금자명</th>
               <th className="px-2 py-2 text-left font-bold text-primary-700 w-48 min-w-48">학교요청사항</th>
               <th className="px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">답변</th>
-              <th className="px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">비고</th>
               <th className="px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">사진</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">강사등급</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">소속구분</th>
@@ -623,6 +624,15 @@ export function EventProgramUnitSection({
                         {v.fieldName} &gt; {v.programName}
                       </div>
                     </td>
+                    <td className="px-2 py-1.5 align-top">
+                      <textarea
+                        value={v.remarks}
+                        onChange={(e) => updateUnit(v.key, { remarks: e.target.value })}
+                        placeholder="특이사항"
+                        rows={2}
+                        className={`${fieldInputCls} resize-none`}
+                      />
+                    </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
                       {assignedMentor ? assignedMentor.name : '미배정'}
                     </td>
@@ -660,12 +670,10 @@ export function EventProgramUnitSection({
                     </td>
                     <td className="px-2 py-1.5">
                       <input
-                        type="number"
-                        value={v.lectureFee ?? ''}
-                        onChange={(e) =>
-                          updateUnit(v.key, { lectureFee: e.target.value === '' ? null : Number(e.target.value) })
-                        }
-                        min={0}
+                        type="text"
+                        inputMode="numeric"
+                        value={formatThousands(v.lectureFee)}
+                        onChange={(e) => updateUnit(v.key, { lectureFee: parseThousands(e.target.value) })}
                         className={fieldInputCls}
                       />
                     </td>
@@ -728,15 +736,6 @@ export function EventProgramUnitSection({
                         value={v.schoolRequestResponse}
                         onChange={(e) => updateUnit(v.key, { schoolRequestResponse: e.target.value })}
                         placeholder="학교(기관) 답변 기록"
-                        rows={2}
-                        className={`${fieldInputCls} resize-none`}
-                      />
-                    </td>
-                    <td className="px-2 py-1.5 align-top">
-                      <textarea
-                        value={v.remarks}
-                        onChange={(e) => updateUnit(v.key, { remarks: e.target.value })}
-                        placeholder="비고"
                         rows={2}
                         className={`${fieldInputCls} resize-none`}
                       />
