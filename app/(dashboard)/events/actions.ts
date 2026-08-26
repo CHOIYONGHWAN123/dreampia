@@ -83,6 +83,7 @@ type EventRowInput = {
   session_headcount?: number | null
   school_request_response?: string | null
   remarks?: string | null
+  criminal_background_check?: string | null
 }
 
 export type MentorOptionForUnit = {
@@ -176,6 +177,7 @@ export type EventRowDetailData = {
   school_request_response: string | null
   remarks: string | null
   attendance: boolean | null
+  criminal_background_check: string | null
 }
 
 export type EventRowPhoto = { id: string; url: string }
@@ -193,7 +195,7 @@ export async function getEventDetail(id: string): Promise<{
     supabase
       .from('event_rows')
       .select(
-        'id, occupation_program_unit_id, start_time, end_time, classroom, instructor_waiting_room, target, lecture_fee, headcount, session_headcount, mentor_id, school_request_response, remarks, attendance'
+        'id, occupation_program_unit_id, start_time, end_time, classroom, instructor_waiting_room, target, lecture_fee, headcount, session_headcount, mentor_id, school_request_response, remarks, attendance, criminal_background_check'
       )
       .eq('event_id', id)
       .order('start_time', { ascending: true, nullsFirst: false }),
@@ -397,6 +399,7 @@ export async function createEvent(data: {
           session_headcount: r.session_headcount ?? null,
           school_request_response: r.school_request_response || null,
           remarks: r.remarks || null,
+          criminal_background_check: r.criminal_background_check || null,
         }))
       )
       .select('id')
@@ -559,6 +562,10 @@ export async function updateEvent(
   const supplyLogs: SupplyLogEntry[] = []
 
   for (const r of data.eventRows ?? []) {
+    // criminal_background_check(회보서)는 attendance와 마찬가지로 멘토 앱에서 폼 외부에
+    // 채워질 수 있는 값이라, 여기 통째로 갱신되는 fields에는 넣지 않는다 — 관리자가 폼을 여는
+    // 사이 멘토가 올린 최신 파일을 관리자의 오래된 로컬 상태로 덮어쓰는 것을 방지하기 위함.
+    // 관리자가 대신 업로드하는 경우는 updateEventRowCriminalBackgroundCheck로 즉시 반영한다.
     const fields = {
       start_time: r.start_time || null,
       end_time: r.end_time || null,
@@ -594,7 +601,12 @@ export async function updateEvent(
     } else {
       const { data: newRow, error: insErr } = await supabase
         .from('event_rows')
-        .insert({ event_id: id, occupation_program_unit_id: r.occupation_program_unit_id, ...fields })
+        .insert({
+          event_id: id,
+          occupation_program_unit_id: r.occupation_program_unit_id,
+          ...fields,
+          criminal_background_check: r.criminal_background_check || null,
+        })
         .select('id')
         .single()
       if (insErr) throw new Error(insErr.message)
@@ -631,6 +643,22 @@ export async function updateEvent(
 
   revalidatePath('/institutions')
   revalidatePath(`/events/${id}`)
+}
+
+// 회보서(criminal_background_check)는 멘토가 직접 앱에서 올리는 것이 기본이지만,
+// 멘토가 자기서비스로 못 올리는 경우 관리자가 대신 올릴 수 있어야 한다. updateEvent의
+// 통짜 저장 흐름에 끼워 넣으면 다른 관리자가 폼을 여는 사이 멘토가 올린 최신 파일을
+// 오래된 로컬 상태로 덮어쓸 위험이 있어, 별도 액션으로 즉시 반영한다.
+export async function updateEventRowCriminalBackgroundCheck(
+  eventRowId: string,
+  url: string | null
+): Promise<void> {
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase
+    .from('event_rows')
+    .update({ criminal_background_check: url })
+    .eq('id', eventRowId)
+  if (error) throw new Error(error.message)
 }
 
 export async function deleteEvent(id: string) {

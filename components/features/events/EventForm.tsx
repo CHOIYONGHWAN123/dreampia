@@ -123,6 +123,7 @@ function buildInitialProgramUnits(
       mentorId: r.mentor_id,
       remarks: r.remarks ?? '',
       attendance: r.attendance,
+      criminalBackgroundCheck: r.criminal_background_check,
     }
   })
 }
@@ -416,6 +417,7 @@ export function EventForm({
           session_headcount: u.sessionHeadcount,
           school_request_response: u.schoolRequestResponse || null,
           remarks: u.remarks || null,
+          criminal_background_check: u.criminalBackgroundCheck || null,
         })),
       }
 

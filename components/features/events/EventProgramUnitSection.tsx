@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react'
 import { generateId } from '@/lib/generate-id'
 import { formatScoreWithGrade } from '@/lib/mentor-grade'
 import { formatUnitTitle } from '@/lib/format-unit-title'
+import { SignedFileCellWithUpload, uploadPrivateFile } from '@/components/features/mentors/shared'
+import { updateEventRowCriminalBackgroundCheck } from '@/app/(dashboard)/events/actions'
 
 export type EventCategoryOption = { id: string; name: string }
 export type FieldOption = { id: string; name: string; event_category_ids: string[] }
@@ -57,6 +59,7 @@ export type SelectedProgramUnit = {
   mentorId: string | null
   remarks: string
   attendance: boolean | null
+  criminalBackgroundCheck: string | null
 }
 
 // 강사료 3.3% 원천징수 후 세후 강의료
@@ -96,6 +99,25 @@ const fieldInputCls =
 function splitDateTime(value: string): { date: string; time: string } {
   const [date, time] = value.split('T')
   return { date: date ?? '', time: time ?? '' }
+}
+
+// criminal-background-check 버킷이 한때 public이었을 때 저장된 값은 전체 공개 URL일 수
+// 있다. private 버킷의 signed URL 발급에는 버킷 내부 경로만 필요하므로, 공개 URL 형태면
+// 경로 부분만 추출한다(경로만 저장된 값은 그대로 반환).
+function toCbcStoragePath(value: string): string {
+  const marker = '/object/public/criminal-background-check/'
+  const idx = value.indexOf(marker)
+  return idx >= 0 ? value.slice(idx + marker.length) : value
+}
+
+// 일자(YYYY-MM-DD)로부터 요일 라벨을 계산. 일요일은 빨강, 토요일은 파랑으로 표시.
+function getWeekdayLabel(date: string): { label: string; colorCls: string } | null {
+  if (!date) return null
+  const d = new Date(`${date}T00:00:00`)
+  if (Number.isNaN(d.getTime())) return null
+  const day = d.getDay()
+  const colorCls = day === 0 ? 'text-red-500' : day === 6 ? 'text-blue-500' : 'text-gray-500'
+  return { label: '일월화수목금토'[day], colorCls }
 }
 function joinDateTime(date: string, time: string): string {
   if (!date) return ''
@@ -145,6 +167,9 @@ export function EventProgramUnitSection({
   const [bulkDate, setBulkDate] = useState('')
   const [bulkStartTime, setBulkStartTime] = useState('')
   const [bulkEndTime, setBulkEndTime] = useState('')
+
+  // 회보서 업로드 중 여부 (행 key 기준)
+  const [uploadingCbc, setUploadingCbc] = useState<Record<string, boolean>>({})
 
   const occupationMap = useMemo(() => new Map(occupations.map((o) => [o.id, o])), [occupations])
   const programMap = useMemo(() => new Map(programs.map((p) => [p.id, p])), [programs])
@@ -218,6 +243,7 @@ export function EventProgramUnitSection({
         mentorId: null,
         remarks: '',
         attendance: null,
+        criminalBackgroundCheck: null,
       },
     ])
   }
@@ -235,6 +261,21 @@ export function EventProgramUnitSection({
 
   const updateUnit = (key: string, patch: Partial<SelectedProgramUnit>) => {
     onChange(value.map((v) => (v.key === key ? { ...v, ...patch } : v)))
+  }
+
+  // 회보서는 기본적으로 멘토가 앱에서 직접 올리지만, 멘토가 못 올리는 경우 관리자가 대신
+  // 올릴 수도 있게 한다. 이미 저장된 행(rowId 있음)은 폼 저장(일괄 갱신)을 거치지 않고
+  // 업로드 즉시 DB에 반영해, 관리자가 폼을 여는 사이 멘토가 올린 최신 파일을 오래된 로컬
+  // 상태로 덮어쓰는 일이 없게 한다. 아직 저장 전인 신규 행은 폼 제출 시 함께 저장된다.
+  const handleCriminalBackgroundCheckUpload = async (v: SelectedProgramUnit, file: File) => {
+    setUploadingCbc((prev) => ({ ...prev, [v.key]: true }))
+    try {
+      const path = await uploadPrivateFile('criminal-background-check', v.rowId ?? v.key, file)
+      if (v.rowId) await updateEventRowCriminalBackgroundCheck(v.rowId, path)
+      updateUnit(v.key, { criminalBackgroundCheck: path })
+    } finally {
+      setUploadingCbc((prev) => ({ ...prev, [v.key]: false }))
+    }
   }
 
   const applyBulkTarget = () => {
@@ -478,7 +519,7 @@ export function EventProgramUnitSection({
         <table className="text-sm border-collapse" style={{ minWidth: '3520px' }}>
           <thead>
             <tr className="bg-primary-50 border-b border-primary-100">
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36">일자</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-44 min-w-44">일자</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">시작 시간</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">종료 시간</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36">대상</th>
@@ -488,6 +529,7 @@ export function EventProgramUnitSection({
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의실</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">대기실</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-20 min-w-20">출석</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">회보서</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의료</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">강의료 입금자명</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36 whitespace-nowrap">1인당 강사 재료비</th>
@@ -509,7 +551,7 @@ export function EventProgramUnitSection({
           <tbody>
             {value.length === 0 ? (
               <tr>
-                <td colSpan={26} className="py-6 text-center text-xs text-gray-400">
+                <td colSpan={27} className="py-6 text-center text-xs text-gray-400">
                   추가된 프로그램이 없습니다.
                 </td>
               </tr>
@@ -522,12 +564,23 @@ export function EventProgramUnitSection({
                 return (
                   <tr key={v.key} className="border-b border-gray-100 last:border-b-0">
                     <td className="px-2 py-1.5">
-                      <input
-                        type="date"
-                        value={splitDateTime(v.startTime).date || splitDateTime(v.endTime).date}
-                        onChange={(e) => updateRowDate(v, e.target.value)}
-                        className={fieldInputCls}
-                      />
+                      {(() => {
+                        const rowDate = splitDateTime(v.startTime).date || splitDateTime(v.endTime).date
+                        const weekday = getWeekdayLabel(rowDate)
+                        return (
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="date"
+                              value={rowDate}
+                              onChange={(e) => updateRowDate(v, e.target.value)}
+                              className={fieldInputCls}
+                            />
+                            {weekday && (
+                              <span className={`text-xs font-medium ${weekday.colorCls}`}>({weekday.label})</span>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </td>
                     <td className="px-2 py-1.5">
                       <input
@@ -584,6 +637,14 @@ export function EventProgramUnitSection({
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
                       {v.attendance === true ? '출석' : v.attendance === false ? '미출석' : '-'}
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <SignedFileCellWithUpload
+                        bucket="criminal-background-check"
+                        path={v.criminalBackgroundCheck ? toCbcStoragePath(v.criminalBackgroundCheck) : null}
+                        uploading={uploadingCbc[v.key] ?? false}
+                        onUpload={(file) => handleCriminalBackgroundCheckUpload(v, file)}
+                      />
                     </td>
                     <td className="px-2 py-1.5">
                       <input
