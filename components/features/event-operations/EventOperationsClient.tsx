@@ -954,8 +954,6 @@ export function EventOperationsClient({
               <th className={th} style={{ width: 90 }}>보고서<br />발송여부</th>
               <th className={th} style={{ width: 90 }}>입금확인</th>
               <th className={th} style={{ width: 130 }}>계약현황</th>
-              <th className={th} style={{ width: 90 }}>계약<br />전달여부</th>
-              <th className={th} style={{ width: 72 }}>공지사항<br />알림</th>
               <th className={th} style={{ width: 72 }}>강사섭외<br />시작일</th>
               <th className={th} style={{ width: 72 }}>강사섭외<br />상태</th>
               <th className={th} style={{ width: 72 }}>유입경로</th>
@@ -964,7 +962,7 @@ export function EventOperationsClient({
           <tbody>
             {filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={47} className="py-16 text-center text-gray-400">
+                <td colSpan={46} className="py-16 text-center text-gray-400">
                   {rows.length === 0 ? '해당 월의 행사가 없습니다.' : '필터에 해당하는 행사가 없습니다.'}
                 </td>
               </tr>
@@ -1296,20 +1294,6 @@ export function EventOperationsClient({
                         options={CONTRACT_STATUS_OPTIONS}
                         onSave={(v) => updateEventField(row.id, { contract_status: v })}
                       />
-                    </td>
-
-                    {/* 계약 전달여부 */}
-                    <td className={td}>
-                      <BoolSelect
-                        value={row.contractDelivered}
-                        trueLabel="완료"
-                        falseLabel="예정"
-                        onSave={(v) => updateEventField(row.id, { contract_delivered: v })}
-                      />
-                    </td>
-
-                    <td className={td}>
-                      <PlaceholderBtn label="알림보내기" />
                     </td>
 
                     <td className={td}>{fmtDate(row.startRecruitAt) ?? '-'}</td>
