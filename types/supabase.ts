@@ -1949,6 +1949,74 @@ export type Database = {
         Returns: string[]
       }
       generate_mentor_unique_code: { Args: never; Returns: string }
+      get_field_operator_contact: {
+        Args: { p_event_row_id: string }
+        Returns: {
+          mentor_name: string
+          mentor_phone: string
+        }[]
+      }
+      get_field_operator_event_detail: {
+        Args: { p_event_id: string }
+        Returns: {
+          admin_contact: string
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          crime_check_info: string
+          crime_check_method: Database["public"]["Enums"]["crime_check_method"]
+          crime_check_status: Database["public"]["Enums"]["crime_check_status"]
+          event_category_id: string
+          event_end_at: string
+          event_id: string
+          event_start_at: string
+          floor_map_url: string
+          group_chat_link: string
+          has_elevator: Database["public"]["Enums"]["elevator_status"]
+          indoor_shoes_note: string
+          institution_address: string
+          institution_id: string
+          institution_name: string
+          institution_region1: string
+          institution_region2: string
+          instructor_waiting_room: string
+          laptop_wifi_note: string
+          name: string
+          notice: string
+          occupation_program_id: string
+          parking_note: string
+          prep_note: string
+          program_name: string
+          remarks: string
+          requested_dates: string[]
+          school_request_note: string
+          student_rotation: string
+          target_grade: string
+          teacher_name: string
+        }[]
+      }
+      get_field_operator_event_rows: {
+        Args: { p_event_id: string }
+        Returns: {
+          attendance: boolean
+          classroom: string
+          end_time: string
+          event_row_id: string
+          headcount: number
+          instructor_waiting_room: string
+          mentor_id: string
+          mentor_name: string
+          mentor_phone: string
+          occupation_name: string
+          preparing: boolean
+          program_name: string
+          remarks: string
+          session_headcount: string
+          start_time: string
+          target: string
+          unit_title: string
+        }[]
+      }
       get_mentor_names: {
         Args: { ids: string[] }
         Returns: {
