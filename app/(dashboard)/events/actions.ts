@@ -115,7 +115,7 @@ export type EventProgramSelectData = {
 }
 
 const EVENT_DETAIL_COLUMNS =
-  'id, name, institution_id, event_category_id, created_at, event_start_at, event_end_at, target_grade, instructor_waiting_room, admin_contact, has_elevator, floor_map_url, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, student_rotation, notice, prep_note, memo, school_request_note, contact_name, contact_email, contact_phone, teacher_name, inflow_source, institution_type, sales_admin_id, budget, estimate_file_url, comm_admin_id'
+  'id, name, institution_id, event_category_id, created_at, event_start_at, event_end_at, target_grade, instructor_waiting_room, admin_contact, has_elevator, floor_map_url, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, student_rotation, notice, prep_note, memo, school_request_note, contact_name, contact_email, contact_phone, teacher_name, inflow_source, institution_type, sales_admin_id, budget, final_budget, estimate_file_url, comm_admin_id'
 
 export type EventDetailData = {
   id: string
@@ -148,6 +148,7 @@ export type EventDetailData = {
   institution_type: string | null
   sales_admin_id: string | null
   budget: number | null
+  final_budget: number | null
   estimate_file_url: string | null
   comm_admin_id: string | null
 }
@@ -298,6 +299,7 @@ export async function createEvent(data: {
   institution_type?: string | null
   sales_admin_id?: string | null
   budget?: number | null
+  final_budget?: number | null
   estimate_file_url?: string
   comm_admin_id?: string | null
   schedules?: ScheduleInput[]
@@ -334,6 +336,7 @@ export async function createEvent(data: {
     institution_type: data.institution_type || null,
     sales_admin_id: data.sales_admin_id || null,
     budget: data.budget ?? null,
+    final_budget: data.final_budget ?? null,
     estimate_file_url: data.estimate_file_url || null,
     comm_admin_id: data.comm_admin_id || null,
     event_check_status: 1,
@@ -450,6 +453,7 @@ export async function updateEvent(
     institution_type?: string | null
     sales_admin_id?: string | null
     budget?: number | null
+    final_budget?: number | null
     estimate_file_url?: string
     comm_admin_id?: string | null
     schedules?: ScheduleInput[]
@@ -487,6 +491,7 @@ export async function updateEvent(
     institution_type: data.institution_type || null,
     sales_admin_id: data.sales_admin_id || null,
     budget: data.budget ?? null,
+    final_budget: data.final_budget ?? null,
     estimate_file_url: data.estimate_file_url || null,
     comm_admin_id: data.comm_admin_id || null,
   }

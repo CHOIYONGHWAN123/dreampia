@@ -184,6 +184,7 @@ function buildDefaultValues(
     institution_type: initialEvent.institution_type as EventFormData['institution_type'],
     sales_admin_id: initialEvent.sales_admin_id,
     budget: initialEvent.budget,
+    final_budget: initialEvent.final_budget,
     comm_admin_id: initialEvent.comm_admin_id,
   }
 }
@@ -366,6 +367,7 @@ export function EventForm({
         institution_type: data.institution_type,
         sales_admin_id: data.sales_admin_id,
         budget: data.budget,
+        final_budget: data.final_budget,
         estimate_file_url: estimateFileUrl,
         comm_admin_id: data.comm_admin_id,
         schedules,
@@ -841,6 +843,21 @@ export function EventForm({
                     setValueAs: (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
                   })}
                   placeholder="예산을 입력하세요"
+                  className={cellInputCls}
+                  min={0}
+                />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>최종 예산 (원)</td>
+              <td className={cellValueCls}>
+                <input
+                  type="number"
+                  {...register('final_budget', {
+                    setValueAs: (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
+                  })}
+                  placeholder="최종 확정된 예산을 입력하세요"
                   className={cellInputCls}
                   min={0}
                 />

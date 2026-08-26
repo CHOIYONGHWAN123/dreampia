@@ -295,6 +295,7 @@ sales_admin_id uuid [ref: > admins.id, note: '영업담당자']
 comm_admin_id uuid [ref: > admins.id, note: '소통담당자']
 field_admin_id. uuid [ref: > admins.id, note: '현장담당자']
 budget integer [note : '예산']
+final_budget integer [note : '최종 확정 예산']
 contract_type contract_type
 name varchar [not null]
 requested_dates date[] [note: '행사 요청일 배열']

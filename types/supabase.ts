@@ -485,6 +485,7 @@ export type Database = {
           event_end_at: string | null
           event_start_at: string | null
           field_admin_ids: string[] | null
+          final_budget: number | null
           floor_map_url: string | null
           group_chat_link: string | null
           group_chat_status: string | null
@@ -555,6 +556,7 @@ export type Database = {
           event_end_at?: string | null
           event_start_at?: string | null
           field_admin_ids?: string[] | null
+          final_budget?: number | null
           floor_map_url?: string | null
           group_chat_link?: string | null
           group_chat_status?: string | null
@@ -627,6 +629,7 @@ export type Database = {
           event_end_at?: string | null
           event_start_at?: string | null
           field_admin_ids?: string[] | null
+          final_budget?: number | null
           floor_map_url?: string | null
           group_chat_link?: string | null
           group_chat_status?: string | null

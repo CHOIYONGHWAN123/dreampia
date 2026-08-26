@@ -45,6 +45,7 @@ export const eventSchema = z.object({
   institution_type: nullableEnum(INSTITUTION_TYPES),
   sales_admin_id: nullableString,
   budget: z.number().nullable().optional(),
+  final_budget: z.number().nullable().optional(),
   comm_admin_id: nullableString,
 })
 
