@@ -29,7 +29,7 @@ export default async function InstitutionEditPage({ params }: { params: Promise<
           institution_type: data.institution_type ?? '',
           admin_contact: data.admin_contact ?? '',
           instructor_waiting_room: data.instructor_waiting_room ?? '',
-          has_elevator: data.has_elevator ?? false,
+          has_elevator: data.has_elevator ?? '확인필요',
           floor_map_url: data.floor_map_url ?? '',
           contact_name: data.contact_name ?? '',
           contact_email: data.contact_email ?? '',

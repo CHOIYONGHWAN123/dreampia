@@ -12,6 +12,7 @@ import {
   STUDENT_ROTATIONS,
   INFLOW_SOURCES,
   INSTITUTION_TYPES,
+  ELEVATOR_STATUSES,
 } from '@/lib/validations/event'
 import { createEvent, updateEvent } from '@/app/(dashboard)/events/actions'
 import { institutionTypeToSchoolLevel } from '@/lib/school-level'
@@ -40,7 +41,7 @@ type Institution = {
   contact_phone: string | null
   instructor_waiting_room: string | null
   admin_contact: string | null
-  has_elevator: boolean | null
+  has_elevator: '있음' | '없음' | '확인필요'
   floor_map_url: string | null
   laptop_wifi_note: string | null
   crime_check_method: string | null
@@ -146,7 +147,7 @@ function buildDefaultValues(
   initialEvent: EventDetailData | undefined,
   today: string
 ): Partial<EventFormData> {
-  if (!initialEvent) return { reception_date: today, institution_id: null }
+  if (!initialEvent) return { reception_date: today, institution_id: null, has_elevator: '확인필요' }
 
   const start = splitDateTime(initialEvent.event_start_at)
   const end = splitDateTime(initialEvent.event_end_at)
@@ -163,7 +164,7 @@ function buildDefaultValues(
     target_grade: initialEvent.target_grade,
     instructor_waiting_room: initialEvent.instructor_waiting_room,
     admin_contact: initialEvent.admin_contact,
-    has_elevator: initialEvent.has_elevator ?? undefined,
+    has_elevator: initialEvent.has_elevator,
     floor_map_url: initialEvent.floor_map_url ?? '',
     laptop_wifi_note: initialEvent.laptop_wifi_note,
     crime_check_method: initialEvent.crime_check_method as EventFormData['crime_check_method'],
@@ -260,7 +261,7 @@ export function EventForm({
     if (institution.institution_type) setValue('institution_type', institution.institution_type as EventFormData['institution_type'])
     if (institution.instructor_waiting_room) setValue('instructor_waiting_room', institution.instructor_waiting_room)
     if (institution.admin_contact) setValue('admin_contact', institution.admin_contact)
-    if (institution.has_elevator !== null) setValue('has_elevator', institution.has_elevator ?? undefined)
+    setValue('has_elevator', institution.has_elevator)
     if (institution.floor_map_url) setValue('floor_map_url', institution.floor_map_url)
     if (institution.laptop_wifi_note) setValue('laptop_wifi_note', institution.laptop_wifi_note)
     if (institution.crime_check_method) setValue('crime_check_method', institution.crime_check_method as EventFormData['crime_check_method'])
@@ -588,28 +589,22 @@ export function EventForm({
               <td className={cellLabelCls}>엘리베이터 유무</td>
               <td className={cellValueCls}>
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setValue('has_elevator', true)}
-                    className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
-                      watch('has_elevator') === true
-                        ? 'bg-primary-500 text-white border-primary-500'
-                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    있음
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setValue('has_elevator', false)}
-                    className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
-                      watch('has_elevator') === false
-                        ? 'bg-primary-500 text-white border-primary-500'
-                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    없음
-                  </button>
+                  {ELEVATOR_STATUSES.map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => setValue('has_elevator', status)}
+                      className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                        watch('has_elevator') === status
+                          ? status === '확인필요'
+                            ? 'bg-amber-500 text-white border-amber-500'
+                            : 'bg-primary-500 text-white border-primary-500'
+                          : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
                 </div>
               </td>
             </tr>

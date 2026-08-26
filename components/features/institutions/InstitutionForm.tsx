@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase'
 
 const INSTITUTION_TYPES = ['유치원', '초등', '중등', '고등', '기관', '특수학교', '문화센터'] as const
 const CRIME_CHECK_METHODS = ['회보서', '동의서'] as const
+const ELEVATOR_STATUSES = ['있음', '없음', '확인필요'] as const
 
 interface DaumPostcodeResult {
   sido: string
@@ -62,7 +63,7 @@ export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
     defaultValues: defaultValues ?? {
       region1: '', region2: '', name: '', address: '',
       institution_type: '', admin_contact: '',
-      instructor_waiting_room: '', has_elevator: false, floor_map_url: '',
+      instructor_waiting_room: '', has_elevator: '확인필요', floor_map_url: '',
       contact_name: '', contact_email: '', contact_phone: '',
       laptop_wifi_note: '', crime_check_method: '', crime_check_info: '',
       indoor_shoes_note: '', parking_note: '',
@@ -309,28 +310,22 @@ export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
       <div>
         <label className={labelCls}>엘리베이터 유무</label>
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setValue('has_elevator', true)}
-            className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
-              hasElevator === true
-                ? 'bg-primary-500 text-white border-primary-500'
-                : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            있음
-          </button>
-          <button
-            type="button"
-            onClick={() => setValue('has_elevator', false)}
-            className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
-              hasElevator === false && hasElevator !== undefined
-                ? 'bg-primary-500 text-white border-primary-500'
-                : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            없음
-          </button>
+          {ELEVATOR_STATUSES.map((status) => (
+            <button
+              key={status}
+              type="button"
+              onClick={() => setValue('has_elevator', status)}
+              className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
+                hasElevator === status
+                  ? status === '확인필요'
+                    ? 'bg-amber-500 text-white border-amber-500'
+                    : 'bg-primary-500 text-white border-primary-500'
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {status}
+            </button>
+          ))}
         </div>
       </div>
 

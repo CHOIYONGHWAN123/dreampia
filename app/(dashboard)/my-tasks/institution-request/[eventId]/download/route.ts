@@ -243,7 +243,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
       value: [crimeCheckMethod, crimeCheckInfo].filter(Boolean).join(' / '),
     },
     { label: '주차장 가능여부 및 주차장 위치', value: parkingNote ?? '' },
-    { label: '엘레베이터 유무', value: hasElevator === null ? '' : hasElevator ? '유' : '무' },
+    { label: '엘레베이터 유무', value: hasElevator ?? '' },
     { label: '실내화 착용 유무', value: indoorShoesNote ?? '' },
     { label: '학교 배치도', value: floorMapUrl ? '파일 참조' : '' },
   ]

@@ -488,7 +488,7 @@ export type Database = {
           floor_map_url: string | null
           group_chat_link: string | null
           group_chat_status: string | null
-          has_elevator: boolean | null
+          has_elevator: Database["public"]["Enums"]["elevator_status"]
           id: string
           indoor_shoes_note: string | null
           inflow_source: Database["public"]["Enums"]["inflow_source"] | null
@@ -558,7 +558,7 @@ export type Database = {
           floor_map_url?: string | null
           group_chat_link?: string | null
           group_chat_status?: string | null
-          has_elevator?: boolean | null
+          has_elevator?: Database["public"]["Enums"]["elevator_status"]
           id?: string
           indoor_shoes_note?: string | null
           inflow_source?: Database["public"]["Enums"]["inflow_source"] | null
@@ -630,7 +630,7 @@ export type Database = {
           floor_map_url?: string | null
           group_chat_link?: string | null
           group_chat_status?: string | null
-          has_elevator?: boolean | null
+          has_elevator?: Database["public"]["Enums"]["elevator_status"]
           id?: string
           indoor_shoes_note?: string | null
           inflow_source?: Database["public"]["Enums"]["inflow_source"] | null
@@ -765,7 +765,7 @@ export type Database = {
             | Database["public"]["Enums"]["crime_check_method"]
             | null
           floor_map_url: string | null
-          has_elevator: boolean | null
+          has_elevator: Database["public"]["Enums"]["elevator_status"]
           id: string
           indoor_shoes_note: string | null
           institution_type:
@@ -792,7 +792,7 @@ export type Database = {
             | Database["public"]["Enums"]["crime_check_method"]
             | null
           floor_map_url?: string | null
-          has_elevator?: boolean | null
+          has_elevator?: Database["public"]["Enums"]["elevator_status"]
           id?: string
           indoor_shoes_note?: string | null
           institution_type?:
@@ -819,7 +819,7 @@ export type Database = {
             | Database["public"]["Enums"]["crime_check_method"]
             | null
           floor_map_url?: string | null
-          has_elevator?: boolean | null
+          has_elevator?: Database["public"]["Enums"]["elevator_status"]
           id?: string
           indoor_shoes_note?: string | null
           institution_type?:
@@ -1993,6 +1993,7 @@ export type Database = {
       contract_type: "학교장터" | "수의계약" | "MyDesk" | "페이백" | "나라장터"
       crime_check_method: "회보서" | "동의서"
       crime_check_status: "불필요" | "진행전" | "취합중" | "완료"
+      elevator_status: "있음" | "없음" | "확인필요"
       experience_type: "직업체험" | "문화예술체험"
       inflow_source:
         | "팜플렛"
@@ -2183,6 +2184,7 @@ export const Constants = {
       contract_type: ["학교장터", "수의계약", "MyDesk", "페이백", "나라장터"],
       crime_check_method: ["회보서", "동의서"],
       crime_check_status: ["불필요", "진행전", "취합중", "완료"],
+      elevator_status: ["있음", "없음", "확인필요"],
       experience_type: ["직업체험", "문화예술체험"],
       inflow_source: [
         "팜플렛",

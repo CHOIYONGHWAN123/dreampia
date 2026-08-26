@@ -7,6 +7,7 @@ export const INFLOW_SOURCES = [
   '꿈길', '카카오톡채널', 'MOU', '입찰', '소개',
 ] as const
 export const INSTITUTION_TYPES = ['유치원', '초등', '중등', '고등', '기관', '특수학교', '문화센터'] as const
+export const ELEVATOR_STATUSES = ['있음', '없음', '확인필요'] as const
 
 const nullableString = z.string().optional().nullable()
 const nullableEnum = <T extends readonly [string, ...string[]]>(values: T) =>
@@ -24,7 +25,7 @@ export const eventSchema = z.object({
   target_grade: nullableString,
   instructor_waiting_room: nullableString,
   admin_contact: nullableString,
-  has_elevator: z.boolean().optional(),
+  has_elevator: nullableEnum(ELEVATOR_STATUSES),
   floor_map_url: z.string().optional(),
   laptop_wifi_note: nullableString,
   crime_check_method: nullableEnum(CRIME_CHECK_METHODS),

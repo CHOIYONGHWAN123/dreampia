@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+export const ELEVATOR_STATUSES = ['있음', '없음', '확인필요'] as const
+
 export const institutionSchema = z.object({
   region1: z.string().min(1, '지역1을 입력해주세요.'),
   region2: z.string().optional(),
@@ -8,7 +10,7 @@ export const institutionSchema = z.object({
   institution_type: z.string().optional(),
   admin_contact: z.string().optional(),
   instructor_waiting_room: z.string().optional(),
-  has_elevator: z.boolean().optional(),
+  has_elevator: z.enum(ELEVATOR_STATUSES).optional(),
   floor_map_url: z.string().optional(),
   contact_name: z.string().optional(),
   contact_email: z.string().optional(),

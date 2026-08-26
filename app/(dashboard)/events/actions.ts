@@ -3,6 +3,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { revalidatePath } from 'next/cache'
 
+type ElevatorStatus = '있음' | '없음' | '확인필요'
+
 // ── 재고 차감 헬퍼 ─────────────────────────────────────────────────
 
 type Supabase = Awaited<ReturnType<typeof createServerSupabaseClient>>
@@ -126,7 +128,7 @@ export type EventDetailData = {
   target_grade: string | null
   instructor_waiting_room: string | null
   admin_contact: string | null
-  has_elevator: boolean | null
+  has_elevator: ElevatorStatus
   floor_map_url: string | null
   laptop_wifi_note: string | null
   crime_check_method: string | null
@@ -276,7 +278,7 @@ export async function createEvent(data: {
   target_grade?: string | null
   instructor_waiting_room?: string | null
   admin_contact?: string | null
-  has_elevator?: boolean | null
+  has_elevator?: ElevatorStatus | null
   floor_map_url?: string
   laptop_wifi_note?: string | null
   crime_check_method?: string | null
@@ -312,7 +314,7 @@ export async function createEvent(data: {
     target_grade: data.target_grade || null,
     instructor_waiting_room: data.instructor_waiting_room || null,
     admin_contact: data.admin_contact || null,
-    has_elevator: data.has_elevator ?? null,
+    has_elevator: data.has_elevator ?? '확인필요',
     floor_map_url: data.floor_map_url || null,
     laptop_wifi_note: data.laptop_wifi_note || null,
     crime_check_method: data.crime_check_method || null,
@@ -428,7 +430,7 @@ export async function updateEvent(
     target_grade?: string | null
     instructor_waiting_room?: string | null
     admin_contact?: string | null
-    has_elevator?: boolean | null
+    has_elevator?: ElevatorStatus | null
     floor_map_url?: string
     laptop_wifi_note?: string | null
     crime_check_method?: string | null
@@ -465,7 +467,7 @@ export async function updateEvent(
     target_grade: data.target_grade || null,
     instructor_waiting_room: data.instructor_waiting_room || null,
     admin_contact: data.admin_contact || null,
-    has_elevator: data.has_elevator ?? null,
+    has_elevator: data.has_elevator ?? '확인필요',
     floor_map_url: data.floor_map_url || null,
     laptop_wifi_note: data.laptop_wifi_note || null,
     crime_check_method: data.crime_check_method || null,

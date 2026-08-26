@@ -28,7 +28,7 @@ type InstitutionData = {
   institution_type?: string
   admin_contact?: string
   instructor_waiting_room?: string
-  has_elevator?: boolean
+  has_elevator?: '있음' | '없음' | '확인필요'
   floor_map_url?: string
   contact_name?: string
   contact_email?: string
@@ -49,7 +49,7 @@ function toPayload(data: InstitutionData) {
     institution_type: data.institution_type || null,
     admin_contact: data.admin_contact || null,
     instructor_waiting_room: data.instructor_waiting_room || null,
-    has_elevator: data.has_elevator ?? null,
+    has_elevator: data.has_elevator ?? '확인필요',
     floor_map_url: data.floor_map_url || null,
     contact_name: data.contact_name || null,
     contact_email: data.contact_email || null,
