@@ -905,6 +905,7 @@ export function EventOperationsClient({
               <th className={th} style={{ width: 130 }}>계약현황</th>
               <th className={th} style={{ width: 90 }}>계약<br />전달여부</th>
               <th className={th} style={{ width: 72 }}>공지사항<br />알림</th>
+              <th className={th} style={{ width: 72 }}>강사섭외<br />시작일</th>
               <th className={th} style={{ width: 72 }}>강사섭외<br />상태</th>
               <th className={th} style={{ width: 72 }}>유입경로</th>
             </tr>
@@ -912,7 +913,7 @@ export function EventOperationsClient({
           <tbody>
             {filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={46} className="py-16 text-center text-gray-400">
+                <td colSpan={47} className="py-16 text-center text-gray-400">
                   {rows.length === 0 ? '해당 월의 행사가 없습니다.' : '필터에 해당하는 행사가 없습니다.'}
                 </td>
               </tr>
@@ -1259,6 +1260,8 @@ export function EventOperationsClient({
                     <td className={td}>
                       <PlaceholderBtn label="알림보내기" />
                     </td>
+
+                    <td className={td}>{fmtDate(row.startRecruitAt) ?? '-'}</td>
 
                     <td className={td}>
                       <div className="flex flex-col items-center gap-0.5">
