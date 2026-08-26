@@ -112,8 +112,10 @@ function buildInitialProgramUnits(
       schoolRequestResponse: r.school_request_response ?? '',
       finalProductAvailable: unit?.final_product_available ?? null,
       isDeliveryAvailable: unit?.is_delivery_available ?? null,
-      mentorMaterialCost: unit?.mentor_material_cost ?? null,
-      dreampiaMaterialCost: unit?.dreampia_material_cost ?? null,
+      mentorMaterialCost: r.mentor_material_cost ?? unit?.mentor_material_cost ?? null,
+      dreampiaMaterialCost: r.dreampia_material_cost ?? unit?.dreampia_material_cost ?? null,
+      mentorMaterialCostDefault: unit?.mentor_material_cost ?? null,
+      dreampiaMaterialCostDefault: unit?.dreampia_material_cost ?? null,
       prepBy: unit?.prep_by ?? null,
       suppliesPrepared: r.supplies_prepared,
       startTime: toDatetimeLocal(r.start_time),
@@ -466,6 +468,11 @@ export function EventForm({
           remarks: u.remarks || null,
           criminal_background_check: u.criminalBackgroundCheck || null,
           supplies_prepared: u.suppliesPrepared,
+          // 입력값이 프로그램 기본값과 같으면 계속 자동 연동되도록 null로 저장하고,
+          // 다르면 이 행만의 수동 오버라이드로 저장한다.
+          mentor_material_cost: u.mentorMaterialCost === u.mentorMaterialCostDefault ? null : u.mentorMaterialCost,
+          dreampia_material_cost:
+            u.dreampiaMaterialCost === u.dreampiaMaterialCostDefault ? null : u.dreampiaMaterialCost,
         })),
       }
 

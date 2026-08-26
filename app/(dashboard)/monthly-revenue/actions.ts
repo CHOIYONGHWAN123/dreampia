@@ -71,7 +71,7 @@ export async function getMonthlyRevenue(year: number, month: number): Promise<Mo
   const [eventRowsRes, institutionsRes] = await Promise.all([
     supabase
       .from('event_rows')
-      .select('event_id, headcount, lecture_fee, occupation_program_unit_id')
+      .select('event_id, headcount, lecture_fee, occupation_program_unit_id, mentor_material_cost, dreampia_material_cost')
       .in('event_id', eventIds),
     institutionIds.length > 0
       ? supabase.from('institutions').select('id, name').in('id', institutionIds)
@@ -124,7 +124,10 @@ export async function getMonthlyRevenue(year: number, month: number): Promise<Mo
       lectureFeeTotal += r.lecture_fee ?? 0
       const prog = r.occupation_program_unit_id ? unitMap.get(r.occupation_program_unit_id) : undefined
       if (prog) {
-        const unitCost = prog.prep_by === '드림피아' ? (prog.dreampia_material_cost ?? 0) : (prog.mentor_material_cost ?? 0)
+        // 재료비는 행(event_rows)에 수기 오버라이드가 있으면 우선 사용하고, 없으면 프로그램 기본값을 따른다.
+        const mentorCost = r.mentor_material_cost ?? prog.mentor_material_cost ?? 0
+        const dreampiaCost = r.dreampia_material_cost ?? prog.dreampia_material_cost ?? 0
+        const unitCost = prog.prep_by === '드림피아' ? dreampiaCost : mentorCost
         materialCostTotal += unitCost * (r.headcount ?? 0)
       }
     }

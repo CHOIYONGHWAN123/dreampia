@@ -51,6 +51,10 @@ export type SelectedProgramUnit = {
   isDeliveryAvailable: boolean | null
   mentorMaterialCost: number | null
   dreampiaMaterialCost: number | null
+  // 프로그램 기본 재료비. 입력창의 현재 값과 같으면 자동 연동(저장 시 null)으로,
+  // 다르면 이 행만의 수동 오버라이드로 저장하기 위한 비교 기준값.
+  mentorMaterialCostDefault: number | null
+  dreampiaMaterialCostDefault: number | null
   prepBy: string | null
   suppliesPrepared: boolean
   startTime: string
@@ -60,7 +64,7 @@ export type SelectedProgramUnit = {
   target: string
   lectureFee: number | null
   headcount: number | null
-  sessionHeadcount: number | null
+  sessionHeadcount: string | null
   mentorId: string | null
   remarks: string
   attendance: boolean | null
@@ -237,6 +241,8 @@ export function EventProgramUnitSection({
         isDeliveryAvailable: unit.is_delivery_available,
         mentorMaterialCost: unit.mentor_material_cost,
         dreampiaMaterialCost: unit.dreampia_material_cost,
+        mentorMaterialCostDefault: unit.mentor_material_cost,
+        dreampiaMaterialCostDefault: unit.dreampia_material_cost,
         prepBy: unit.prep_by,
         suppliesPrepared: false,
         startTime: defaultStartTime ?? '',
@@ -689,11 +695,23 @@ export function EventProgramUnitSection({
                         className="w-4 h-4 accent-primary-500"
                       />
                     </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {v.mentorMaterialCost != null ? v.mentorMaterialCost.toLocaleString() : '-'}
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={formatThousands(v.mentorMaterialCost)}
+                        onChange={(e) => updateUnit(v.key, { mentorMaterialCost: parseThousands(e.target.value) })}
+                        className={fieldInputCls}
+                      />
                     </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {v.dreampiaMaterialCost != null ? v.dreampiaMaterialCost.toLocaleString() : '-'}
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={formatThousands(v.dreampiaMaterialCost)}
+                        onChange={(e) => updateUnit(v.key, { dreampiaMaterialCost: parseThousands(e.target.value) })}
+                        className={fieldInputCls}
+                      />
                     </td>
                     <td className="px-2 py-1.5">
                       <input
@@ -708,14 +726,13 @@ export function EventProgramUnitSection({
                     </td>
                     <td className="px-2 py-1.5">
                       <input
-                        type="number"
+                        type="text"
                         value={v.sessionHeadcount ?? ''}
                         onChange={(e) =>
                           updateUnit(v.key, {
-                            sessionHeadcount: e.target.value === '' ? null : Number(e.target.value),
+                            sessionHeadcount: e.target.value === '' ? null : e.target.value,
                           })
                         }
-                        min={0}
                         className={fieldInputCls}
                       />
                     </td>

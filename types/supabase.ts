@@ -292,6 +292,7 @@ export type Database = {
           attendance_reminder_sent_at: string | null
           classroom: string | null
           criminal_background_check: string | null
+          dreampia_material_cost: number | null
           end_time: string | null
           event_id: string | null
           headcount: number | null
@@ -302,12 +303,13 @@ export type Database = {
           lecture_fee_payer_id: string | null
           material_fee_payer_id: string | null
           mentor_id: string | null
+          mentor_material_cost: number | null
           occupation_program_unit_id: string | null
           preparing: boolean
           preparing_reminder_sent_at: string | null
           remarks: string | null
           school_request_response: string | null
-          session_headcount: number | null
+          session_headcount: string | null
           start_time: string | null
           supplies_prepared: boolean
           target: string | null
@@ -317,6 +319,7 @@ export type Database = {
           attendance_reminder_sent_at?: string | null
           classroom?: string | null
           criminal_background_check?: string | null
+          dreampia_material_cost?: number | null
           end_time?: string | null
           event_id?: string | null
           headcount?: number | null
@@ -327,12 +330,13 @@ export type Database = {
           lecture_fee_payer_id?: string | null
           material_fee_payer_id?: string | null
           mentor_id?: string | null
+          mentor_material_cost?: number | null
           occupation_program_unit_id?: string | null
           preparing?: boolean
           preparing_reminder_sent_at?: string | null
           remarks?: string | null
           school_request_response?: string | null
-          session_headcount?: number | null
+          session_headcount?: string | null
           start_time?: string | null
           supplies_prepared?: boolean
           target?: string | null
@@ -342,6 +346,7 @@ export type Database = {
           attendance_reminder_sent_at?: string | null
           classroom?: string | null
           criminal_background_check?: string | null
+          dreampia_material_cost?: number | null
           end_time?: string | null
           event_id?: string | null
           headcount?: number | null
@@ -352,12 +357,13 @@ export type Database = {
           lecture_fee_payer_id?: string | null
           material_fee_payer_id?: string | null
           mentor_id?: string | null
+          mentor_material_cost?: number | null
           occupation_program_unit_id?: string | null
           preparing?: boolean
           preparing_reminder_sent_at?: string | null
           remarks?: string | null
           school_request_response?: string | null
-          session_headcount?: number | null
+          session_headcount?: string | null
           start_time?: string | null
           supplies_prepared?: boolean
           target?: string | null
@@ -1823,7 +1829,7 @@ export type Database = {
           prep_by: Database["public"]["Enums"]["prep_by"] | null
           preparing: boolean | null
           program_name: string | null
-          session_headcount: number | null
+          session_headcount: string | null
           start_time: string | null
           student_rotation: string | null
           target: string | null
@@ -1868,7 +1874,7 @@ export type Database = {
           occupation_name: string | null
           program_name: string | null
           responded_at: string | null
-          session_headcount: number | null
+          session_headcount: string | null
           start_time: string | null
           target: string | null
           unit_id: string | null
@@ -1974,7 +1980,7 @@ export type Database = {
           prep_by: Database["public"]["Enums"]["prep_by"]
           preparing: boolean
           program_name: string
-          session_headcount: number
+          session_headcount: string
           start_time: string
           student_rotation: string
           target: string
