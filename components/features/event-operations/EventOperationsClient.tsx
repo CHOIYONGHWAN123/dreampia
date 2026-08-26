@@ -53,7 +53,7 @@ export type EventOperationRow = {
   estimateDelivered: boolean | null
   teacherName: string | null
   remarks: string | null
-  groupChatLink: string | null
+  groupChatStatus: string | null
   inflowSource: string | null
   paymentConfirmed: boolean | null
   photoStatus: boolean | null
@@ -87,6 +87,7 @@ const CRIME_CHECK_DELIVERED_OPTIONS = ['완료', '예정', '시설출력']
 const INFLOW_SOURCE_OPTIONS = [
   '팜플렛', '기존진행', '홈페이지', '블로그', '전화영업', '꿈길', '카카오톡채널', 'MOU', '입찰', '소개',
 ]
+const GROUP_CHAT_STATUS_OPTIONS = ['개설전', '개설완료']
 
 // ── 포맷 헬퍼 ────────────────────────────────────────────────────────
 
@@ -731,12 +732,10 @@ function InlineTextCell({
   value,
   placeholder = '클릭하여 입력',
   onSave,
-  statusLabels,
 }: {
   value: string | null
   placeholder?: string
   onSave: (v: string | null) => Promise<void>
-  statusLabels?: { filled: string; empty: string }
 }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(value ?? '')
@@ -790,9 +789,7 @@ function InlineTextCell({
       onClick={() => setEditing(true)}
       className="cursor-pointer rounded px-1 min-h-5 flex items-center justify-center hover:bg-gray-50"
     >
-      {statusLabels ? (
-        <Badge text={value ? statusLabels.filled : statusLabels.empty} color={value ? 'green' : 'orange'} />
-      ) : value ? (
+      {value ? (
         <span className="text-[11px] text-primary-600 underline break-all">{value}</span>
       ) : (
         <span className="text-[10px] text-gray-300">{placeholder}</span>
@@ -1254,11 +1251,10 @@ export function EventOperationsClient({
 
                     {/* 행사 단톡 */}
                     <td className={td}>
-                      <InlineTextCell
-                        value={row.groupChatLink}
-                        placeholder="링크 입력"
-                        onSave={(v) => updateEventField(row.id, { group_chat_link: v })}
-                        statusLabels={{ filled: '개설완료', empty: '개설전' }}
+                      <InlineSelect
+                        value={row.groupChatStatus}
+                        options={GROUP_CHAT_STATUS_OPTIONS}
+                        onSave={(v) => updateEventField(row.id, { group_chat_status: v })}
                       />
                     </td>
 

@@ -23,7 +23,7 @@ type EventUpdateData = {
   payment_confirmed?: boolean | null
   photo_sent?: boolean | null
   report_sent?: boolean | null
-  group_chat_link?: string | null
+  group_chat_status?: string | null
   estimate_file_url?: string | null
   comm_admin_id?: string | null
   sales_admin_id?: string | null
