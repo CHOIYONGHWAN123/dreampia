@@ -44,7 +44,7 @@ export type EventOperationRow = {
   crimeCheckMethod: string | null
   crimeCheckNotified: boolean | null
   crimeCheckStatus: string | null
-  crimeCheckDelivered: boolean | null
+  crimeCheckDelivered: string | null
   adminDocs: string | null
   adminDocsDelivered: boolean | null
   salesAdminId: string | null
@@ -76,13 +76,14 @@ interface Props {
 
 const CONTRACT_TYPE_OPTIONS = ['학교장터', '수의계약', 'MyDesk', '페이백', '나라장터']
 const CONTRACT_STATUS_OPTIONS = [
-  '계약 시작 전', '진행중(단일계약)', '진행중(공동계약)', '최종일 계약', '계약 완료', '계약 없음',
+  '계약 시작 전(전화 예정)', '계약 시작 전(전화 완료)', '진행중(단일계약)', '진행중(공동계약)', '최종일 계약', '계약 완료', '계약 없음',
 ]
 const EVENT_CHECK_OPTIONS = ['1', '2', '3', '4']
 const SUPPLIES_STATUS_OPTIONS = [
   '준비 완료', '체크 전', '재고 이상무', '재고 파악', '주문 필요', '택배 예정', '택배 발송', '회수 필요',
 ]
 const RECRUIT_STATUS_OPTIONS = ['섭외대기', '섭외진행중', '섭외완료']
+const CRIME_CHECK_DELIVERED_OPTIONS = ['완료', '예정', '시설출력']
 const INFLOW_SOURCE_OPTIONS = [
   '팜플렛', '기존진행', '홈페이지', '블로그', '전화영업', '꿈길', '카카오톡채널', 'MOU', '입찰', '소개',
 ]
@@ -193,12 +194,54 @@ function HeaderFilter({
 
 // ── 셀 스타일 ─────────────────────────────────────────────────────────
 
-const th =
-  'px-2 py-2 text-center text-[11px] font-bold text-primary-700 bg-primary-50 border-b border-r border-primary-100 whitespace-nowrap sticky top-0 z-10'
-const td =
+const thBase =
+  'px-2 py-2 text-center text-[11px] font-bold text-primary-700 bg-primary-50 border-b border-r border-primary-100 whitespace-nowrap'
+const th = `${thBase} sticky top-0 z-10`
+const tdBase =
   'px-2 py-1.5 text-center text-[11px] text-gray-700 border-b border-r border-gray-100 align-middle whitespace-nowrap'
-const tdL =
+const td = tdBase
+const tdLBase =
   'px-2 py-1.5 text-left text-[11px] text-gray-700 border-b border-r border-gray-100 align-middle'
+const tdL = tdLBase
+
+// ── 왼쪽 고정(freeze) 컬럼 ────────────────────────────────────────────
+// NO/지역1/지역2/기관/행사구분/현장담당/행사일시 7개 컬럼은 가로 스크롤을 해도 왼쪽에
+// 고정한다. 각 컬럼 폭이 이미 px로 고정돼 있으므로(아래 thead의 style width와 반드시
+// 동일하게 유지) 그 누적값을 그대로 sticky left 오프셋으로 쓴다.
+const FROZEN_WIDTHS = [36, 48, 56, 120, 80, 120, 64]
+const frozenNaturalLeft = (index: number) => FROZEN_WIDTHS.slice(0, index).reduce((a, b) => a + b, 0)
+// border-separate + sticky 조합에서도 인접한 고정 셀 사이에 개발자도구로는 선택되지 않는
+// 서브픽셀 렌더링 틈(브라우저가 각 sticky 셀을 독립된 레이어로 그리면서 생기는 합성 이음새)이
+// 남아있어, 각 셀이 왼쪽 이웃 쪽으로 살짝 파고들게 만들어 이음새를 원천적으로 덮어버린다.
+// left만 당기면 폭은 그대로라 셀 전체가 누적으로 밀리므로, width도 같은 만큼 늘려 오른쪽
+// 경계(=다음 셀이 시작하는 지점)는 그대로 유지한다 — 그래야 스크롤 영역과의 마지막 경계도
+// 밀리지 않는다. 같은 z-index를 가진 형제 요소는 DOM 순서상 나중 요소가 위에 그려지므로,
+// 뒤 컬럼이 앞 컬럼의 오른쪽 끝 1px을 덮어써서 이음새가 사라진다.
+const FROZEN_OVERLAP = 2
+const frozenLeft = (index: number) => frozenNaturalLeft(index) - (index > 0 ? FROZEN_OVERLAP : 0)
+const frozenWidth = (index: number) => FROZEN_WIDTHS[index] + (index > 0 ? FROZEN_OVERLAP : 0)
+// 고정 영역의 마지막 컬럼은 스크롤 중에도 경계가 보이도록 진한 오른쪽 테두리를 준다.
+const frozenBoundaryCls = 'border-r-2 border-r-gray-300'
+
+// 헤더이면서 동시에 고정 컬럼인 좌상단 칸은 위/왼쪽 두 방향 다 sticky라
+// top만 고정인 나머지 헤더(z-10)나 left만 고정인 몸통 셀보다 z-index를 높게 줘야
+// 대각선으로 스크롤할 때 한쪽이 다른 쪽 밑에 깔리는 문제가 없다.
+const thFrozen = `${thBase} sticky top-0 z-20`
+// 몸통의 고정 셀은 배경을 명시적으로 칠해야 스크롤 시 뒤 컬럼 텍스트가 비쳐 보이는
+// 겹침 현상이 생기지 않는다. 행 hover는 tr의 hover:bg-gray-50가 고정 셀 배경에
+// 가려지므로 group-hover로 별도 지정해 나머지 컬럼과 동일하게 하이라이트되게 한다.
+//
+// table-layout이 auto(기본값)라 컬럼 폭은 그 컬럼의 가장 넓은 셀 내용에 맞춰 늘어날 수
+// 있는데, 그러면 실제 렌더링된 폭이 위 FROZEN_WIDTHS 가정과 어긋나 고정 셀 사이에
+// 스크롤 영역이 비쳐 보이는 틈이 생긴다. overflow-hidden으로 각 고정 셀의 폭을
+// 지정한 px로 강제로 못박아 이 틈을 원천 차단한다 — 기관명처럼 줄바꿈이 나아 보이는
+// 셀은 truncate 대신 break-words로 세로로만 늘어나게 한다(행 높이는 늘어나도
+// 가로 폭은 절대 넘지 않음).
+const tdFrozen = `${tdBase} sticky z-[1] bg-white group-hover:bg-gray-50 overflow-hidden text-ellipsis`
+const tdLFrozen = `${tdLBase} sticky z-[1] bg-white group-hover:bg-gray-50 overflow-hidden break-words`
+// 현장담당처럼 텍스트 여러 개 + 버튼이 함께 들어가는 셀은 한 줄로 잘라버리면 버튼이
+// 가려질 수 있어, 말줄임 대신 줄바꿈으로 폭만 막는다.
+const tdFrozenWrap = `${tdBase.replace('whitespace-nowrap', '')} sticky z-[1] bg-white group-hover:bg-gray-50 overflow-hidden`
 const selectCls =
   'text-[11px] border border-gray-200 rounded-md px-1 py-0.5 bg-white w-full cursor-pointer focus:outline-none focus:border-primary-400 disabled:opacity-50'
 
@@ -539,10 +582,12 @@ function InlineTextCell({
   value,
   placeholder = '클릭하여 입력',
   onSave,
+  statusLabels,
 }: {
   value: string | null
   placeholder?: string
   onSave: (v: string | null) => Promise<void>
+  statusLabels?: { filled: string; empty: string }
 }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(value ?? '')
@@ -596,7 +641,9 @@ function InlineTextCell({
       onClick={() => setEditing(true)}
       className="cursor-pointer rounded px-1 min-h-5 flex items-center justify-center hover:bg-gray-50"
     >
-      {value ? (
+      {statusLabels ? (
+        <Badge text={value ? statusLabels.filled : statusLabels.empty} color={value ? 'green' : 'orange'} />
+      ) : value ? (
         <span className="text-[11px] text-primary-600 underline break-all">{value}</span>
       ) : (
         <span className="text-[10px] text-gray-300">{placeholder}</span>
@@ -843,12 +890,16 @@ export function EventOperationsClient({
         )}
       </p>
 
-      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
-        <table className="border-collapse text-[11px]" style={{ minWidth: '4000px' }}>
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] max-h-[75vh] overflow-auto">
+        {/* border-collapse는 sticky 셀과 함께 쓰면 셀 경계의 병합된 테두리가 sticky 위치 이동을
+            따라가지 못해 그 틈으로 뒤 배경이 비쳐 보이는 버그가 있다(브라우저 렌더링 한계).
+            separate + spacing 0으로 바꾸면 각 셀이 자기 테두리를 독립적으로 그려서 해결된다.
+            border-r/border-b만 쓰고 있어 겹쳐 그려지던 테두리가 없으므로 시각적 차이는 없다. */}
+        <table className="border-separate border-spacing-0 text-[11px]" style={{ minWidth: '4000px' }}>
           <thead>
             <tr>
-              <th className={th} style={{ width: 36 }}>NO</th>
-              <th className={th} style={{ width: 48 }}>
+              <th className={thFrozen} style={{ width: frozenWidth(0), left: frozenLeft(0) }}>NO</th>
+              <th className={thFrozen} style={{ width: frozenWidth(1), left: frozenLeft(1) }}>
                 <HeaderFilter
                   label="지역1"
                   options={region1Options}
@@ -859,15 +910,15 @@ export function EventOperationsClient({
                   }}
                 />
               </th>
-              <th className={th} style={{ width: 56 }}>
+              <th className={thFrozen} style={{ width: frozenWidth(2), left: frozenLeft(2) }}>
                 <HeaderFilter label="지역2" options={region2Options} value={region2Filter} onChange={setRegion2Filter} />
               </th>
-              <th className={th} style={{ width: 120 }}>기관</th>
-              <th className={th} style={{ width: 80 }}>
+              <th className={thFrozen} style={{ width: frozenWidth(3), left: frozenLeft(3) }}>기관</th>
+              <th className={thFrozen} style={{ width: frozenWidth(4), left: frozenLeft(4) }}>
                 <HeaderFilter label="행사구분" options={categoryOptions} value={categoryFilter} onChange={setCategoryFilter} />
               </th>
-              <th className={th} style={{ width: 120 }}>현장담당</th>
-              <th className={th} style={{ width: 64 }}>행사일시</th>
+              <th className={thFrozen} style={{ width: frozenWidth(5), left: frozenLeft(5) }}>현장담당</th>
+              <th className={`${thFrozen} ${frozenBoundaryCls}`} style={{ width: frozenWidth(6), left: frozenLeft(6) }}>행사일시</th>
               <th className={th} style={{ width: 56 }}>시작시간</th>
               <th className={th} style={{ width: 56 }}>종료시간</th>
               <th className={th} style={{ width: 64 }}>학년</th>
@@ -923,13 +974,13 @@ export function EventOperationsClient({
                 const dateDisplay = fmtDate(row.eventDate) ?? '-'
 
                 return (
-                  <tr key={row.rowKey} className="hover:bg-gray-50">
-                    <td className={td}>{idx + 1}</td>
-                    <td className={td}>{row.region1 ?? '-'}</td>
-                    <td className={td}>{row.region2 ?? '-'}</td>
+                  <tr key={row.rowKey} className="group hover:bg-gray-50">
+                    <td className={tdFrozen} style={{ left: frozenLeft(0) }}>{idx + 1}</td>
+                    <td className={tdFrozen} style={{ left: frozenLeft(1) }}>{row.region1 ?? '-'}</td>
+                    <td className={tdFrozen} style={{ left: frozenLeft(2) }}>{row.region2 ?? '-'}</td>
 
                     {/* 기관 → 행사관리 페이지 링크 */}
-                    <td className={`${tdL} font-medium`}>
+                    <td className={`${tdLFrozen} font-medium`} style={{ left: frozenLeft(3) }}>
                       {row.institutionId ? (
                         <a
                           href={`/institutions/${row.institutionId}`}
@@ -943,10 +994,10 @@ export function EventOperationsClient({
                     </td>
 
                     {/* 행사구분 */}
-                    <td className={td}>{row.eventCategoryName ?? '-'}</td>
+                    <td className={tdFrozen} style={{ left: frozenLeft(4) }}>{row.eventCategoryName ?? '-'}</td>
 
-                    {/* 현장담당 — 다중 선택 */}
-                    <td className={td}>
+                    {/* 현장담당 — 다중 선택. 이름이 여러 개면 말줄임 대신 줄바꿈시켜 버튼이 가려지지 않게 한다 */}
+                    <td className={tdFrozenWrap} style={{ left: frozenLeft(5) }}>
                       <FieldAdminPicker
                         adminIds={row.fieldAdminIds}
                         admins={admins}
@@ -954,7 +1005,7 @@ export function EventOperationsClient({
                       />
                     </td>
 
-                    <td className={td}>{dateDisplay}</td>
+                    <td className={`${tdFrozen} ${frozenBoundaryCls}`} style={{ left: frozenLeft(6) }}>{dateDisplay}</td>
                     <td className={td}>{fmtTime(row.dayStart) ?? '-'}</td>
                     <td className={td}>{fmtTime(row.dayEnd) ?? '-'}</td>
 
@@ -1061,6 +1112,7 @@ export function EventOperationsClient({
                         value={row.groupChatLink}
                         placeholder="링크 입력"
                         onSave={(v) => updateEventField(row.id, { group_chat_link: v })}
+                        statusLabels={{ filled: '개설완료', empty: '개설전' }}
                       />
                     </td>
 
@@ -1180,10 +1232,9 @@ export function EventOperationsClient({
 
                     {/* 회보서 전달여부 */}
                     <td className={td}>
-                      <BoolSelect
+                      <InlineSelect
                         value={row.crimeCheckDelivered}
-                        trueLabel="완료"
-                        falseLabel="예정"
+                        options={CRIME_CHECK_DELIVERED_OPTIONS}
                         onSave={(v) => updateEventField(row.id, { crime_check_delivered: v })}
                       />
                     </td>

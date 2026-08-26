@@ -545,7 +545,7 @@ export type Database = {
           contract_status: Database["public"]["Enums"]["contract_status"] | null
           contract_type: Database["public"]["Enums"]["contract_type"] | null
           created_at: string
-          crime_check_delivered: boolean
+          crime_check_delivered: Database["public"]["Enums"]["crime_check_delivered_status"]
           crime_check_info: string | null
           crime_check_method:
             | Database["public"]["Enums"]["crime_check_method"]
@@ -620,7 +620,7 @@ export type Database = {
             | null
           contract_type?: Database["public"]["Enums"]["contract_type"] | null
           created_at?: string
-          crime_check_delivered?: boolean
+          crime_check_delivered?: Database["public"]["Enums"]["crime_check_delivered_status"]
           crime_check_info?: string | null
           crime_check_method?:
             | Database["public"]["Enums"]["crime_check_method"]
@@ -697,7 +697,7 @@ export type Database = {
             | null
           contract_type?: Database["public"]["Enums"]["contract_type"] | null
           created_at?: string
-          crime_check_delivered?: boolean
+          crime_check_delivered?: Database["public"]["Enums"]["crime_check_delivered_status"]
           crime_check_info?: string | null
           crime_check_method?:
             | Database["public"]["Enums"]["crime_check_method"]
@@ -2048,13 +2048,15 @@ export type Database = {
     Enums: {
       area: "부산" | "김해" | "울산" | "창원"
       contract_status:
-        | "계약 시작 전"
+        | "계약 시작 전(전화 예정)"
+        | "계약 시작 전(전화 완료)"
         | "진행중(단일계약)"
         | "진행중(공동계약)"
         | "최종일 계약"
         | "계약 완료"
         | "계약 없음"
       contract_type: "학교장터" | "수의계약" | "MyDesk" | "페이백" | "나라장터"
+      crime_check_delivered_status: "완료" | "예정" | "시설출력"
       crime_check_method: "회보서" | "동의서"
       crime_check_status: "불필요" | "진행전" | "취합중" | "완료"
       elevator_status: "있음" | "없음" | "확인필요"
@@ -2238,7 +2240,8 @@ export const Constants = {
     Enums: {
       area: ["부산", "김해", "울산", "창원"],
       contract_status: [
-        "계약 시작 전",
+        "계약 시작 전(전화 예정)",
+        "계약 시작 전(전화 완료)",
         "진행중(단일계약)",
         "진행중(공동계약)",
         "최종일 계약",
@@ -2246,6 +2249,7 @@ export const Constants = {
         "계약 없음",
       ],
       contract_type: ["학교장터", "수의계약", "MyDesk", "페이백", "나라장터"],
+      crime_check_delivered_status: ["완료", "예정", "시설출력"],
       crime_check_method: ["회보서", "동의서"],
       crime_check_status: ["불필요", "진행전", "취합중", "완료"],
       elevator_status: ["있음", "없음", "확인필요"],

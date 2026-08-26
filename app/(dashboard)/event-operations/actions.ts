@@ -40,7 +40,7 @@ type EventUpdateData = {
   contract_memo?: string | null
   admin_docs?: string | null
   estimate_delivered?: boolean | null
-  crime_check_delivered?: boolean | null
+  crime_check_delivered?: string | null
 }
 
 export async function updateEventField(eventId: string, data: EventUpdateData) {
