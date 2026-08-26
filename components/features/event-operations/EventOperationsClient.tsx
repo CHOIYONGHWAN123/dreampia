@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect, useTransition } from 'react'
+import { useRef, useState, useEffect, useMemo, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import {
@@ -105,6 +105,90 @@ function recruitDanger(status: string | null, startAt: string | null) {
   if (status !== '섭외진행중' || !startAt) return null
   const days = Math.floor((Date.now() - new Date(startAt).getTime()) / 86400000)
   return days >= 7 ? '위험' : null
+}
+
+// ── 지역1/지역2/행사구분 필터 — 스프레드시트 헤더처럼 컬럼 제목 클릭 시 드롭다운 ──
+
+function HeaderFilter({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  options: string[]
+  value: string | null
+  onChange: (v: string | null) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const dropRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (
+        dropRef.current && !dropRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)
+      ) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const handleOpen = () => {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      setDropPos({ top: r.bottom + 2, left: r.left })
+    }
+    setOpen((o) => !o)
+  }
+
+  const handleSelect = (v: string | null) => {
+    onChange(v)
+    setOpen(false)
+  }
+
+  return (
+    <button
+      ref={btnRef}
+      type="button"
+      onClick={handleOpen}
+      className="inline-flex items-center gap-1"
+    >
+      <span>{label}</span>
+      <span className={`text-[8px] ${value !== null ? 'text-primary-500' : 'text-primary-300'}`}>▾</span>
+      {open && createPortal(
+        <div
+          ref={dropRef}
+          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, zIndex: 9999 }}
+          className="bg-white border border-gray-200 shadow-lg rounded min-w-24 max-h-60 overflow-y-auto text-left font-normal"
+        >
+          <div
+            className={`px-3 py-1.5 text-[11px] cursor-pointer hover:bg-gray-50 whitespace-nowrap ${
+              value === null ? 'font-bold text-gray-800' : 'text-gray-400'
+            }`}
+            onClick={() => handleSelect(null)}
+          >
+            전체
+          </div>
+          {options.map((opt) => (
+            <div
+              key={opt}
+              className={`px-3 py-1.5 text-[11px] cursor-pointer hover:bg-primary-50 whitespace-nowrap ${
+                value === opt ? 'bg-primary-50 font-bold text-primary-700' : 'text-gray-700'
+              }`}
+              onClick={() => handleSelect(opt)}
+            >
+              {opt}
+            </div>
+          ))}
+        </div>,
+        document.body
+      )}
+    </button>
+  )
 }
 
 // ── 셀 스타일 ─────────────────────────────────────────────────────────
@@ -677,6 +761,34 @@ export function EventOperationsClient({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
+  const [region1Filter, setRegion1Filter] = useState<string | null>(null)
+  const [region2Filter, setRegion2Filter] = useState<string | null>(null)
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
+
+  const region1Options = useMemo(
+    () => [...new Set(rows.map((r) => r.region1).filter((v): v is string => !!v))].sort(),
+    [rows]
+  )
+  const region2Options = useMemo(() => {
+    const source = region1Filter ? rows.filter((r) => r.region1 === region1Filter) : rows
+    return [...new Set(source.map((r) => r.region2).filter((v): v is string => !!v))].sort()
+  }, [rows, region1Filter])
+  const categoryOptions = useMemo(
+    () => [...new Set(rows.map((r) => r.eventCategoryName).filter((v): v is string => !!v))].sort(),
+    [rows]
+  )
+
+  const filteredRows = useMemo(
+    () =>
+      rows.filter((r) => {
+        if (region1Filter && r.region1 !== region1Filter) return false
+        if (region2Filter && r.region2 !== region2Filter) return false
+        if (categoryFilter && r.eventCategoryName !== categoryFilter) return false
+        return true
+      }),
+    [rows, region1Filter, region2Filter, categoryFilter]
+  )
+
   const handleMonthChange = (year: number, month: number) => {
     router.push(`/event-operations?year=${year}&month=${month}`)
   }
@@ -725,7 +837,10 @@ export function EventOperationsClient({
 
       <p className="text-sm text-gray-500 mb-3">
         {currentYear}년 {currentMonth}월 ·{' '}
-        <span className="font-semibold text-gray-800">{rows.length}</span>건
+        <span className="font-semibold text-gray-800">{filteredRows.length}</span>건
+        {filteredRows.length !== rows.length && (
+          <span className="text-gray-400"> (전체 {rows.length}건 중 필터링됨)</span>
+        )}
       </p>
 
       <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
@@ -733,10 +848,24 @@ export function EventOperationsClient({
           <thead>
             <tr>
               <th className={th} style={{ width: 36 }}>NO</th>
-              <th className={th} style={{ width: 48 }}>지역1</th>
-              <th className={th} style={{ width: 56 }}>지역2</th>
+              <th className={th} style={{ width: 48 }}>
+                <HeaderFilter
+                  label="지역1"
+                  options={region1Options}
+                  value={region1Filter}
+                  onChange={(v) => {
+                    setRegion1Filter(v)
+                    setRegion2Filter(null)
+                  }}
+                />
+              </th>
+              <th className={th} style={{ width: 56 }}>
+                <HeaderFilter label="지역2" options={region2Options} value={region2Filter} onChange={setRegion2Filter} />
+              </th>
               <th className={th} style={{ width: 120 }}>기관</th>
-              <th className={th} style={{ width: 80 }}>행사구분</th>
+              <th className={th} style={{ width: 80 }}>
+                <HeaderFilter label="행사구분" options={categoryOptions} value={categoryFilter} onChange={setCategoryFilter} />
+              </th>
               <th className={th} style={{ width: 120 }}>현장담당</th>
               <th className={th} style={{ width: 64 }}>행사일시</th>
               <th className={th} style={{ width: 56 }}>시작시간</th>
@@ -781,20 +910,20 @@ export function EventOperationsClient({
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
+            {filteredRows.length === 0 ? (
               <tr>
                 <td colSpan={46} className="py-16 text-center text-gray-400">
-                  해당 월의 행사가 없습니다.
+                  {rows.length === 0 ? '해당 월의 행사가 없습니다.' : '필터에 해당하는 행사가 없습니다.'}
                 </td>
               </tr>
             ) : (
-              rows.map((row) => {
+              filteredRows.map((row, idx) => {
                 const danger = recruitDanger(row.recruitStatus, row.startRecruitAt)
                 const dateDisplay = fmtDate(row.eventDate) ?? '-'
 
                 return (
                   <tr key={row.rowKey} className="hover:bg-gray-50">
-                    <td className={td}>{row.no}</td>
+                    <td className={td}>{idx + 1}</td>
                     <td className={td}>{row.region1 ?? '-'}</td>
                     <td className={td}>{row.region2 ?? '-'}</td>
 
