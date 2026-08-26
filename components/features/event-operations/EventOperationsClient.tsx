@@ -192,6 +192,155 @@ function HeaderFilter({
   )
 }
 
+// 계약 관련 메모 셀 — 엑셀 메모(코멘트)처럼 버튼을 누르면 해당 셀 위치에서
+// 떠 있는(float) 확대 박스가 열리고, 그 박스 안의 +/- 버튼으로 박스 크기만 조절한다.
+// 컬럼 자체의 폭은 바뀌지 않으며, 박스는 다른 셀 위에 겹쳐서 표시된다.
+const MEMO_BOX_MIN = { width: 200, height: 100 }
+const MEMO_BOX_MAX = { width: 480, height: 320 }
+const MEMO_BOX_STEP = { width: 60, height: 40 }
+const MEMO_BOX_DEFAULT = { width: 260, height: 140 }
+
+function ExpandableMemoCell({
+  value,
+  onSave,
+}: {
+  value: string | null
+  onSave: (v: string | null) => Promise<void>
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const [size, setSize] = useState(MEMO_BOX_DEFAULT)
+  const [text, setText] = useState(value ?? '')
+  const [saving, setSaving] = useState(false)
+  const cellRef = useRef<HTMLDivElement>(null)
+  const boxRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!expanded) return
+    const handler = (e: MouseEvent) => {
+      if (
+        boxRef.current && !boxRef.current.contains(e.target as Node) &&
+        cellRef.current && !cellRef.current.contains(e.target as Node)
+      ) setExpanded(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [expanded])
+
+  const openExpand = () => {
+    if (cellRef.current) {
+      const r = cellRef.current.getBoundingClientRect()
+      setPos({ top: r.top, left: r.right + 6 })
+    }
+    setText(value ?? '')
+    setSize(MEMO_BOX_DEFAULT)
+    setExpanded(true)
+  }
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      await onSave(text.trim() || null)
+      setExpanded(false)
+    } catch {
+      alert('저장에 실패했습니다.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const grow = () =>
+    setSize((s) => ({
+      width: Math.min(MEMO_BOX_MAX.width, s.width + MEMO_BOX_STEP.width),
+      height: Math.min(MEMO_BOX_MAX.height, s.height + MEMO_BOX_STEP.height),
+    }))
+  const shrink = () =>
+    setSize((s) => ({
+      width: Math.max(MEMO_BOX_MIN.width, s.width - MEMO_BOX_STEP.width),
+      height: Math.max(MEMO_BOX_MIN.height, s.height - MEMO_BOX_STEP.height),
+    }))
+
+  return (
+    <div ref={cellRef}>
+      <div
+        onClick={openExpand}
+        className="cursor-pointer rounded px-1 min-h-5 flex items-center justify-between gap-1 hover:bg-gray-50"
+      >
+        {value ? (
+          <span className="text-[11px] text-gray-700 truncate">{value}</span>
+        ) : (
+          <span className="text-[10px] text-gray-300">메모 입력</span>
+        )}
+        <span className="text-[9px] text-primary-400 shrink-0" title="확대 보기">⤢</span>
+      </div>
+      {expanded && createPortal(
+        <div
+          ref={boxRef}
+          style={{ position: 'fixed', top: pos.top, left: pos.left, width: size.width, height: size.height, zIndex: 9999 }}
+          className="bg-yellow-50 border border-gray-400 shadow-xl rounded-sm p-2 flex flex-col"
+        >
+          <div className="flex items-center justify-between mb-1 shrink-0">
+            <span className="text-[10px] font-bold text-gray-500">계약 관련 메모</span>
+            <div className="flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={shrink}
+                disabled={size.width <= MEMO_BOX_MIN.width}
+                title="박스 축소"
+                className="w-3.5 h-3.5 leading-none flex items-center justify-center rounded border border-gray-300 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                −
+              </button>
+              <button
+                type="button"
+                onClick={grow}
+                disabled={size.width >= MEMO_BOX_MAX.width}
+                title="박스 확대"
+                className="w-3.5 h-3.5 leading-none flex items-center justify-center rounded border border-gray-300 text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                +
+              </button>
+              <button
+                type="button"
+                onClick={() => setExpanded(false)}
+                title="닫기"
+                className="w-3.5 h-3.5 leading-none flex items-center justify-center rounded border border-gray-300 text-gray-500 hover:bg-gray-100"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+          <textarea
+            autoFocus
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            className="flex-1 w-full text-[11px] border border-gray-300 rounded px-1.5 py-1 resize-none focus:outline-none focus:border-primary-400 bg-white"
+            placeholder="메모 입력"
+          />
+          <div className="flex gap-1.5 mt-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="flex-1 py-1 text-[10px] text-white bg-primary-500 rounded disabled:opacity-50"
+            >
+              저장
+            </button>
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="flex-1 py-1 text-[10px] border border-gray-300 rounded hover:bg-gray-50"
+            >
+              닫기
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  )
+}
+
 // ── 셀 스타일 ─────────────────────────────────────────────────────────
 
 const thBase =
@@ -1040,11 +1189,10 @@ export function EventOperationsClient({
                       />
                     </td>
 
-                    {/* 계약 관련 메모 */}
+                    {/* 계약 관련 메모 — 클릭 시 셀 위치에서 확대된 박스가 float으로 열림 */}
                     <td className={tdL}>
-                      <InlineTextCell
+                      <ExpandableMemoCell
                         value={row.contractMemo}
-                        placeholder="메모 입력"
                         onSave={(v) => updateEventField(row.id, { contract_memo: v })}
                       />
                     </td>
