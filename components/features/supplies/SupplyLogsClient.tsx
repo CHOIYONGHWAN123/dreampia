@@ -138,7 +138,7 @@ export function SupplyLogsClient({
   };
 
   const thCls =
-    "px-2 py-2.5 text-xs font-bold text-primary-700 text-center bg-primary-50 border-b border-r border-primary-100 whitespace-nowrap";
+    "px-2 py-2.5 text-xs font-bold text-primary-700 text-center bg-primary-50 border-b border-r border-primary-100 whitespace-nowrap sticky top-0 z-10";
   const td =
     "px-2 py-2.5 text-xs text-gray-700 text-center border-b border-r border-gray-100 align-middle";
   const tdDash = <span className="text-gray-300">-</span>;
@@ -271,7 +271,7 @@ export function SupplyLogsClient({
       </div>
 
       {/* 테이블 */}
-      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] max-h-[75vh] overflow-auto">
         <table
           className="text-xs border-collapse"
           style={{ minWidth: "1400px" }}

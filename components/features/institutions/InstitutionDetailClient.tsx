@@ -206,29 +206,29 @@ export function InstitutionDetailClient({
           </button>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] max-h-[75vh] overflow-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-primary-50 border-b border-primary-100">
-                <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-12 min-w-12">
+              <tr>
+                <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-12 min-w-12">
                   no
                 </th>
-                <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-24 min-w-24">
+                <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24 min-w-24">
                   상태
                 </th>
-                <th className="px-4 py-2.5 text-left font-bold text-primary-700 min-w-32">
+                <th className="sticky top-0 z-10 px-4 py-2.5 text-left font-bold text-primary-700 bg-primary-50 border-b border-primary-100 min-w-32">
                   행사명
                 </th>
-                <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
+                <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28 min-w-28">
                   시작일시
                 </th>
-                <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
+                <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28 min-w-28">
                   종료일시
                 </th>
-                <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-36 min-w-36">
+                <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-36 min-w-36">
                   담당선생님
                 </th>
-                <th className="px-4 py-2.5 w-16 min-w-16" />
+                <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 w-16 min-w-16" />
               </tr>
             </thead>
             <tbody>

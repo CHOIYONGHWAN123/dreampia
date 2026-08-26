@@ -38,18 +38,18 @@ export function TeachersClient({ teachers }: { teachers: TeacherRow[] }) {
         />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] max-h-[75vh] overflow-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-primary-50 border-b border-primary-100">
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-14">no</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700">학교명</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-24">지역1</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-24">지역2</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700">주소</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-28">선생님</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-44">아이디</th>
-              <th className="px-4 py-2.5 w-20" />
+            <tr>
+              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-14">no</th>
+              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100">학교명</th>
+              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24">지역1</th>
+              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24">지역2</th>
+              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100">주소</th>
+              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">선생님</th>
+              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-44">아이디</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 w-20" />
             </tr>
           </thead>
           <tbody>

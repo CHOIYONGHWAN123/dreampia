@@ -156,7 +156,7 @@ export function SuppliesClient({ programs, fields }: Props) {
   };
 
   const thCls =
-    "px-3 py-2.5 text-xs font-bold text-primary-700 text-center bg-primary-50 border-b border-r border-primary-100 whitespace-nowrap";
+    "px-3 py-2.5 text-xs font-bold text-primary-700 text-center bg-primary-50 border-b border-r border-primary-100 whitespace-nowrap sticky top-0 z-10";
   const td =
     "px-3 py-2.5 text-xs text-gray-700 text-center border-b border-r border-gray-100";
 
@@ -243,7 +243,7 @@ export function SuppliesClient({ programs, fields }: Props) {
       </div>
 
       {/* 테이블 */}
-      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] max-h-[75vh] overflow-auto">
         <table
           className="text-xs border-collapse w-full"
           style={{ minWidth: "900px" }}

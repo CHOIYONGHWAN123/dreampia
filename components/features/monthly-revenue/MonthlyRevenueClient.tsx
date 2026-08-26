@@ -89,18 +89,18 @@ export function MonthlyRevenueClient({
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] max-h-[75vh] overflow-auto">
         <table className="text-sm" style={{ minWidth: '1100px' }}>
           <thead>
-            <tr className="bg-primary-50 border-b border-primary-100">
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-16 whitespace-nowrap">일자</th>
-              <th className="px-3 py-2.5 text-left font-bold text-primary-700 w-40 whitespace-nowrap">기관명</th>
-              <th className="px-3 py-2.5 text-left font-bold text-primary-700 min-w-40">행사명</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 whitespace-nowrap">계약 현황</th>
-              <th className="px-3 py-2.5 text-right font-bold text-primary-700 w-28 whitespace-nowrap">계약금</th>
-              <th className="px-3 py-2.5 text-right font-bold text-primary-700 w-28 whitespace-nowrap">강의료</th>
-              <th className="px-3 py-2.5 text-right font-bold text-primary-700 w-28 whitespace-nowrap">재료비</th>
-              <th className="px-3 py-2.5 text-right font-bold text-primary-700 w-28 whitespace-nowrap">수익</th>
+            <tr>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-16 whitespace-nowrap">일자</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-left font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-40 whitespace-nowrap">기관명</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-left font-bold text-primary-700 bg-primary-50 border-b border-primary-100 min-w-40">행사명</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-32 whitespace-nowrap">계약 현황</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-right font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28 whitespace-nowrap">계약금</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-right font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28 whitespace-nowrap">강의료</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-right font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28 whitespace-nowrap">재료비</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-right font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28 whitespace-nowrap">수익</th>
             </tr>
           </thead>
           <tbody>

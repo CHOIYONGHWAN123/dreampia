@@ -528,40 +528,40 @@ export function EventProgramUnitSection({
       )}
 
       {/* 추가된 프로그램 목록 - 엑셀 시트처럼 프로그램 1개당 1행 */}
-      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] max-h-[75vh] overflow-auto">
         <table className="text-sm border-collapse" style={{ minWidth: '3520px' }}>
           <thead>
-            <tr className="bg-primary-50 border-b border-primary-100">
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-44 min-w-44">일자</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">시작 시간</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">종료 시간</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36">대상</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">요청직업군</th>
-              <th className="px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">프로그램</th>
-              <th className="px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">특이사항</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40">강사 배정</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강사 연락처</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의실</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">대기실</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-20 min-w-20">출석</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">회보서</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의료</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">강의료 입금자명</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">준비주체</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">준비물 준비</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36 whitespace-nowrap">1인당 강사 재료비</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40 whitespace-nowrap">1인당 드림피아 재료비</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">인원수</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">차시별 인원수</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">재료비 입금자명</th>
-              <th className="px-2 py-2 text-left font-bold text-primary-700 w-48 min-w-48">학교요청사항</th>
-              <th className="px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">답변</th>
-              <th className="px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">사진</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">강사등급</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">소속구분</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">완성품 제공</th>
-              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">택배 가능</th>
-              <th className="px-2 py-2 w-16 min-w-16" />
+            <tr>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-44 min-w-44">일자</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">시작 시간</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">종료 시간</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36">대상</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">요청직업군</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">프로그램</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">특이사항</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40">강사 배정</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강사 연락처</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의실</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">대기실</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-20 min-w-20">출석</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">회보서</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의료</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">강의료 입금자명</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">준비주체</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">준비물 준비</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36 whitespace-nowrap">1인당 강사 재료비</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40 whitespace-nowrap">1인당 드림피아 재료비</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">인원수</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">차시별 인원수</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">재료비 입금자명</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-48 min-w-48">학교요청사항</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">답변</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">사진</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">강사등급</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">소속구분</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">완성품 제공</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">택배 가능</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 w-16 min-w-16" />
             </tr>
           </thead>
           <tbody>

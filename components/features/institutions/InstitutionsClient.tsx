@@ -142,16 +142,16 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
       </div>
 
       {/* 테이블 */}
-      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] max-h-[75vh] overflow-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-primary-50 border-b border-primary-100">
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-14">no</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-24">지역1</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-24">지역2</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-28">기관</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700">기관명</th>
-              <th className="px-4 py-2.5 w-52" />
+            <tr>
+              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-14">no</th>
+              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24">지역1</th>
+              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24">지역2</th>
+              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">기관</th>
+              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100">기관명</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 w-52" />
             </tr>
           </thead>
           <tbody>

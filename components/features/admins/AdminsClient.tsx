@@ -58,7 +58,7 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
   }
 
   const td = 'px-4 py-2.5 text-center text-gray-800 border-b border-gray-100'
-  const th = 'px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 whitespace-nowrap'
+  const th = 'px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 whitespace-nowrap sticky top-0 z-10'
 
   return (
     <div className="p-8 bg-gray-50 min-h-full">
@@ -80,7 +80,7 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
         </label>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] max-h-[75vh] overflow-auto">
         <table className="w-full text-sm" style={{ minWidth: '1000px' }}>
           <thead>
             <tr>

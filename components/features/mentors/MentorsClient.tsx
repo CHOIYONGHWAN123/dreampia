@@ -918,7 +918,7 @@ export function MentorsClient({
   }
 
   const thCls =
-    'px-2 py-2 text-center text-xs font-bold text-primary-700 border-b border-r border-primary-100 whitespace-nowrap bg-primary-50'
+    'px-2 py-2 text-center text-xs font-bold text-primary-700 border-b border-r border-primary-100 whitespace-nowrap bg-primary-50 sticky top-0 z-10'
 
   return (
     <div className="p-7 bg-gray-50 min-h-full">
@@ -967,7 +967,7 @@ export function MentorsClient({
         </span>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] max-h-[75vh] overflow-auto">
         <table
           className="text-xs border-collapse"
           style={{ minWidth: `${THEAD.reduce((s, c) => s + c.w, 0)}px` }}

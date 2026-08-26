@@ -115,22 +115,22 @@ export function MentorFeesClient({
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] max-h-[75vh] overflow-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-primary-50 border-b border-primary-100">
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-12">NO</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24">날짜</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24">강사명</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700">학교명</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28">강의료</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28">재료비</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28">강연료</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28">총 강연료</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28">세후 금액</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32">계좌번호</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28">주민번호</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32">비고</th>
+            <tr>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-12">NO</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24">날짜</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24">강사명</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100">학교명</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">강의료</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">재료비</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">강연료</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">총 강연료</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">세후 금액</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-32">계좌번호</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">주민번호</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-32">비고</th>
             </tr>
           </thead>
           <tbody>

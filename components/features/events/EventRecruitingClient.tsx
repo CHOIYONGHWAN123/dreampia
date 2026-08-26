@@ -386,11 +386,11 @@ export function EventRecruitingClient({
         <p className="mt-1 text-sm text-gray-400">{eventName}</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] max-h-[75vh] overflow-auto">
         <table className="text-sm" style={{ minWidth: '1500px' }}>
           <thead>
-            <tr className="bg-primary-50 border-b border-primary-100">
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-10">
+            <tr>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-10">
                 <input
                   type="checkbox"
                   checked={allSelectableChecked}
@@ -402,17 +402,17 @@ export function EventRecruitingClient({
                   className="disabled:opacity-30"
                 />
               </th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-20 whitespace-nowrap">일자</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-20 whitespace-nowrap">시작</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-20 whitespace-nowrap">종료</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 whitespace-nowrap">대상</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 whitespace-nowrap">요청 직업군</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 whitespace-nowrap">프로그램</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-20 whitespace-nowrap">인원수</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-20 whitespace-nowrap">묶음</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-40 whitespace-nowrap">배정 현황</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-40 whitespace-nowrap">직접 배정</th>
-              <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 whitespace-nowrap">배정 취소</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-20 whitespace-nowrap">일자</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-20 whitespace-nowrap">시작</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-20 whitespace-nowrap">종료</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24 whitespace-nowrap">대상</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24 whitespace-nowrap">요청 직업군</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28 whitespace-nowrap">프로그램</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-20 whitespace-nowrap">인원수</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-20 whitespace-nowrap">묶음</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-40 whitespace-nowrap">배정 현황</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-40 whitespace-nowrap">직접 배정</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24 whitespace-nowrap">배정 취소</th>
             </tr>
           </thead>
           <tbody>

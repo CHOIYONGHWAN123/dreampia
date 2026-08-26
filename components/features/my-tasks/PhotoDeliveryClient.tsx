@@ -123,16 +123,16 @@ export function PhotoDeliveryClient({ rows }: { rows: PhotoDeliveryRow[] }) {
         />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] max-h-[75vh] overflow-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-primary-50 border-b border-primary-100">
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-14">No.</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-28">일자</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700">기관명</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-28">영업담당자</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-28">소통담당자</th>
-              <th className="px-4 py-2.5 text-center font-bold text-primary-700 w-32">행사 사진 전달 완료</th>
+            <tr>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-14">No.</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-28">일자</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700">기관명</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-28">영업담당자</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-28">소통담당자</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-32">행사 사진 전달 완료</th>
             </tr>
           </thead>
           <tbody>
