@@ -36,6 +36,11 @@ type EventUpdateData = {
   teacher_name?: string | null
   remarks?: string | null
   inflow_source?: string | null
+  final_budget?: number | null
+  contract_memo?: string | null
+  admin_docs?: string | null
+  estimate_delivered?: boolean | null
+  crime_check_delivered?: boolean | null
 }
 
 export async function updateEventField(eventId: string, data: EventUpdateData) {

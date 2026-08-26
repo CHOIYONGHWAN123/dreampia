@@ -19,16 +19,20 @@ export type EventOperationRow = {
   institutionId: string | null
   region1: string | null
   region2: string | null
-  category: string | null
+  eventCategoryName: string | null
   institutionName: string | null
   fieldAdminIds: string[]
   fieldAdminNames: string[]
   eventDate: string | null
+  dayStart: string | null
+  dayEnd: string | null
   targetGrade: string | null
   budget: number | null
+  finalBudget: number | null
   contractType: string | null
   contractStatus: string | null
   contractDelivered: boolean | null
+  contractMemo: string | null
   eventCheckStatus: number
   suppliesStatus: string | null
   preNoticeSent: boolean
@@ -40,10 +44,13 @@ export type EventOperationRow = {
   crimeCheckMethod: string | null
   crimeCheckNotified: boolean | null
   crimeCheckStatus: string | null
+  crimeCheckDelivered: boolean | null
+  adminDocs: string | null
   adminDocsDelivered: boolean | null
   salesAdminId: string | null
   salesAdminName: string | null
   estimateFileUrl: string | null
+  estimateDelivered: boolean | null
   teacherName: string | null
   remarks: string | null
   groupChatLink: string | null
@@ -86,6 +93,12 @@ function fmtDate(iso: string | null) {
   if (!iso) return null
   const d = new Date(iso)
   return `${d.getMonth() + 1}/${d.getDate()}`
+}
+
+function fmtTime(iso: string | null) {
+  if (!iso) return null
+  const d = new Date(iso)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
 function recruitDanger(status: string | null, startAt: string | null) {
@@ -722,48 +735,55 @@ export function EventOperationsClient({
               <th className={th} style={{ width: 36 }}>NO</th>
               <th className={th} style={{ width: 48 }}>지역1</th>
               <th className={th} style={{ width: 56 }}>지역2</th>
-              <th className={th} style={{ width: 56 }}>분류</th>
               <th className={th} style={{ width: 120 }}>기관</th>
+              <th className={th} style={{ width: 80 }}>행사구분</th>
               <th className={th} style={{ width: 120 }}>현장담당</th>
-              <th className={th} style={{ width: 140 }}>행사일시</th>
+              <th className={th} style={{ width: 64 }}>행사일시</th>
+              <th className={th} style={{ width: 56 }}>시작시간</th>
+              <th className={th} style={{ width: 56 }}>종료시간</th>
               <th className={th} style={{ width: 64 }}>학년</th>
-              <th className={th} style={{ width: 80 }}>예산</th>
+              <th className={th} style={{ width: 80 }}>계약 예산</th>
+              <th className={th} style={{ width: 80 }}>최종 예산</th>
               <th className={th} style={{ width: 100 }}>계약종류</th>
-              <th className={th} style={{ width: 130 }}>계약현황</th>
-              <th className={th} style={{ width: 90 }}>계약<br />전달여부</th>
+              <th className={th} style={{ width: 120 }}>계약<br />관련 메모</th>
               <th className={th} style={{ width: 80 }}>행사체크</th>
               <th className={th} style={{ width: 80 }}>준비물</th>
               <th className={th} style={{ width: 72 }}>행사안내<br />(1주일전)</th>
               <th className={th} style={{ width: 120 }}>소통담당자</th>
               <th className={th} style={{ width: 80 }}>강사섭외현황</th>
-              <th className={th} style={{ width: 72 }}>강사섭외<br />전달여부</th>
+              <th className={th} style={{ width: 72 }}>강사섭외<br />확정전달여부</th>
+              <th className={th} style={{ width: 120 }}>행사 단톡</th>
               <th className={th} style={{ width: 72 }}>학교요청<br />사항다운</th>
               <th className={th} style={{ width: 90 }}>학교요청<br />전달여부</th>
+              <th className={th} style={{ width: 80 }}>담당T</th>
+              <th className={th} style={{ width: 120 }}>비고</th>
+              <th className={th} style={{ width: 72 }}>행정서류<br />다운</th>
+              <th className={th} style={{ width: 120 }}>행정서류<br />폴더</th>
+              <th className={th} style={{ width: 90 }}>행정서류<br />전달여부</th>
+              <th className={th} style={{ width: 100 }}>견적서<br />제작여부</th>
+              <th className={th} style={{ width: 90 }}>견적서<br />전달여부</th>
+              <th className={th} style={{ width: 120 }}>영업담당자</th>
               <th className={th} style={{ width: 80 }}>범죄경력<br />조회서종류</th>
               <th className={th} style={{ width: 80 }}>회보서<br />등록알림</th>
               <th className={th} style={{ width: 72 }}>회보서현황</th>
-              <th className={th} style={{ width: 72 }}>행정서류<br />다운</th>
-              <th className={th} style={{ width: 90 }}>행정서류<br />전달여부</th>
-              <th className={th} style={{ width: 120 }}>영업담당자</th>
-              <th className={th} style={{ width: 100 }}>견적서<br />제작여부</th>
-              <th className={th} style={{ width: 72 }}>공지사항<br />알림</th>
-              <th className={th} style={{ width: 72 }}>강사섭외<br />상태</th>
-              <th className={th} style={{ width: 80 }}>담당T</th>
-              <th className={th} style={{ width: 120 }}>비고</th>
-              <th className={th} style={{ width: 120 }}>행사단톡</th>
-              <th className={th} style={{ width: 72 }}>유입경로</th>
-              <th className={th} style={{ width: 90 }}>입금확인</th>
+              <th className={th} style={{ width: 90 }}>회보서<br />전달여부</th>
               <th className={th} style={{ width: 56 }}>행사사진</th>
               <th className={th} style={{ width: 64 }}>행사사진<br />다운</th>
               <th className={th} style={{ width: 90 }}>행사사진<br />발송여부</th>
               <th className={th} style={{ width: 56 }}>보고서</th>
               <th className={th} style={{ width: 90 }}>보고서<br />발송여부</th>
+              <th className={th} style={{ width: 90 }}>입금확인</th>
+              <th className={th} style={{ width: 130 }}>계약현황</th>
+              <th className={th} style={{ width: 90 }}>계약<br />전달여부</th>
+              <th className={th} style={{ width: 72 }}>공지사항<br />알림</th>
+              <th className={th} style={{ width: 72 }}>강사섭외<br />상태</th>
+              <th className={th} style={{ width: 72 }}>유입경로</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={39} className="py-16 text-center text-gray-400">
+                <td colSpan={46} className="py-16 text-center text-gray-400">
                   해당 월의 행사가 없습니다.
                 </td>
               </tr>
@@ -777,7 +797,6 @@ export function EventOperationsClient({
                     <td className={td}>{row.no}</td>
                     <td className={td}>{row.region1 ?? '-'}</td>
                     <td className={td}>{row.region2 ?? '-'}</td>
-                    <td className={td}>{row.category ?? '-'}</td>
 
                     {/* 기관 → 행사관리 페이지 링크 */}
                     <td className={`${tdL} font-medium`}>
@@ -793,6 +812,9 @@ export function EventOperationsClient({
                       )}
                     </td>
 
+                    {/* 행사구분 */}
+                    <td className={td}>{row.eventCategoryName ?? '-'}</td>
+
                     {/* 현장담당 — 다중 선택 */}
                     <td className={td}>
                       <FieldAdminPicker
@@ -802,7 +824,10 @@ export function EventOperationsClient({
                       />
                     </td>
 
-                    <td className={`${td} whitespace-pre-line`}>{dateDisplay}</td>
+                    <td className={td}>{dateDisplay}</td>
+                    <td className={td}>{fmtTime(row.dayStart) ?? '-'}</td>
+                    <td className={td}>{fmtTime(row.dayEnd) ?? '-'}</td>
+
                     <td className={td}>
                       <InlineTextCell
                         value={row.targetGrade}
@@ -810,10 +835,20 @@ export function EventOperationsClient({
                         onSave={(v) => updateEventField(row.id, { target_grade: v })}
                       />
                     </td>
+
+                    {/* 계약 예산 */}
                     <td className={td}>
                       <InlineBudgetCell
                         value={row.budget}
                         onSave={(v) => updateEventField(row.id, { budget: v })}
+                      />
+                    </td>
+
+                    {/* 최종 예산 */}
+                    <td className={td}>
+                      <InlineBudgetCell
+                        value={row.finalBudget}
+                        onSave={(v) => updateEventField(row.id, { final_budget: v })}
                       />
                     </td>
 
@@ -826,22 +861,12 @@ export function EventOperationsClient({
                       />
                     </td>
 
-                    {/* 계약현황 */}
-                    <td className={td}>
-                      <InlineSelect
-                        value={row.contractStatus}
-                        options={CONTRACT_STATUS_OPTIONS}
-                        onSave={(v) => updateEventField(row.id, { contract_status: v })}
-                      />
-                    </td>
-
-                    {/* 계약 전달여부 */}
-                    <td className={td}>
-                      <BoolSelect
-                        value={row.contractDelivered}
-                        trueLabel="완료"
-                        falseLabel="예정"
-                        onSave={(v) => updateEventField(row.id, { contract_delivered: v })}
+                    {/* 계약 관련 메모 */}
+                    <td className={tdL}>
+                      <InlineTextCell
+                        value={row.contractMemo}
+                        placeholder="메모 입력"
+                        onSave={(v) => updateEventField(row.id, { contract_memo: v })}
                       />
                     </td>
 
@@ -890,12 +915,22 @@ export function EventOperationsClient({
                       />
                     </td>
 
+                    {/* 강사섭외 확정전달여부 */}
                     <td className={td}>
                       <BoolSelect
                         value={row.recruitDelivered}
                         trueLabel="완료"
                         falseLabel="예정"
                         onSave={(v) => updateEventField(row.id, { recruit_delivered: v })}
+                      />
+                    </td>
+
+                    {/* 행사 단톡 */}
+                    <td className={td}>
+                      <InlineTextCell
+                        value={row.groupChatLink}
+                        placeholder="링크 입력"
+                        onSave={(v) => updateEventField(row.id, { group_chat_link: v })}
                       />
                     </td>
 
@@ -910,6 +945,72 @@ export function EventOperationsClient({
                         trueLabel="완료"
                         falseLabel="예정"
                         onSave={(v) => updateEventField(row.id, { institution_request_delivered: v })}
+                      />
+                    </td>
+
+                    <td className={td}>
+                      <InlineTextCell
+                        value={row.teacherName}
+                        placeholder="담당T 입력"
+                        onSave={(v) => updateEventField(row.id, { teacher_name: v })}
+                      />
+                    </td>
+
+                    <td className={tdL}>
+                      <InlineTextCell
+                        value={row.remarks}
+                        placeholder="비고 입력"
+                        onSave={(v) => updateEventField(row.id, { remarks: v })}
+                      />
+                    </td>
+
+                    <td className={td}>
+                      <PlaceholderBtn label="다운" />
+                    </td>
+
+                    {/* 행정서류 폴더 */}
+                    <td className={tdL}>
+                      <InlineTextCell
+                        value={row.adminDocs}
+                        placeholder="폴더 링크 입력"
+                        onSave={(v) => updateEventField(row.id, { admin_docs: v })}
+                      />
+                    </td>
+
+                    {/* 행정서류 전달여부 */}
+                    <td className={td}>
+                      <BoolSelect
+                        value={row.adminDocsDelivered}
+                        trueLabel="완료"
+                        falseLabel="예정"
+                        onSave={(v) => updateEventField(row.id, { admin_docs_delivered: v })}
+                      />
+                    </td>
+
+                    {/* 견적서 제작여부 — 파일 업로드 */}
+                    <td className={td}>
+                      <EstimateFileCell
+                        eventId={row.id}
+                        fileUrl={row.estimateFileUrl}
+                      />
+                    </td>
+
+                    {/* 견적서 전달여부 */}
+                    <td className={td}>
+                      <BoolSelect
+                        value={row.estimateDelivered}
+                        trueLabel="완료"
+                        falseLabel="예정"
+                        onSave={(v) => updateEventField(row.id, { estimate_delivered: v })}
+                      />
+                    </td>
+
+                    {/* 영업담당 */}
+                    <td className={td}>
+                      <SingleAdminPicker
+                        adminId={row.salesAdminId}
+                        admins={admins}
+                        onSave={(id) => updateEventField(row.id, { sales_admin_id: id })}
                       />
                     </td>
 
@@ -947,92 +1048,13 @@ export function EventOperationsClient({
                       )}
                     </td>
 
-                    <td className={td}>
-                      <PlaceholderBtn label="다운" />
-                    </td>
-
-                    {/* 행정서류 전달여부 */}
+                    {/* 회보서 전달여부 */}
                     <td className={td}>
                       <BoolSelect
-                        value={row.adminDocsDelivered}
+                        value={row.crimeCheckDelivered}
                         trueLabel="완료"
                         falseLabel="예정"
-                        onSave={(v) => updateEventField(row.id, { admin_docs_delivered: v })}
-                      />
-                    </td>
-
-                    {/* 영업담당 */}
-                    <td className={td}>
-                      <SingleAdminPicker
-                        adminId={row.salesAdminId}
-                        admins={admins}
-                        onSave={(id) => updateEventField(row.id, { sales_admin_id: id })}
-                      />
-                    </td>
-
-                    {/* 견적서 제작여부 — 파일 업로드 */}
-                    <td className={td}>
-                      <EstimateFileCell
-                        eventId={row.id}
-                        fileUrl={row.estimateFileUrl}
-                      />
-                    </td>
-
-                    <td className={td}>
-                      <PlaceholderBtn label="알림보내기" />
-                    </td>
-
-                    <td className={td}>
-                      <div className="flex flex-col items-center gap-0.5">
-                        {danger && <Badge text="위험" color="red" />}
-                        <InlineSelect
-                          value={row.recruitStatus}
-                          options={RECRUIT_STATUS_OPTIONS}
-                          onSave={(v) => updateEventField(row.id, { recruit_status: v })}
-                        />
-                      </div>
-                    </td>
-
-                    <td className={td}>
-                      <InlineTextCell
-                        value={row.teacherName}
-                        placeholder="담당T 입력"
-                        onSave={(v) => updateEventField(row.id, { teacher_name: v })}
-                      />
-                    </td>
-
-                    <td className={tdL}>
-                      <InlineTextCell
-                        value={row.remarks}
-                        placeholder="비고 입력"
-                        onSave={(v) => updateEventField(row.id, { remarks: v })}
-                      />
-                    </td>
-
-                    {/* 행사단톡 */}
-                    <td className={td}>
-                      <InlineTextCell
-                        value={row.groupChatLink}
-                        placeholder="링크 입력"
-                        onSave={(v) => updateEventField(row.id, { group_chat_link: v })}
-                      />
-                    </td>
-
-                    <td className={td}>
-                      <InlineSelect
-                        value={row.inflowSource}
-                        options={INFLOW_SOURCE_OPTIONS}
-                        onSave={(v) => updateEventField(row.id, { inflow_source: v })}
-                      />
-                    </td>
-
-                    {/* 입금확인 */}
-                    <td className={td}>
-                      <BoolSelect
-                        value={row.paymentConfirmed}
-                        trueLabel="확인"
-                        falseLabel="미확인"
-                        onSave={(v) => updateEventField(row.id, { payment_confirmed: v })}
+                        onSave={(v) => updateEventField(row.id, { crime_check_delivered: v })}
                       />
                     </td>
 
@@ -1071,6 +1093,60 @@ export function EventOperationsClient({
                         trueLabel="발송"
                         falseLabel="미발송"
                         onSave={(v) => updateEventField(row.id, { report_sent: v })}
+                      />
+                    </td>
+
+                    {/* 입금확인 */}
+                    <td className={td}>
+                      <BoolSelect
+                        value={row.paymentConfirmed}
+                        trueLabel="확인"
+                        falseLabel="미확인"
+                        onSave={(v) => updateEventField(row.id, { payment_confirmed: v })}
+                      />
+                    </td>
+
+                    {/* ── 이하 순서 목록에 없어 표 맨 뒤로 옮긴 기존 컬럼 ── */}
+
+                    {/* 계약현황 */}
+                    <td className={td}>
+                      <InlineSelect
+                        value={row.contractStatus}
+                        options={CONTRACT_STATUS_OPTIONS}
+                        onSave={(v) => updateEventField(row.id, { contract_status: v })}
+                      />
+                    </td>
+
+                    {/* 계약 전달여부 */}
+                    <td className={td}>
+                      <BoolSelect
+                        value={row.contractDelivered}
+                        trueLabel="완료"
+                        falseLabel="예정"
+                        onSave={(v) => updateEventField(row.id, { contract_delivered: v })}
+                      />
+                    </td>
+
+                    <td className={td}>
+                      <PlaceholderBtn label="알림보내기" />
+                    </td>
+
+                    <td className={td}>
+                      <div className="flex flex-col items-center gap-0.5">
+                        {danger && <Badge text="위험" color="red" />}
+                        <InlineSelect
+                          value={row.recruitStatus}
+                          options={RECRUIT_STATUS_OPTIONS}
+                          onSave={(v) => updateEventField(row.id, { recruit_status: v })}
+                        />
+                      </div>
+                    </td>
+
+                    <td className={td}>
+                      <InlineSelect
+                        value={row.inflowSource}
+                        options={INFLOW_SOURCE_OPTIONS}
+                        onSave={(v) => updateEventField(row.id, { inflow_source: v })}
                       />
                     </td>
                   </tr>

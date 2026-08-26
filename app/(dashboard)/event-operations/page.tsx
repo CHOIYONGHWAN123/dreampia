@@ -34,18 +34,25 @@ export default async function EventOperationsPage({
 
   const { data: rowsInMonth } = await supabase
     .from('event_rows')
-    .select('event_id, start_time')
+    .select('event_id, start_time, end_time')
     .gte('start_time', startOfMonth)
     .lt('start_time', startOfNextMonth)
 
   // 행사별 실제 수업일(날짜 단위, 중복 제거) 목록 — 행사운영확인표에서 행사를 날짜별로 나눠 보여주는 데 사용.
-  const datesByEvent = new Map<string, { key: string; iso: string | null }[]>()
+  // 하루에 교시가 여러 개일 수 있어, 시작/종료 시간은 그날의 가장 이른 시작 ~ 가장 늦은 종료로 계산한다.
+  const datesByEvent = new Map<string, { key: string; iso: string | null; dayStart: string | null; dayEnd: string | null }[]>()
   for (const r of rowsInMonth ?? []) {
     if (!r.event_id || !r.start_time) continue
     const d = new Date(r.start_time)
     const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
     const list = datesByEvent.get(r.event_id) ?? []
-    if (!list.some((e) => e.key === key)) list.push({ key, iso: r.start_time })
+    const entry = list.find((e) => e.key === key)
+    if (!entry) {
+      list.push({ key, iso: r.start_time, dayStart: r.start_time, dayEnd: r.end_time })
+    } else {
+      if (r.start_time && (!entry.dayStart || r.start_time < entry.dayStart)) entry.dayStart = r.start_time
+      if (r.end_time && (!entry.dayEnd || r.end_time > entry.dayEnd)) entry.dayEnd = r.end_time
+    }
     datesByEvent.set(r.event_id, list)
   }
   for (const list of datesByEvent.values()) list.sort((a, b) => (a.iso ?? '').localeCompare(b.iso ?? ''))
@@ -56,7 +63,7 @@ export default async function EventOperationsPage({
     eventIdsInMonth.length > 0
       ? await supabase
           .from('events')
-          .select(`id, name, event_start_at, event_end_at, target_grade, budget, contract_type, contract_status, contract_delivered, event_check_status, supplies_status, pre_notice_sent, recruit_status, recruit_delivered, start_recruit_at, institution_request_delivered, crime_check_method, crime_check_notified, crime_check_status, admin_docs_delivered, estimate_file_url, teacher_name, remarks, group_chat_link, inflow_source, payment_confirmed, photo_sent, report_sent, field_admin_ids, comm_admin_id, sales_admin_id, institution_id`)
+          .select(`id, name, event_start_at, event_end_at, target_grade, budget, final_budget, contract_type, contract_status, contract_delivered, contract_memo, event_check_status, supplies_status, pre_notice_sent, recruit_status, recruit_delivered, start_recruit_at, institution_request_delivered, crime_check_method, crime_check_notified, crime_check_status, crime_check_delivered, admin_docs, admin_docs_delivered, estimate_file_url, estimate_delivered, teacher_name, remarks, group_chat_link, inflow_source, payment_confirmed, photo_sent, report_sent, field_admin_ids, comm_admin_id, sales_admin_id, institution_id, event_category_id`)
           .in('id', eventIdsInMonth)
           .order('event_start_at', { ascending: true })
       : { data: null }
@@ -64,6 +71,10 @@ export default async function EventOperationsPage({
   // 전체 관리자 목록
   const { data: allAdmins } = await supabase.from('admins').select('id, name').order('name')
   const admins = (allAdmins ?? []).map((a) => ({ id: a.id, name: a.name }))
+
+  // 행사구분(직업체험/문화예술체험 등) 이름 조회
+  const { data: eventCategories } = await supabase.from('event_categories').select('id, name')
+  const eventCategoryMap = new Map((eventCategories ?? []).map((c) => [c.id, c.name]))
 
   if (!events || events.length === 0) {
     return (
@@ -123,7 +134,9 @@ export default async function EventOperationsPage({
       eventRowIdList.every((rowId) => (photoCountByRow.get(rowId) ?? 0) >= 3)
 
     // 이론상 eventIdsInMonth에 포함된 행사는 항상 날짜가 하나 이상 있지만, 방어적으로 폴백을 둔다.
-    const dates = datesByEvent.get(e.id) ?? [{ key: e.id, iso: e.event_start_at }]
+    const dates = datesByEvent.get(e.id) ?? [
+      { key: e.id, iso: e.event_start_at, dayStart: e.event_start_at, dayEnd: e.event_end_at },
+    ]
 
     for (const date of dates) {
       rows.push({
@@ -133,16 +146,20 @@ export default async function EventOperationsPage({
         institutionId: e.institution_id,
         region1: inst?.region1 ?? null,
         region2: inst?.region2 ?? null,
-        category: inst?.institution_type ?? null,
+        eventCategoryName: e.event_category_id ? (eventCategoryMap.get(e.event_category_id) ?? null) : null,
         institutionName: inst ? `${inst.name}${inst.is_deleted ? '(삭제됨)' : ''}` : null,
         fieldAdminIds: e.field_admin_ids ?? [],
         fieldAdminNames,
         eventDate: date.iso,
+        dayStart: date.dayStart,
+        dayEnd: date.dayEnd,
         targetGrade: e.target_grade,
         budget: e.budget,
+        finalBudget: e.final_budget,
         contractType: e.contract_type,
         contractStatus: e.contract_status,
         contractDelivered: e.contract_delivered,
+        contractMemo: e.contract_memo,
         eventCheckStatus: e.event_check_status,
         suppliesStatus: e.supplies_status,
         preNoticeSent: e.pre_notice_sent,
@@ -154,10 +171,13 @@ export default async function EventOperationsPage({
         crimeCheckMethod: e.crime_check_method,
         crimeCheckNotified: e.crime_check_notified,
         crimeCheckStatus: e.crime_check_status,
+        crimeCheckDelivered: e.crime_check_delivered,
+        adminDocs: e.admin_docs,
         adminDocsDelivered: e.admin_docs_delivered,
         salesAdminId: e.sales_admin_id,
         salesAdminName: e.sales_admin_id ? (adminMap.get(e.sales_admin_id) ?? null) : null,
         estimateFileUrl: e.estimate_file_url,
+        estimateDelivered: e.estimate_delivered,
         teacherName: e.teacher_name,
         remarks: e.remarks,
         groupChatLink: e.group_chat_link,

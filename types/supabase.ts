@@ -541,9 +541,11 @@ export type Database = {
           contact_name: string | null
           contact_phone: string | null
           contract_delivered: boolean
+          contract_memo: string | null
           contract_status: Database["public"]["Enums"]["contract_status"] | null
           contract_type: Database["public"]["Enums"]["contract_type"] | null
           created_at: string
+          crime_check_delivered: boolean
           crime_check_info: string | null
           crime_check_method:
             | Database["public"]["Enums"]["crime_check_method"]
@@ -552,6 +554,7 @@ export type Database = {
           crime_check_status:
             | Database["public"]["Enums"]["crime_check_status"]
             | null
+          estimate_delivered: boolean
           estimate_file_url: string | null
           event_category_id: string | null
           event_check_status: number
@@ -611,11 +614,13 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           contract_delivered?: boolean
+          contract_memo?: string | null
           contract_status?:
             | Database["public"]["Enums"]["contract_status"]
             | null
           contract_type?: Database["public"]["Enums"]["contract_type"] | null
           created_at?: string
+          crime_check_delivered?: boolean
           crime_check_info?: string | null
           crime_check_method?:
             | Database["public"]["Enums"]["crime_check_method"]
@@ -624,6 +629,7 @@ export type Database = {
           crime_check_status?:
             | Database["public"]["Enums"]["crime_check_status"]
             | null
+          estimate_delivered?: boolean
           estimate_file_url?: string | null
           event_category_id?: string | null
           event_check_status?: number
@@ -685,11 +691,13 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           contract_delivered?: boolean
+          contract_memo?: string | null
           contract_status?:
             | Database["public"]["Enums"]["contract_status"]
             | null
           contract_type?: Database["public"]["Enums"]["contract_type"] | null
           created_at?: string
+          crime_check_delivered?: boolean
           crime_check_info?: string | null
           crime_check_method?:
             | Database["public"]["Enums"]["crime_check_method"]
@@ -698,6 +706,7 @@ export type Database = {
           crime_check_status?:
             | Database["public"]["Enums"]["crime_check_status"]
             | null
+          estimate_delivered?: boolean
           estimate_file_url?: string | null
           event_category_id?: string | null
           event_check_status?: number
