@@ -18,7 +18,7 @@ import { createEvent, updateEvent } from '@/app/(dashboard)/events/actions'
 import { institutionTypeToSchoolLevel } from '@/lib/school-level'
 import { generateId } from '@/lib/generate-id'
 import { formatThousands, parseThousands } from '@/lib/format-number'
-import type { EventDetailData, EventScheduleRow, EventRowDetailData, EventRowPhoto } from '@/app/(dashboard)/events/actions'
+import type { EventDetailData, EventScheduleRow, EventRowDetailData, EventRowPhoto, EventNoticeFile } from '@/app/(dashboard)/events/actions'
 import {
   EventProgramUnitSection,
   calcLectureFeeAfterTax,
@@ -75,6 +75,7 @@ interface Props {
   initialEstimateFileUrl?: string | null
   initialTransactionStatementFileUrl?: string | null
   initialPhotosByRow?: Record<string, EventRowPhoto[]>
+  initialNoticeFiles?: EventNoticeFile[]
 }
 
 function splitDateTime(value: string | null): { date: string; time: string } {
@@ -222,6 +223,7 @@ export function EventForm({
   initialEstimateFileUrl,
   initialTransactionStatementFileUrl,
   initialPhotosByRow,
+  initialNoticeFiles,
 }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -230,6 +232,8 @@ export function EventForm({
   const [transactionStatementFile, setTransactionStatementFile] = useState<File | null>(null)
   const [floorMapFile, setFloorMapFile] = useState<File | null>(null)
   const floorMapInputRef = useRef<HTMLInputElement>(null)
+  const [existingNoticeFiles, setExistingNoticeFiles] = useState<EventNoticeFile[]>(initialNoticeFiles ?? [])
+  const [newNoticeFiles, setNewNoticeFiles] = useState<File[]>([])
   const [programUnits, setProgramUnits] = useState<SelectedProgramUnit[]>(() =>
     buildInitialProgramUnits(initialEventRows, units, programs, occupations, fields)
   )
@@ -313,6 +317,31 @@ export function EventForm({
     return urlData.publicUrl
   }
 
+  // 공지사항 첨부파일(이미지, 여러 장 업로드 가능) — 학교 배치도와 동일하게 민감정보가
+  // 아니므로 공개 버킷 + 공개 URL로 저장한다.
+  async function uploadNoticeFile(file: File, index: number): Promise<string> {
+    const supabase = createClient()
+    const ext = file.name.includes('.') ? file.name.split('.').pop() : ''
+    const path = `notice-files/${eventId ?? 'new'}-${Date.now()}-${index}${ext ? `.${ext}` : ''}`
+    const { error } = await supabase.storage.from('files').upload(path, file)
+    if (error) throw new Error(error.message)
+    const { data: urlData } = supabase.storage.from('files').getPublicUrl(path)
+    return urlData.publicUrl
+  }
+
+  const addNoticeFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    setNewNoticeFiles((prev) => [...prev, ...Array.from(files)])
+  }
+
+  const removeExistingNoticeFile = (id: string) => {
+    setExistingNoticeFiles((prev) => prev.filter((f) => f.id !== id))
+  }
+
+  const removeNewNoticeFile = (index: number) => {
+    setNewNoticeFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
   const onSubmit = (data: EventFormData) => {
     startTransition(async () => {
       // 새 파일을 업로드하지 않으면 기존 견적서 경로를 그대로 유지한다.
@@ -354,6 +383,20 @@ export function EventForm({
           floorMapUrl = await uploadFloorMap(floorMapFile)
         } catch (e) {
           alert('배치도 파일 업로드에 실패했습니다.')
+          setIsUploading(false)
+          return
+        }
+        setIsUploading(false)
+      }
+
+      let noticeFileUrls = existingNoticeFiles.map((f) => f.url)
+      if (newNoticeFiles.length > 0) {
+        setIsUploading(true)
+        try {
+          const uploaded = await Promise.all(newNoticeFiles.map((file, i) => uploadNoticeFile(file, i)))
+          noticeFileUrls = [...noticeFileUrls, ...uploaded]
+        } catch (e) {
+          alert('공지사항 첨부파일 업로드에 실패했습니다.')
           setIsUploading(false)
           return
         }
@@ -406,6 +449,7 @@ export function EventForm({
         comm_admin_id: data.comm_admin_id,
         comm_content: data.comm_content,
         schedules,
+        noticeFileUrls,
         eventRows: programUnits.map((u) => ({
           id: u.rowId,
           occupation_program_unit_id: u.unitId,
@@ -722,6 +766,59 @@ export function EventForm({
                   rows={2}
                   className={`${cellInputCls} resize-none`}
                 />
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>공지사항 첨부파일</td>
+              <td className={cellValueCls}>
+                <div className="flex flex-wrap gap-2">
+                  {existingNoticeFiles.map((f) => (
+                    <div key={f.id} className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={f.url} alt="" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
+                      <button
+                        type="button"
+                        onClick={() => removeExistingNoticeFile(f.id)}
+                        className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] leading-none hover:bg-red-600"
+                        title="삭제"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  {newNoticeFiles.map((file, i) => (
+                    <div key={`${file.name}-${i}`} className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt=""
+                        className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeNewNoticeFile(i)}
+                        className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] leading-none hover:bg-red-600"
+                        title="삭제"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  <label className="w-16 h-16 flex items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs text-gray-400 cursor-pointer hover:bg-gray-50">
+                    + 추가
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => {
+                        addNoticeFiles(e.target.files)
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                </div>
               </td>
             </tr>
 

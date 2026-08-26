@@ -185,15 +185,17 @@ export type EventRowDetailData = {
 }
 
 export type EventRowPhoto = { id: string; url: string }
+export type EventNoticeFile = { id: string; url: string }
 
 export async function getEventDetail(id: string): Promise<{
   event: EventDetailData
   schedules: EventScheduleRow[]
   eventRows: EventRowDetailData[]
   photosByRow: Record<string, EventRowPhoto[]>
+  noticeFiles: EventNoticeFile[]
 } | null> {
   const supabase = await createServerSupabaseClient()
-  const [{ data: event }, { data: schedules }, { data: eventRows }] = await Promise.all([
+  const [{ data: event }, { data: schedules }, { data: eventRows }, { data: noticeFiles }] = await Promise.all([
     supabase.from('events').select(EVENT_DETAIL_COLUMNS).eq('id', id).single(),
     supabase.from('event_schedules').select('label, start_time, end_time').eq('event_id', id).order('sort_order'),
     supabase
@@ -203,6 +205,7 @@ export async function getEventDetail(id: string): Promise<{
       )
       .eq('event_id', id)
       .order('start_time', { ascending: true, nullsFirst: false }),
+    supabase.from('event_notice_files').select('id, url').eq('event_id', id).order('created_at'),
   ])
   if (!event) return null
 
@@ -218,7 +221,7 @@ export async function getEventDetail(id: string): Promise<{
     photosByRow[p.event_rows_id] = list
   }
 
-  return { event, schedules: schedules ?? [], eventRows: eventRows ?? [], photosByRow }
+  return { event, schedules: schedules ?? [], eventRows: eventRows ?? [], photosByRow, noticeFiles: noticeFiles ?? [] }
 }
 
 export async function getEventProgramSelectData(): Promise<EventProgramSelectData> {
@@ -336,6 +339,7 @@ export async function createEvent(data: {
   comm_content?: string | null
   schedules?: ScheduleInput[]
   eventRows?: EventRowInput[]
+  noticeFileUrls?: string[]
 }) {
   const supabase = await createServerSupabaseClient()
 
@@ -403,6 +407,13 @@ export async function createEvent(data: {
       )
       if (schedErr) throw new Error(schedErr.message)
     }
+  }
+
+  if (data.noticeFileUrls && data.noticeFileUrls.length > 0) {
+    const { error: noticeFilesErr } = await supabase
+      .from('event_notice_files')
+      .insert(data.noticeFileUrls.map((url) => ({ event_id: event.id, url })))
+    if (noticeFilesErr) throw new Error(noticeFilesErr.message)
   }
 
   if (data.eventRows && data.eventRows.length > 0) {
@@ -496,6 +507,7 @@ export async function updateEvent(
     comm_content?: string | null
     schedules?: ScheduleInput[]
     eventRows?: EventRowInput[]
+    noticeFileUrls?: string[]
   }
 ) {
   const supabase = await createServerSupabaseClient()
@@ -559,6 +571,17 @@ export async function updateEvent(
       }))
     )
     if (schedErr) throw new Error(schedErr.message)
+  }
+
+  // 공지사항 첨부파일도 다른 테이블에서 참조하지 않으므로 통째로 교체한다.
+  const { error: noticeFilesDelErr } = await supabase.from('event_notice_files').delete().eq('event_id', id)
+  if (noticeFilesDelErr) throw new Error(noticeFilesDelErr.message)
+
+  if (data.noticeFileUrls && data.noticeFileUrls.length > 0) {
+    const { error: noticeFilesErr } = await supabase
+      .from('event_notice_files')
+      .insert(data.noticeFileUrls.map((url) => ({ event_id: id, url })))
+    if (noticeFilesErr) throw new Error(noticeFilesErr.message)
   }
 
   // event_rows는 attendance 등 폼 외부에서 채워지는 값이 있으므로 통째로 갈아엎지 않고

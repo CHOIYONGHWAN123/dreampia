@@ -50,6 +50,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       initialEstimateFileUrl={signedResult.data?.signedUrl ?? null}
       initialTransactionStatementFileUrl={transactionStatementSignedResult.data?.signedUrl ?? null}
       initialPhotosByRow={detail.photosByRow}
+      initialNoticeFiles={detail.noticeFiles}
     />
   )
 }

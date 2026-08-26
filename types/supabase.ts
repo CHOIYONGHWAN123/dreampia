@@ -200,6 +200,49 @@ export type Database = {
           },
         ]
       }
+      event_notice_files: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_notice_files_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_notice_files_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_notice_files_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_invitation_requests"
+            referencedColumns: ["event_id"]
+          },
+        ]
+      }
       event_photos: {
         Row: {
           created_at: string
