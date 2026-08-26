@@ -113,6 +113,7 @@ function buildInitialProgramUnits(
       mentorMaterialCost: unit?.mentor_material_cost ?? null,
       dreampiaMaterialCost: unit?.dreampia_material_cost ?? null,
       prepBy: unit?.prep_by ?? null,
+      suppliesPrepared: r.supplies_prepared,
       startTime: toDatetimeLocal(r.start_time),
       endTime: toDatetimeLocal(r.end_time),
       classroom: r.classroom ?? '',
@@ -419,6 +420,7 @@ export function EventForm({
           school_request_response: u.schoolRequestResponse || null,
           remarks: u.remarks || null,
           criminal_background_check: u.criminalBackgroundCheck || null,
+          supplies_prepared: u.suppliesPrepared,
         })),
       }
 

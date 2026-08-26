@@ -84,6 +84,7 @@ type EventRowInput = {
   school_request_response?: string | null
   remarks?: string | null
   criminal_background_check?: string | null
+  supplies_prepared?: boolean | null
 }
 
 export type MentorOptionForUnit = {
@@ -179,6 +180,7 @@ export type EventRowDetailData = {
   remarks: string | null
   attendance: boolean | null
   criminal_background_check: string | null
+  supplies_prepared: boolean
 }
 
 export type EventRowPhoto = { id: string; url: string }
@@ -196,7 +198,7 @@ export async function getEventDetail(id: string): Promise<{
     supabase
       .from('event_rows')
       .select(
-        'id, occupation_program_unit_id, start_time, end_time, classroom, instructor_waiting_room, target, lecture_fee, headcount, session_headcount, mentor_id, school_request_response, remarks, attendance, criminal_background_check'
+        'id, occupation_program_unit_id, start_time, end_time, classroom, instructor_waiting_room, target, lecture_fee, headcount, session_headcount, mentor_id, school_request_response, remarks, attendance, criminal_background_check, supplies_prepared'
       )
       .eq('event_id', id)
       .order('start_time', { ascending: true, nullsFirst: false }),
@@ -422,6 +424,7 @@ export async function createEvent(data: {
           school_request_response: r.school_request_response || null,
           remarks: r.remarks || null,
           criminal_background_check: r.criminal_background_check || null,
+          supplies_prepared: r.supplies_prepared ?? false,
         }))
       )
       .select('id')
@@ -600,6 +603,7 @@ export async function updateEvent(
       session_headcount: r.session_headcount ?? null,
       school_request_response: r.school_request_response || null,
       remarks: r.remarks || null,
+      supplies_prepared: r.supplies_prepared ?? false,
     }
     const existing = r.id ? existingById.get(r.id) : undefined
     if (existing) {

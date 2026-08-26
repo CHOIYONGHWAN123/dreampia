@@ -266,6 +266,7 @@ export type Database = {
           school_request_response: string | null
           session_headcount: number | null
           start_time: string | null
+          supplies_prepared: boolean
           target: string | null
         }
         Insert: {
@@ -290,6 +291,7 @@ export type Database = {
           school_request_response?: string | null
           session_headcount?: number | null
           start_time?: string | null
+          supplies_prepared?: boolean
           target?: string | null
         }
         Update: {
@@ -314,6 +316,7 @@ export type Database = {
           school_request_response?: string | null
           session_headcount?: number | null
           start_time?: string | null
+          supplies_prepared?: boolean
           target?: string | null
         }
         Relationships: [
