@@ -47,6 +47,7 @@ export const eventSchema = z.object({
   budget: z.number().nullable().optional(),
   final_budget: z.number().nullable().optional(),
   comm_admin_id: nullableString,
+  comm_content: nullableString,
 })
 
 export type EventFormData = z.infer<typeof eventSchema>

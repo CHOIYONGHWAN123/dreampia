@@ -187,6 +187,7 @@ function buildDefaultValues(
     budget: initialEvent.budget,
     final_budget: initialEvent.final_budget,
     comm_admin_id: initialEvent.comm_admin_id,
+    comm_content: initialEvent.comm_content,
   }
 }
 
@@ -399,6 +400,7 @@ export function EventForm({
         estimate_file_url: estimateFileUrl,
         transaction_statement_file_url: transactionStatementFileUrl,
         comm_admin_id: data.comm_admin_id,
+        comm_content: data.comm_content,
         schedules,
         eventRows: programUnits.map((u) => ({
           id: u.rowId,
@@ -962,6 +964,17 @@ export function EventForm({
                     <option key={a.id} value={a.id}>{a.name}</option>
                   ))}
                 </select>
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>소통내용</td>
+              <td className={cellValueCls}>
+                <textarea
+                  {...register('comm_content')}
+                  rows={10}
+                  className={`${cellInputCls} resize-none`}
+                />
               </td>
             </tr>
           </tbody>
