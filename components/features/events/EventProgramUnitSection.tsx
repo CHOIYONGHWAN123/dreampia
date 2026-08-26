@@ -26,6 +26,7 @@ export type UnitOption = {
 export type MentorOption = {
   id: string
   name: string
+  phone: string | null
   score: number | null
   belongsToName: string | null
   schoolRequestNote: string | null
@@ -531,6 +532,7 @@ export function EventProgramUnitSection({
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">요청직업군</th>
               <th className="px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">프로그램</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40">강사 배정</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강사 연락처</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의실</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">대기실</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-20 min-w-20">출석</th>
@@ -558,7 +560,7 @@ export function EventProgramUnitSection({
           <tbody>
             {value.length === 0 ? (
               <tr>
-                <td colSpan={29} className="py-6 text-center text-xs text-gray-400">
+                <td colSpan={30} className="py-6 text-center text-xs text-gray-400">
                   추가된 프로그램이 없습니다.
                 </td>
               </tr>
@@ -623,6 +625,9 @@ export function EventProgramUnitSection({
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
                       {assignedMentor ? assignedMentor.name : '미배정'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {assignedMentor ? (assignedMentor.phone ?? '-') : '-'}
                     </td>
                     <td className="px-2 py-1.5">
                       <input

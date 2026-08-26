@@ -90,6 +90,7 @@ type EventRowInput = {
 export type MentorOptionForUnit = {
   id: string
   name: string
+  phone: string | null
   score: number | null
   belongsToName: string | null
   schoolRequestNote: string | null
@@ -240,7 +241,7 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
     supabase
       .from('mentor_occupation_programs')
       .select('mentor_id, occupation_program_unit_id, school_request_note, lecture_fee_payer_id, material_fee_payer_id'),
-    supabase.from('mentors').select('id, name, score, belongs_to'),
+    supabase.from('mentors').select('id, name, phone, score, belongs_to'),
   ])
 
   const mentorMap = new Map((mentorsRes.data ?? []).map((m) => [m.id, m]))
@@ -253,6 +254,7 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
     list.push({
       id: mentor.id,
       name: mentor.name,
+      phone: mentor.phone,
       score: mentor.score,
       belongsToName: mentor.belongs_to ? mentorMap.get(mentor.belongs_to)?.name ?? null : null,
       schoolRequestNote: row.school_request_note,
