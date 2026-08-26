@@ -112,6 +112,7 @@ function buildInitialProgramUnits(
       isDeliveryAvailable: unit?.is_delivery_available ?? null,
       mentorMaterialCost: unit?.mentor_material_cost ?? null,
       dreampiaMaterialCost: unit?.dreampia_material_cost ?? null,
+      prepBy: unit?.prep_by ?? null,
       startTime: toDatetimeLocal(r.start_time),
       endTime: toDatetimeLocal(r.end_time),
       classroom: r.classroom ?? '',

@@ -21,6 +21,7 @@ export type UnitOption = {
   is_delivery_available: boolean | null
   mentor_material_cost: number | null
   dreampia_material_cost: number | null
+  prep_by: string | null
 }
 export type MentorOption = {
   id: string
@@ -48,6 +49,7 @@ export type SelectedProgramUnit = {
   isDeliveryAvailable: boolean | null
   mentorMaterialCost: number | null
   dreampiaMaterialCost: number | null
+  prepBy: string | null
   startTime: string
   endTime: string
   classroom: string
@@ -232,6 +234,7 @@ export function EventProgramUnitSection({
         isDeliveryAvailable: unit.is_delivery_available,
         mentorMaterialCost: unit.mentor_material_cost,
         dreampiaMaterialCost: unit.dreampia_material_cost,
+        prepBy: unit.prep_by,
         startTime: defaultStartTime ?? '',
         endTime: defaultEndTime ?? '',
         classroom: '',
@@ -532,6 +535,7 @@ export function EventProgramUnitSection({
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">회보서</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의료</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">강의료 입금자명</th>
+              <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">준비주체</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36 whitespace-nowrap">1인당 강사 재료비</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40 whitespace-nowrap">1인당 드림피아 재료비</th>
               <th className="px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">인원수</th>
@@ -551,7 +555,7 @@ export function EventProgramUnitSection({
           <tbody>
             {value.length === 0 ? (
               <tr>
-                <td colSpan={27} className="py-6 text-center text-xs text-gray-400">
+                <td colSpan={28} className="py-6 text-center text-xs text-gray-400">
                   추가된 프로그램이 없습니다.
                 </td>
               </tr>
@@ -660,6 +664,7 @@ export function EventProgramUnitSection({
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
                       {assignedMentor ? (assignedMentor.lectureFeePayerName ?? '-') : '-'}
                     </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">{v.prepBy ?? '-'}</td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
                       {v.mentorMaterialCost != null ? v.mentorMaterialCost.toLocaleString() : '-'}
                     </td>

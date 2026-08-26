@@ -111,6 +111,7 @@ export type EventProgramSelectData = {
     is_delivery_available: boolean | null
     mentor_material_cost: number | null
     dreampia_material_cost: number | null
+    prep_by: string | null
   }[]
   mentorsByUnit: Record<string, MentorOptionForUnit[]>
 }
@@ -226,7 +227,7 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
     supabase.from('occupations').select('id, name, field_id').order('name'),
     supabase
       .from('occupation_programs')
-      .select('id, name, occupation_id, mentor_material_cost, dreampia_material_cost')
+      .select('id, name, occupation_id, mentor_material_cost, dreampia_material_cost, prep_by')
       .order('name'),
     supabase
       .from('occupation_program_unit')
@@ -266,11 +267,14 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
     eventCategoryIdsByField.set(l.field_id, list)
   }
 
-  // 재료비는 프로그램(occupation_programs) 단위로 관리되므로, 유닛에는 소속 프로그램의
-  // 재료비를 그대로 병합해서 내려준다 (units[].mentor_material_cost/dreampia_material_cost
-  // 출력 형태는 유지).
+  // 재료비/준비주체는 프로그램(occupation_programs) 단위로 관리되므로, 유닛에는 소속
+  // 프로그램의 값을 그대로 병합해서 내려준다 (units[].mentor_material_cost/
+  // dreampia_material_cost/prep_by 출력 형태는 유지).
   const programCostMap = new Map(
-    (progsRes.data ?? []).map((p) => [p.id, { mentor: p.mentor_material_cost, dreampia: p.dreampia_material_cost }])
+    (progsRes.data ?? []).map((p) => [
+      p.id,
+      { mentor: p.mentor_material_cost, dreampia: p.dreampia_material_cost, prepBy: p.prep_by },
+    ])
   )
 
   return {
@@ -284,6 +288,7 @@ export async function getEventProgramSelectData(): Promise<EventProgramSelectDat
         ...u,
         mentor_material_cost: cost?.mentor ?? null,
         dreampia_material_cost: cost?.dreampia ?? null,
+        prep_by: cost?.prepBy ?? null,
       }
     }),
     mentorsByUnit,
