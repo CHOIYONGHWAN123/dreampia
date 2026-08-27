@@ -102,8 +102,8 @@ export function InstitutionRequestClient({ rows }: { rows: InstitutionRequestRow
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-28">
                 <HeaderFilter label="소통담당자" options={commAdminOptions} value={commAdminFilter} onChange={setCommAdminFilter} />
               </th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-32">기관 요청사항 다운</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-32">기관요청사항 전달</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-44 whitespace-nowrap">기관 요청사항 다운</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-44 whitespace-nowrap">기관요청사항 전달</th>
             </tr>
           </thead>
           <tbody>

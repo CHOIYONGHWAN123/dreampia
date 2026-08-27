@@ -170,7 +170,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
     '드림피아 → 학교 요청 사항',
     '답변',
     '강의실',
-    '강의실 위치',
+    '강의실 위치\n(배치도 제출시 생략 가능)',
     '차시별 인원수',
     '총 인원수',
   ]
@@ -238,10 +238,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
     { label: '계약담당 행정실 연락처', value: adminContact ?? '' },
     { label: '강사대기실', value: waitingRoom ?? '' },
     { label: '노트북 지참 여부 / 교내 Wi-Fi ID·PW', value: laptopWifiNote ?? '' },
-    {
-      label: '범죄경력회보서 코드 (강사 직접조회 필요시)',
-      value: [crimeCheckMethod, crimeCheckInfo].filter(Boolean).join(' / '),
-    },
+    { label: '범죄경력조회방법', value: crimeCheckMethod ?? '' },
+    { label: '범죄경력회보서 코드 (강사 직접조회 필요시)', value: crimeCheckInfo ?? '' },
     { label: '주차장 가능여부 및 주차장 위치', value: parkingNote ?? '' },
     { label: '엘레베이터 유무', value: hasElevator ?? '' },
     { label: '실내화 착용 유무', value: indoorShoesNote ?? '' },
@@ -263,6 +261,29 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
     valueCell.fill = GREEN_FILL
     r++
   }
+
+  // 시간표(시정표) — 각 교시의 정확한 시각을 학교에서 채워달라고 요청하는 영역
+  sheet.mergeCells(r, 1, r, 2)
+  const timetableHeaderCell = sheet.getCell(r, 1)
+  timetableHeaderCell.value = '시간표(시정표)'
+  timetableHeaderCell.font = { bold: true }
+  timetableHeaderCell.alignment = { horizontal: 'center', vertical: 'middle' }
+  r++
+
+  const PERIOD_LABELS = ['1교시', '2교시', '3교시', '4교시', '5교시', '6교시']
+  PERIOD_LABELS.forEach((label, i) => {
+    sheet.getCell(r, 1).value = label
+    sheet.getCell(r, 1).alignment = { vertical: 'middle', wrapText: true }
+    sheet.getCell(r, 1).font = { bold: true }
+    const valueCell = sheet.getCell(r, 2)
+    if (i === 0) {
+      valueCell.value = 'ex) 08:50 ~ 09:30'
+      valueCell.font = { italic: true, color: { argb: 'FF555555' } }
+    }
+    valueCell.alignment = { vertical: 'middle', wrapText: true }
+    valueCell.fill = GREEN_FILL
+    r++
+  })
 
   const footerNotes = [
     '* 요리체험 및 꽃만들기 체험은 당일 재료를 폐기하므로, 당일 인원 변동에 따른 금액 변동은 불가합니다.',
