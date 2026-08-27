@@ -81,7 +81,7 @@ export default async function EventOperationsPage({
     eventIdsInMonth.length > 0
       ? await supabase
           .from('events')
-          .select(`id, name, event_start_at, event_end_at, budget, final_budget, contract_type, contract_memo, recruit_status, recruit_delivered, start_recruit_at, crime_check_method, crime_check_status, admin_docs, admin_docs_delivered, estimate_file_url, estimate_delivered, transaction_statement_file_url, teacher_name, inflow_source, payment_confirmed, report_sent, field_admin_ids, comm_admin_id, sales_admin_id, contract_admin_id, recruit_admin_id, institution_id, event_category_id`)
+          .select(`id, name, event_start_at, event_end_at, budget, final_budget, contract_type, contract_method, contract_memo, recruit_status, recruit_delivered, start_recruit_at, crime_check_method, crime_check_status, admin_docs, admin_docs_delivered, estimate_file_url, estimate_delivered, transaction_statement_file_url, teacher_name, inflow_source, payment_confirmed, report_sent, field_admin_ids, comm_admin_id, sales_admin_id, institution_id, event_category_id`)
           .in('id', eventIdsInMonth)
           .order('event_start_at', { ascending: true })
       : { data: null }
@@ -224,6 +224,7 @@ export default async function EventOperationsPage({
         budget: e.budget,
         finalBudget: e.final_budget,
         contractType: e.contract_type,
+        contractMethod: e.contract_method,
         contractMemo: e.contract_memo,
         commAdminId: e.comm_admin_id,
         commAdminName: e.comm_admin_id ? (adminMap.get(e.comm_admin_id) ?? null) : null,
@@ -235,10 +236,6 @@ export default async function EventOperationsPage({
         adminDocsDelivered: e.admin_docs_delivered,
         salesAdminId: e.sales_admin_id,
         salesAdminName: e.sales_admin_id ? (adminMap.get(e.sales_admin_id) ?? null) : null,
-        contractAdminId: e.contract_admin_id,
-        contractAdminName: e.contract_admin_id ? (adminMap.get(e.contract_admin_id) ?? null) : null,
-        recruitAdminId: e.recruit_admin_id,
-        recruitAdminName: e.recruit_admin_id ? (adminMap.get(e.recruit_admin_id) ?? null) : null,
         estimateFileUrl: e.estimate_file_url,
         estimateDelivered: e.estimate_delivered,
         transactionStatementFileUrl: e.transaction_statement_file_url,

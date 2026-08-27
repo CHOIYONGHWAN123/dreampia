@@ -730,6 +730,7 @@ export type Database = {
           contract_admin_id: string | null
           contract_delivered: boolean
           contract_memo: string | null
+          contract_method: Database["public"]["Enums"]["contract_method"] | null
           contract_status: Database["public"]["Enums"]["contract_status"] | null
           contract_type: Database["public"]["Enums"]["contract_type"] | null
           created_at: string
@@ -806,6 +807,9 @@ export type Database = {
           contract_admin_id?: string | null
           contract_delivered?: boolean
           contract_memo?: string | null
+          contract_method?:
+            | Database["public"]["Enums"]["contract_method"]
+            | null
           contract_status?:
             | Database["public"]["Enums"]["contract_status"]
             | null
@@ -886,6 +890,9 @@ export type Database = {
           contract_admin_id?: string | null
           contract_delivered?: boolean
           contract_memo?: string | null
+          contract_method?:
+            | Database["public"]["Enums"]["contract_method"]
+            | null
           contract_status?:
             | Database["public"]["Enums"]["contract_status"]
             | null
@@ -2332,6 +2339,7 @@ export type Database = {
     }
     Enums: {
       area: "부산" | "김해" | "울산" | "창원"
+      contract_method: "단일계약" | "공동계약"
       contract_status:
         | "계약 시작 전(전화 예정)"
         | "계약 시작 전(전화 완료)"
@@ -2524,6 +2532,7 @@ export const Constants = {
   public: {
     Enums: {
       area: ["부산", "김해", "울산", "창원"],
+      contract_method: ["단일계약", "공동계약"],
       contract_status: [
         "계약 시작 전(전화 예정)",
         "계약 시작 전(전화 완료)",

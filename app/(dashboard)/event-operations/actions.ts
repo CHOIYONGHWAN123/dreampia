@@ -7,11 +7,10 @@ import { revalidatePath } from 'next/cache'
 
 type EventUpdateData = {
   contract_type?: string | null
+  contract_method?: string | null
   admin_docs_delivered?: boolean | null // 행정서류전달여부 — 행정서류폴더와 같은 A(행사 단위) 취급
   comm_admin_id?: string | null
   sales_admin_id?: string | null
-  contract_admin_id?: string | null
-  recruit_admin_id?: string | null
   budget?: number | null
   recruit_status?: string | null
   recruit_delivered?: boolean | null

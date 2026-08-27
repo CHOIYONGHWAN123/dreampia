@@ -44,6 +44,7 @@ export type EventOperationRow = {
   budget: number | null
   finalBudget: number | null
   contractType: string | null
+  contractMethod: string | null
   contractStatus: string | null
   contractMemo: string | null
   eventCheckStatus: number
@@ -64,10 +65,6 @@ export type EventOperationRow = {
   salesAdminName: string | null
   suppliesAdminId: string | null
   suppliesAdminName: string | null
-  contractAdminId: string | null
-  contractAdminName: string | null
-  recruitAdminId: string | null
-  recruitAdminName: string | null
   estimateFileUrl: string | null
   estimateDelivered: boolean | null
   transactionStatementFileUrl: string | null
@@ -95,6 +92,7 @@ interface Props {
 // ── 상수 ─────────────────────────────────────────────────────────────
 
 const CONTRACT_TYPE_OPTIONS = ['학교장터', '수의계약', 'MyDesk', '페이백', '나라장터']
+const CONTRACT_METHOD_OPTIONS = ['단일계약', '공동계약']
 const CONTRACT_STATUS_OPTIONS = [
   '계약 시작 전(전화 예정)', '계약 시작 전(전화 완료)', '진행중(단일계약)', '진행중(공동계약)', '최종일 계약', '계약 완료', '계약 없음',
 ]
@@ -978,20 +976,20 @@ export function EventOperationsClient({
               </th>
               <th className={th} style={{ width: 56 }}>시작시간</th>
               <th className={th} style={{ width: 56 }}>종료시간</th>
+              <th className={th} style={{ width: 72 }}>강사섭외<br />상태</th>
+              <th className={th} style={{ width: 72 }}>강사섭외<br />확정전달여부</th>
               <th className={th} style={{ width: 64 }}>학년</th>
               <th className={th} style={{ width: 80 }}>계약 예산</th>
               <th className={th} style={{ width: 80 }}>최종 예산</th>
+              <th className={th} style={{ width: 90 }}>계약방식</th>
               <th className={th} style={{ width: 100 }}>계약종류</th>
+              <th className={th} style={{ width: 130 }}>계약현황</th>
               <th className={th} style={{ width: 120 }}>계약<br />관련 메모</th>
-              <th className={th} style={{ width: 120 }}>계약담당자</th>
               <th className={th} style={{ width: 80 }}>행사체크</th>
               <th className={th} style={{ width: 80 }}>준비물</th>
               <th className={th} style={{ width: 120 }}>준비물담당자</th>
               <th className={th} style={{ width: 72 }}>행사안내<br />(1주일전)</th>
               <th className={th} style={{ width: 120 }}>소통담당자</th>
-              <th className={th} style={{ width: 80 }}>강사섭외현황</th>
-              <th className={th} style={{ width: 72 }}>강사섭외<br />확정전달여부</th>
-              <th className={th} style={{ width: 120 }}>강사담당자</th>
               <th className={th} style={{ width: 120 }}>행사 단톡</th>
               <th className={th} style={{ width: 72 }}>학교요청<br />사항다운</th>
               <th className={th} style={{ width: 90 }}>학교요청<br />전달여부</th>
@@ -1013,16 +1011,14 @@ export function EventOperationsClient({
               <th className={th} style={{ width: 56 }}>보고서</th>
               <th className={th} style={{ width: 90 }}>보고서<br />발송여부</th>
               <th className={th} style={{ width: 90 }}>입금확인</th>
-              <th className={th} style={{ width: 130 }}>계약현황</th>
               <th className={th} style={{ width: 72 }}>강사섭외<br />시작일</th>
-              <th className={th} style={{ width: 72 }}>강사섭외<br />상태</th>
               <th className={th} style={{ width: 72 }}>유입경로</th>
             </tr>
           </thead>
           <tbody>
             {filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={49} className="py-16 text-center text-gray-400">
+                <td colSpan={46} className="py-16 text-center text-gray-400">
                   {rows.length === 0 ? '해당 월의 행사가 없습니다.' : '필터에 해당하는 행사가 없습니다.'}
                 </td>
               </tr>
@@ -1071,6 +1067,28 @@ export function EventOperationsClient({
                     <td className={td}>{fmtTime(row.dayStart) ?? '-'}</td>
                     <td className={td}>{fmtTime(row.dayEnd) ?? '-'}</td>
 
+                    {/* 강사섭외상태 */}
+                    <td className={td}>
+                      <div className="flex flex-col items-center gap-0.5">
+                        {danger && <Badge text="위험" color="red" />}
+                        <InlineSelect
+                          value={row.recruitStatus}
+                          options={RECRUIT_STATUS_OPTIONS}
+                          onSave={(v) => updateEventField(row.id, { recruit_status: v })}
+                        />
+                      </div>
+                    </td>
+
+                    {/* 강사섭외 확정전달여부 */}
+                    <td className={td}>
+                      <BoolSelect
+                        value={row.recruitDelivered}
+                        trueLabel="완료"
+                        falseLabel="예정"
+                        onSave={(v) => updateEventField(row.id, { recruit_delivered: v })}
+                      />
+                    </td>
+
                     <td className={td}>
                       <InlineTextCell
                         value={row.targetGrade}
@@ -1098,6 +1116,15 @@ export function EventOperationsClient({
                       />
                     </td>
 
+                    {/* 계약방식 */}
+                    <td className={td}>
+                      <InlineSelect
+                        value={row.contractMethod}
+                        options={CONTRACT_METHOD_OPTIONS}
+                        onSave={(v) => updateEventField(row.id, { contract_method: v })}
+                      />
+                    </td>
+
                     {/* 계약종류 */}
                     <td className={td}>
                       <InlineSelect
@@ -1107,21 +1134,21 @@ export function EventOperationsClient({
                       />
                     </td>
 
+                    {/* 계약현황 */}
+                    <td className={td}>
+                      <InlineSelect
+                        value={row.contractStatus}
+                        options={CONTRACT_STATUS_OPTIONS}
+                        onSave={(v) => saveDateField(row, { contract_status: v })}
+                      />
+                    </td>
+
                     {/* 계약 관련 메모 — 클릭 시 셀 위치에서 확대된 박스가 float으로 열림 */}
                     <td className={tdL}>
                       <ExpandableMemoCell
                         value={row.contractMemo}
                         onSave={(v) => updateEventField(row.id, { contract_memo: v })}
                         label="계약 관련 메모"
-                      />
-                    </td>
-
-                    {/* 계약담당 */}
-                    <td className={td}>
-                      <SingleAdminPicker
-                        adminId={row.contractAdminId}
-                        admins={admins}
-                        onSave={(id) => updateEventField(row.id, { contract_admin_id: id })}
                       />
                     </td>
 
@@ -1168,33 +1195,6 @@ export function EventOperationsClient({
                         adminId={row.commAdminId}
                         admins={admins}
                         onSave={(id) => updateEventField(row.id, { comm_admin_id: id })}
-                      />
-                    </td>
-
-                    <td className={td}>
-                      <InlineSelect
-                        value={row.recruitStatus}
-                        options={RECRUIT_STATUS_OPTIONS}
-                        onSave={(v) => updateEventField(row.id, { recruit_status: v })}
-                      />
-                    </td>
-
-                    {/* 강사섭외 확정전달여부 */}
-                    <td className={td}>
-                      <BoolSelect
-                        value={row.recruitDelivered}
-                        trueLabel="완료"
-                        falseLabel="예정"
-                        onSave={(v) => updateEventField(row.id, { recruit_delivered: v })}
-                      />
-                    </td>
-
-                    {/* 강사담당 */}
-                    <td className={td}>
-                      <SingleAdminPicker
-                        adminId={row.recruitAdminId}
-                        admins={admins}
-                        onSave={(id) => updateEventField(row.id, { recruit_admin_id: id })}
                       />
                     </td>
 
@@ -1378,29 +1378,7 @@ export function EventOperationsClient({
                       />
                     </td>
 
-                    {/* ── 이하 순서 목록에 없어 표 맨 뒤로 옮긴 기존 컬럼 ── */}
-
-                    {/* 계약현황 */}
-                    <td className={td}>
-                      <InlineSelect
-                        value={row.contractStatus}
-                        options={CONTRACT_STATUS_OPTIONS}
-                        onSave={(v) => saveDateField(row, { contract_status: v })}
-                      />
-                    </td>
-
                     <td className={td}>{fmtDate(row.startRecruitAt) ?? '-'}</td>
-
-                    <td className={td}>
-                      <div className="flex flex-col items-center gap-0.5">
-                        {danger && <Badge text="위험" color="red" />}
-                        <InlineSelect
-                          value={row.recruitStatus}
-                          options={RECRUIT_STATUS_OPTIONS}
-                          onSave={(v) => updateEventField(row.id, { recruit_status: v })}
-                        />
-                      </div>
-                    </td>
 
                     <td className={td}>
                       <InlineSelect
