@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
+import { HeaderFilter } from '@/components/ui/HeaderFilter'
 
 export type InstitutionRequestRow = {
   no: number
@@ -31,6 +32,24 @@ function fmtEventDateRange(startAt: string | null, endAt: string | null) {
 }
 
 export function InstitutionRequestClient({ rows }: { rows: InstitutionRequestRow[] }) {
+  const [salesAdminFilter, setSalesAdminFilter] = useState<string | null>(null)
+  const [commAdminFilter, setCommAdminFilter] = useState<string | null>(null)
+  const salesAdminOptions = useMemo(
+    () => [...new Set(rows.map((r) => r.salesAdminName).filter((v): v is string => !!v))].sort(),
+    [rows]
+  )
+  const commAdminOptions = useMemo(
+    () => [...new Set(rows.map((r) => r.commAdminName).filter((v): v is string => !!v))].sort(),
+    [rows]
+  )
+  const filteredRows = useMemo(() => {
+    return rows.filter((row) => {
+      if (salesAdminFilter && row.salesAdminName !== salesAdminFilter) return false
+      if (commAdminFilter && row.commAdminName !== commAdminFilter) return false
+      return true
+    })
+  }, [rows, salesAdminFilter, commAdminFilter])
+
   const router = useRouter()
   const supabase = createClient()
   const [updatingId, setUpdatingId] = useState<string | null>(null)
@@ -77,15 +96,19 @@ export function InstitutionRequestClient({ rows }: { rows: InstitutionRequestRow
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-14">No.</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-28">일자</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700">기관명</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-28">영업담당자</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-28">소통담당자</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-28">
+                <HeaderFilter label="영업담당자" options={salesAdminOptions} value={salesAdminFilter} onChange={setSalesAdminFilter} />
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-28">
+                <HeaderFilter label="소통담당자" options={commAdminOptions} value={commAdminFilter} onChange={setCommAdminFilter} />
+              </th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-32">기관 요청사항 다운</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-32">기관요청사항 전달</th>
             </tr>
           </thead>
           <tbody>
-            {rows.length > 0 ? (
-              rows.map((row) => (
+            {filteredRows.length > 0 ? (
+              filteredRows.map((row) => (
                 <tr key={row.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
                   <td className="px-4 py-2.5 text-center text-gray-600">{row.no}</td>
                   <td className="px-4 py-2.5 text-center text-gray-800 whitespace-nowrap">

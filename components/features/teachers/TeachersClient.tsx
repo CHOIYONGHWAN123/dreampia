@@ -3,17 +3,31 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { TeacherRow } from '@/app/(dashboard)/teachers/actions'
+import { HeaderFilter } from '@/components/ui/HeaderFilter'
 
 export function TeachersClient({ teachers }: { teachers: TeacherRow[] }) {
   const router = useRouter()
   const [searchText, setSearchText] = useState('')
+  const [region1Filter, setRegion1Filter] = useState<string | null>(null)
+  const [region2Filter, setRegion2Filter] = useState<string | null>(null)
+
+  const region1Options = useMemo(
+    () => [...new Set(teachers.map((t) => t.region1).filter((v): v is string => !!v))].sort(),
+    [teachers]
+  )
+  const region2Options = useMemo(() => {
+    const source = region1Filter ? teachers.filter((t) => t.region1 === region1Filter) : teachers
+    return [...new Set(source.map((t) => t.region2).filter((v): v is string => !!v))].sort()
+  }, [teachers, region1Filter])
 
   const filtered = useMemo(() => {
-    if (!searchText) return teachers
-    return teachers.filter(
-      (t) => t.institutionName.includes(searchText) || t.name.includes(searchText)
-    )
-  }, [teachers, searchText])
+    return teachers.filter((t) => {
+      if (region1Filter && t.region1 !== region1Filter) return false
+      if (region2Filter && t.region2 !== region2Filter) return false
+      if (searchText && !t.institutionName.includes(searchText) && !t.name.includes(searchText)) return false
+      return true
+    })
+  }, [teachers, searchText, region1Filter, region2Filter])
 
   return (
     <div className="p-8 bg-gray-50 min-h-full">
@@ -44,8 +58,12 @@ export function TeachersClient({ teachers }: { teachers: TeacherRow[] }) {
             <tr>
               <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-14">no</th>
               <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100">학교명</th>
-              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24">지역1</th>
-              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24">지역2</th>
+              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24">
+                <HeaderFilter label="지역1" options={region1Options} value={region1Filter} onChange={(v) => { setRegion1Filter(v); setRegion2Filter(null) }} />
+              </th>
+              <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24">
+                <HeaderFilter label="지역2" options={region2Options} value={region2Filter} onChange={setRegion2Filter} />
+              </th>
               <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100">주소</th>
               <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">선생님</th>
               <th className="sticky top-0 z-10 px-4 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-44">아이디</th>

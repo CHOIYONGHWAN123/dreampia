@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
+import { HeaderFilter } from '@/components/ui/HeaderFilter'
 
 export type PhotoDeliveryRow = {
   no: number
@@ -59,18 +60,31 @@ export function PhotoDeliveryClient({ rows }: { rows: PhotoDeliveryRow[] }) {
 
   // 일자(시작~종료)가 선택된 기간과 겹치는 행사만 표시. 일자 정보가 없는 행사는
   // 기간 필터로 실수로 놓치지 않도록 항상 포함한다.
+  const [salesAdminFilter, setSalesAdminFilter] = useState<string | null>(null)
+  const [commAdminFilter, setCommAdminFilter] = useState<string | null>(null)
+  const salesAdminOptions = useMemo(
+    () => [...new Set(rows.map((r) => r.salesAdminName).filter((v): v is string => !!v))].sort(),
+    [rows]
+  )
+  const commAdminOptions = useMemo(
+    () => [...new Set(rows.map((r) => r.commAdminName).filter((v): v is string => !!v))].sort(),
+    [rows]
+  )
   const filteredRows = useMemo(() => {
     const filterStart = startDate ? new Date(startDate) : null
     const filterEnd = endDate ? new Date(endDate) : null
     return rows.filter((row) => {
       const eventStart = toDateOnly(row.eventStartAt)
-      if (!eventStart) return true
-      const eventEnd = toDateOnly(row.eventEndAt) ?? eventStart
-      if (filterStart && eventEnd < filterStart) return false
-      if (filterEnd && eventStart > filterEnd) return false
+      if (eventStart) {
+        const eventEnd = toDateOnly(row.eventEndAt) ?? eventStart
+        if (filterStart && eventEnd < filterStart) return false
+        if (filterEnd && eventStart > filterEnd) return false
+      }
+      if (salesAdminFilter && row.salesAdminName !== salesAdminFilter) return false
+      if (commAdminFilter && row.commAdminName !== commAdminFilter) return false
       return true
     })
-  }, [rows, startDate, endDate])
+  }, [rows, startDate, endDate, salesAdminFilter, commAdminFilter])
 
   const handleMarkSent = async (eventId: string) => {
     if (!confirm('행사 사진 전달을 완료하셨습니까?')) return
@@ -130,8 +144,12 @@ export function PhotoDeliveryClient({ rows }: { rows: PhotoDeliveryRow[] }) {
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-14">No.</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-28">일자</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700">기관명</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-28">영업담당자</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-28">소통담당자</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-28">
+                <HeaderFilter label="영업담당자" options={salesAdminOptions} value={salesAdminFilter} onChange={setSalesAdminFilter} />
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-28">
+                <HeaderFilter label="소통담당자" options={commAdminOptions} value={commAdminFilter} onChange={setCommAdminFilter} />
+              </th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-4 py-2.5 text-center font-bold text-primary-700 w-32">행사 사진 전달 완료</th>
             </tr>
           </thead>

@@ -1,8 +1,10 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { EventRevenueRow, MonthlyRevenueTotals } from '@/app/(dashboard)/monthly-revenue/actions'
+import { HeaderFilter } from '@/components/ui/HeaderFilter'
 
 const won = (n: number) => `₩${n.toLocaleString()}`
 
@@ -26,6 +28,16 @@ export function MonthlyRevenueClient({
   currentMonth: number
 }) {
   const router = useRouter()
+  const [contractStatusFilter, setContractStatusFilter] = useState<string | null>(null)
+
+  const contractStatusOptions = useMemo(
+    () => [...new Set(rows.map((r) => r.contractStatus).filter((v): v is string => !!v))].sort(),
+    [rows]
+  )
+  const filteredRows = useMemo(
+    () => rows.filter((r) => !contractStatusFilter || r.contractStatus === contractStatusFilter),
+    [rows, contractStatusFilter]
+  )
 
   const handleMonthChange = (year: number, month: number) => {
     router.push(`/monthly-revenue?year=${year}&month=${month}`)
@@ -96,7 +108,9 @@ export function MonthlyRevenueClient({
               <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-16 whitespace-nowrap">일자</th>
               <th className="sticky top-0 z-10 px-3 py-2.5 text-left font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-40 whitespace-nowrap">기관명</th>
               <th className="sticky top-0 z-10 px-3 py-2.5 text-left font-bold text-primary-700 bg-primary-50 border-b border-primary-100 min-w-40">행사명</th>
-              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-32 whitespace-nowrap">계약 현황</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-32 whitespace-nowrap">
+                <HeaderFilter label="계약 현황" options={contractStatusOptions} value={contractStatusFilter} onChange={setContractStatusFilter} />
+              </th>
               <th className="sticky top-0 z-10 px-3 py-2.5 text-right font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28 whitespace-nowrap">계약금</th>
               <th className="sticky top-0 z-10 px-3 py-2.5 text-right font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28 whitespace-nowrap">강의료</th>
               <th className="sticky top-0 z-10 px-3 py-2.5 text-right font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28 whitespace-nowrap">재료비</th>
@@ -104,8 +118,8 @@ export function MonthlyRevenueClient({
             </tr>
           </thead>
           <tbody>
-            {rows.length > 0 ? (
-              rows.map((r) => (
+            {filteredRows.length > 0 ? (
+              filteredRows.map((r) => (
                 <tr key={r.eventId} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
                   <td className="px-3 py-2.5 text-center text-gray-600 whitespace-nowrap">{fmtDate(r.eventStartAt)}</td>
                   <td className="px-3 py-2.5 text-gray-800">{r.institutionName}</td>

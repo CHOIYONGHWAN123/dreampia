@@ -27,6 +27,7 @@ import { AreaSelector, MentorSearchSelect, FileCell, SignedFileCell, SignedFileC
 import { BANK_OPTIONS } from '@/constants/banks'
 import { ProgramUnitPicker, type ProgramSelectionValue } from './ProgramUnitPicker'
 import { LevelFileInputs } from './LevelFileInputs'
+import { HeaderFilter } from '@/components/ui/HeaderFilter'
 
 // ── 유틸 ─────────────────────────────────────────────────────────────
 
@@ -886,6 +887,42 @@ export function MentorsClient({
   const [searchText, setSearchText] = useState('')
   const [filterAvailable, setFilterAvailable] = useState('')
   const [filterAuthenticated, setFilterAuthenticated] = useState('')
+  const [fieldFilter, setFieldFilter] = useState<string | null>(null)
+  const [occupationFilter, setOccupationFilter] = useState<string | null>(null)
+  const [programFilter, setProgramFilter] = useState<string | null>(null)
+  const [schoolLevelFilter, setSchoolLevelFilter] = useState<string | null>(null)
+  const [areaFilter, setAreaFilter] = useState<string | null>(null)
+  const [gradeFilter, setGradeFilter] = useState<string | null>(null)
+  const [mentorTypeFilter, setMentorTypeFilter] = useState<string | null>(null)
+
+  const fieldOptions = useMemo(
+    () => [...new Set(mentors.flatMap((m) => m.occupation_programs.map((p) => p.field_name)).filter((v): v is string => !!v))].sort(),
+    [mentors]
+  )
+  const occupationOptions = useMemo(
+    () => [...new Set(mentors.flatMap((m) => m.occupation_programs.map((p) => p.occupation_name)).filter((v): v is string => !!v))].sort(),
+    [mentors]
+  )
+  const programOptions = useMemo(
+    () => [...new Set(mentors.flatMap((m) => m.occupation_programs.map((p) => p.program_title)).filter((v): v is string => !!v))].sort(),
+    [mentors]
+  )
+  const schoolLevelOptions = useMemo(
+    () => [...new Set(mentors.flatMap((m) => m.occupation_programs.map((p) => p.school_level)).filter((v): v is string => !!v))].sort(),
+    [mentors]
+  )
+  const areaOptions = useMemo(
+    () => [...new Set(mentors.flatMap((m) => m.available_areas ?? []))].sort(),
+    [mentors]
+  )
+  const gradeOptions = useMemo(
+    () => [...new Set(mentors.map((m) => scoreToGrade(m.score)))].sort(),
+    [mentors]
+  )
+  const mentorTypeOptions = useMemo(
+    () => [...new Set(mentors.map((m) => m.mentor_type))].sort(),
+    [mentors]
+  )
 
   const filtered = useMemo(() => {
     return mentors.filter((m) => {
@@ -894,9 +931,19 @@ export function MentorsClient({
       if (filterAuthenticated === 'true' && !m.is_authenticated) return false
       if (filterAuthenticated === 'false' && m.is_authenticated) return false
       if (searchText && !m.name.includes(searchText)) return false
+      if (fieldFilter && !m.occupation_programs.some((p) => p.field_name === fieldFilter)) return false
+      if (occupationFilter && !m.occupation_programs.some((p) => p.occupation_name === occupationFilter)) return false
+      if (programFilter && !m.occupation_programs.some((p) => p.program_title === programFilter)) return false
+      if (schoolLevelFilter && !m.occupation_programs.some((p) => p.school_level === schoolLevelFilter)) return false
+      if (areaFilter && !(m.available_areas ?? []).includes(areaFilter)) return false
+      if (gradeFilter && scoreToGrade(m.score) !== gradeFilter) return false
+      if (mentorTypeFilter && m.mentor_type !== mentorTypeFilter) return false
       return true
     })
-  }, [mentors, filterAvailable, filterAuthenticated, searchText])
+  }, [
+    mentors, filterAvailable, filterAuthenticated, searchText,
+    fieldFilter, occupationFilter, programFilter, schoolLevelFilter, areaFilter, gradeFilter, mentorTypeFilter,
+  ])
 
   const handleAuthChange = (id: string, val: boolean) => {
     setMentors((prev) => prev.map((m) => (m.id === id ? { ...m, is_authenticated: val } : m)))
@@ -980,7 +1027,23 @@ export function MentorsClient({
                   className={thCls}
                   style={{ width: col.w, minWidth: col.w }}
                 >
-                  {col.label}
+                  {col.label === '분야' ? (
+                    <HeaderFilter label="분야" options={fieldOptions} value={fieldFilter} onChange={setFieldFilter} />
+                  ) : col.label === '직종' ? (
+                    <HeaderFilter label="직종" options={occupationOptions} value={occupationFilter} onChange={setOccupationFilter} />
+                  ) : col.label === '프로그램명' ? (
+                    <HeaderFilter label="프로그램명" options={programOptions} value={programFilter} onChange={setProgramFilter} />
+                  ) : col.label === '교급' ? (
+                    <HeaderFilter label="교급" options={schoolLevelOptions} value={schoolLevelFilter} onChange={setSchoolLevelFilter} />
+                  ) : col.label === '출강가능지역' ? (
+                    <HeaderFilter label="출강가능지역" options={areaOptions} value={areaFilter} onChange={setAreaFilter} />
+                  ) : col.label === '강사등급' ? (
+                    <HeaderFilter label="강사등급" options={gradeOptions} value={gradeFilter} onChange={setGradeFilter} />
+                  ) : col.label === '강사분류' ? (
+                    <HeaderFilter label="강사분류" options={mentorTypeOptions} value={mentorTypeFilter} onChange={setMentorTypeFilter} />
+                  ) : (
+                    col.label
+                  )}
                 </th>
               ))}
             </tr>

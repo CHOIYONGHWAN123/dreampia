@@ -3,6 +3,9 @@
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { approveAdmin, updateAdminFields, deleteAdmin, restoreAdmin, type AdminRow } from '@/app/(dashboard)/admins/actions'
+import { HeaderFilter } from '@/components/ui/HeaderFilter'
+
+const YES_NO_OPTIONS = ['예', '아니오']
 
 function fmtDate(iso: string | null) {
   if (!iso) return '-'
@@ -15,11 +18,21 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
   const [isPending, startTransition] = useTransition()
   const [busyId, setBusyId] = useState<string | null>(null)
   const [showDeleted, setShowDeleted] = useState(false)
+  const [superFilter, setSuperFilter] = useState<string | null>(null)
+  const [salesFilter, setSalesFilter] = useState<string | null>(null)
+  const [commFilter, setCommFilter] = useState<string | null>(null)
+  const [authFilter, setAuthFilter] = useState<string | null>(null)
 
-  const visibleAdmins = useMemo(
-    () => (showDeleted ? admins : admins.filter((a) => !a.isDeleted)),
-    [admins, showDeleted]
-  )
+  const visibleAdmins = useMemo(() => {
+    return admins.filter((a) => {
+      if (!showDeleted && a.isDeleted) return false
+      if (superFilter && (a.isSuper ? '예' : '아니오') !== superFilter) return false
+      if (salesFilter && (a.isSales ? '예' : '아니오') !== salesFilter) return false
+      if (commFilter && (a.isComm ? '예' : '아니오') !== commFilter) return false
+      if (authFilter && (a.isAuthenticated ? '예' : '아니오') !== authFilter) return false
+      return true
+    })
+  }, [admins, showDeleted, superFilter, salesFilter, commFilter, authFilter])
 
   const runAction = (id: string, action: () => Promise<void>) => {
     setBusyId(id)
@@ -87,10 +100,18 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
               <th className={th}>이름</th>
               <th className={th}>이메일</th>
               <th className={th}>전화번호</th>
-              <th className={th}>슈퍼관리자</th>
-              <th className={th}>영업담당</th>
-              <th className={th}>소통담당</th>
-              <th className={th}>승인여부</th>
+              <th className={th}>
+                <HeaderFilter label="슈퍼관리자" options={YES_NO_OPTIONS} value={superFilter} onChange={setSuperFilter} />
+              </th>
+              <th className={th}>
+                <HeaderFilter label="영업담당" options={YES_NO_OPTIONS} value={salesFilter} onChange={setSalesFilter} />
+              </th>
+              <th className={th}>
+                <HeaderFilter label="소통담당" options={YES_NO_OPTIONS} value={commFilter} onChange={setCommFilter} />
+              </th>
+              <th className={th}>
+                <HeaderFilter label="승인여부" options={YES_NO_OPTIONS} value={authFilter} onChange={setAuthFilter} />
+              </th>
               <th className={th}>승인자</th>
               <th className={th}>승인일</th>
               <th className={th}>가입일</th>
