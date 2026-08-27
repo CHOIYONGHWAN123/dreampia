@@ -19,6 +19,12 @@ function fmtDate(iso: string | null) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+function fmtDateCompact(iso: string | null) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+}
+
 function fmtTime(iso: string | null) {
   if (!iso) return ''
   const d = new Date(iso)
@@ -304,7 +310,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
   }
 
   const buffer = await workbook.xlsx.writeBuffer()
-  const fileName = `기관요청사항_${event.name}.xlsx`
+  const startDate = fmtDateCompact(event.event_start_at)
+  const endDate = fmtDateCompact(event.event_end_at)
+  const dateRange = startDate && endDate ? `${startDate}~${endDate}` : startDate || endDate
+  const fileName = [dateRange, event.name, '기관요청사항 및 확정 명단', '드림피아']
+    .filter(Boolean)
+    .join('_') + '.xlsx'
 
   return new NextResponse(buffer as unknown as BodyInit, {
     headers: {
