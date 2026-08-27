@@ -1,9 +1,10 @@
 'use client'
 
-import { useMemo, useState, useTransition } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateLedgerRemark, type PayerLedgerGroup } from '@/app/(dashboard)/mentor-fees/actions'
 import { MentorSearchSelect } from '@/components/features/mentors/shared'
+import { ExpandableMemoCell } from '@/components/ui/ExpandableMemoCell'
 
 const won = (n: number) => `₩${n.toLocaleString()}`
 
@@ -21,7 +22,6 @@ export function MentorFeesClient({
   mentors: { id: string; name: string }[]
 }) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
 
   const [mentorId, setMentorId] = useState('')
   const [search, setSearch] = useState('')
@@ -52,21 +52,24 @@ export function MentorFeesClient({
     }))
   }, [groups, mentorId, search, descending])
 
-  const handleRemarkBlur = (eventRowId: string, value: string, original: string | null) => {
-    if (value === (original ?? '')) return
-    startTransition(async () => {
-      try {
-        await updateLedgerRemark(eventRowId, value)
-      } catch (e) {
-        alert(e instanceof Error ? e.message : '비고 저장에 실패했습니다.')
-      }
-    })
-  }
+  const downloadUrl = useMemo(() => {
+    const params = new URLSearchParams({ year: String(currentYear), month: String(currentMonth) })
+    if (mentorId) params.set('mentorId', mentorId)
+    if (search) params.set('search', search)
+    if (descending) params.set('descending', '1')
+    return `/mentor-fees/download?${params.toString()}`
+  }, [currentYear, currentMonth, mentorId, search, descending])
 
   return (
     <div className="p-6 bg-gray-50 min-h-full">
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">강사료 대장</h1>
+        <a
+          href={downloadUrl}
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition-colors whitespace-nowrap"
+        >
+          엑셀 다운로드
+        </a>
       </div>
 
       {/* 월 선택 탭 */}
@@ -121,16 +124,16 @@ export function MentorFeesClient({
             <tr>
               <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-12">NO</th>
               <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24">날짜</th>
-              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24">강사명</th>
-              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100">학교명</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-24 whitespace-nowrap">강사명</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 min-w-55 whitespace-nowrap">학교명</th>
               <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">강의료</th>
-              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">재료비</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28 whitespace-nowrap">재료비</th>
               <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">강연료</th>
               <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">총 강연료</th>
               <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">세후 금액</th>
               <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-32">계좌번호</th>
               <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-28">주민번호</th>
-              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-32">비고</th>
+              <th className="sticky top-0 z-10 px-3 py-2.5 text-center font-bold text-primary-700 bg-primary-50 border-b border-primary-100 w-37">비고</th>
             </tr>
           </thead>
           <tbody>
@@ -151,11 +154,11 @@ export function MentorFeesClient({
                     )}
                     <td className="px-3 py-2.5 text-center text-gray-800">{line.date}</td>
                     {lineIndex === 0 && (
-                      <td className="px-3 py-2.5 text-center text-gray-800 font-medium" rowSpan={group.lines.length}>
+                      <td className="px-3 py-2.5 text-center text-gray-800 font-medium whitespace-nowrap" rowSpan={group.lines.length}>
                         {group.payerName}
                       </td>
                     )}
-                    <td className="px-3 py-2.5 text-center text-gray-800">{line.institutionName}</td>
+                    <td className="px-3 py-2.5 text-center text-gray-800 whitespace-nowrap">{line.institutionName}</td>
                     <td className="px-3 py-2.5 text-center text-gray-800">
                       {line.lectureFee !== null ? won(line.lectureFee) : ''}
                     </td>
@@ -184,12 +187,12 @@ export function MentorFeesClient({
                       </td>
                     )}
                     <td className="px-3 py-2.5 text-center">
-                      <input
-                        type="text"
-                        defaultValue={line.remarks ?? ''}
-                        onBlur={(e) => handleRemarkBlur(line.eventRowId, e.target.value, line.remarks)}
-                        disabled={isPending}
-                        className="w-full border border-gray-200 rounded-full px-2.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary-300"
+                      <ExpandableMemoCell
+                        value={line.remarks}
+                        onSave={(v) => updateLedgerRemark(line.eventRowId, v ?? '')}
+                        label="비고"
+                        placeholder="비고 입력"
+                        defaultSize={{ width: 320, height: 180 }}
                       />
                     </td>
                   </tr>
