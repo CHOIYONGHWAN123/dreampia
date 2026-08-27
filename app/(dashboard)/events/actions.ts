@@ -121,7 +121,7 @@ export type EventProgramSelectData = {
 }
 
 const EVENT_DETAIL_COLUMNS =
-  'id, name, institution_id, event_category_id, created_at, event_start_at, event_end_at, target_grade, instructor_waiting_room, admin_contact, has_elevator, floor_map_url, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, student_rotation, notice, prep_note, memo, school_request_note, contact_name, contact_email, contact_phone, teacher_name, inflow_source, institution_type, sales_admin_id, budget, final_budget, estimate_file_url, transaction_statement_file_url, comm_admin_id, comm_content'
+  'id, name, institution_id, event_category_id, created_at, event_start_at, event_end_at, target_grade, instructor_waiting_room, admin_contact, has_elevator, floor_map_url, laptop_wifi_note, crime_check_method, crime_check_info, indoor_shoes_note, parking_note, student_rotation, notice, prep_note, memo, school_request_note, contact_name, contact_email, contact_phone, teacher_name, inflow_source, institution_type, sales_admin_id, budget, final_budget, estimate_file_url, transaction_statement_file_url, comm_admin_id, comm_content, supplies_admin_id, contract_admin_id, recruit_admin_id'
 
 export type EventDetailData = {
   id: string
@@ -159,6 +159,9 @@ export type EventDetailData = {
   transaction_statement_file_url: string | null
   comm_admin_id: string | null
   comm_content: string | null
+  supplies_admin_id: string | null
+  contract_admin_id: string | null
+  recruit_admin_id: string | null
 }
 
 export type EventScheduleRow = {
@@ -341,6 +344,9 @@ export async function createEvent(data: {
   transaction_statement_file_url?: string
   comm_admin_id?: string | null
   comm_content?: string | null
+  supplies_admin_id?: string | null
+  contract_admin_id?: string | null
+  recruit_admin_id?: string | null
   schedules?: ScheduleInput[]
   eventRows?: EventRowInput[]
   noticeFileUrls?: string[]
@@ -381,6 +387,9 @@ export async function createEvent(data: {
     transaction_statement_file_url: data.transaction_statement_file_url || null,
     comm_admin_id: data.comm_admin_id || null,
     comm_content: data.comm_content || null,
+    supplies_admin_id: data.supplies_admin_id || null,
+    contract_admin_id: data.contract_admin_id || null,
+    recruit_admin_id: data.recruit_admin_id || null,
     event_check_status: 1,
     recruit_status: '섭외대기',
   }
@@ -511,6 +520,9 @@ export async function updateEvent(
     transaction_statement_file_url?: string
     comm_admin_id?: string | null
     comm_content?: string | null
+    supplies_admin_id?: string | null
+    contract_admin_id?: string | null
+    recruit_admin_id?: string | null
     schedules?: ScheduleInput[]
     eventRows?: EventRowInput[]
     noticeFileUrls?: string[]
@@ -552,6 +564,9 @@ export async function updateEvent(
     transaction_statement_file_url: data.transaction_statement_file_url || null,
     comm_admin_id: data.comm_admin_id || null,
     comm_content: data.comm_content || null,
+    supplies_admin_id: data.supplies_admin_id || null,
+    contract_admin_id: data.contract_admin_id || null,
+    recruit_admin_id: data.recruit_admin_id || null,
   }
 
   if (data.reception_date) {

@@ -8,6 +8,9 @@ export type Admin = {
   is_authenticated: boolean
   is_sales: boolean
   is_comm: boolean
+  is_supplies: boolean
+  is_contract: boolean
+  is_recruit: boolean
   approved_at: string | null
   created_at: string
 }

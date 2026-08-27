@@ -5,14 +5,14 @@ export default async function ContractDeliveryPage() {
   const supabase = await createServerSupabaseClient()
   const { id: adminId, isSuper } = await getCurrentAdmin()
 
-  // 영업담당자 또는 소통담당자로 지정된 행사 중, 아직 계약서를 전달하지 않은 것만 표시.
+  // 영업담당자, 소통담당자 또는 계약담당자로 지정된 행사 중, 아직 계약서를 전달하지 않은 것만 표시.
   // 슈퍼관리자는 담당자 여부와 무관하게 전체 조회.
   let eventsQuery = supabase
     .from('events')
-    .select('id, institution_id, sales_admin_id, comm_admin_id, event_start_at, event_end_at, contract_delivered')
+    .select('id, institution_id, sales_admin_id, comm_admin_id, contract_admin_id, event_start_at, event_end_at, contract_delivered')
     .eq('contract_delivered', false)
   if (!isSuper) {
-    eventsQuery = eventsQuery.or(`sales_admin_id.eq.${adminId},comm_admin_id.eq.${adminId}`)
+    eventsQuery = eventsQuery.or(`sales_admin_id.eq.${adminId},comm_admin_id.eq.${adminId},contract_admin_id.eq.${adminId}`)
   }
   const { data: events } = await eventsQuery.order('event_start_at', { ascending: false, nullsFirst: false })
 

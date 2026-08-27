@@ -14,6 +14,9 @@ export default async function NewEventPage({
     institutionResult,
     salesAdminsResult,
     commAdminsResult,
+    suppliesAdminsResult,
+    contractAdminsResult,
+    recruitAdminsResult,
     programSelectData,
   ] = await Promise.all([
     institutionId
@@ -21,14 +24,21 @@ export default async function NewEventPage({
       : Promise.resolve({ data: null, error: null }),
     supabase.from('admins').select('id, name').eq('is_sales', true).order('name'),
     supabase.from('admins').select('id, name').eq('is_comm', true).order('name'),
+    supabase.from('admins').select('id, name').eq('is_supplies', true).order('name'),
+    supabase.from('admins').select('id, name').eq('is_contract', true).order('name'),
+    supabase.from('admins').select('id, name').eq('is_recruit', true).order('name'),
     getEventProgramSelectData(),
   ])
 
   const { data: salesAdmins } = salesAdminsResult
   const { data: commAdmins } = commAdminsResult
+  const { data: suppliesAdmins } = suppliesAdminsResult
+  const { data: contractAdmins } = contractAdminsResult
+  const { data: recruitAdmins } = recruitAdminsResult
 
   const queryError =
-    institutionResult.error || salesAdminsResult.error || commAdminsResult.error
+    institutionResult.error || salesAdminsResult.error || commAdminsResult.error ||
+    suppliesAdminsResult.error || contractAdminsResult.error || recruitAdminsResult.error
 
   if (queryError) {
     console.error('[NewEventPage] 데이터 조회 오류:', queryError.message)
@@ -45,6 +55,9 @@ export default async function NewEventPage({
         institution={institutionResult.data ?? null}
         salesAdmins={salesAdmins || []}
         commAdmins={commAdmins || []}
+        suppliesAdmins={suppliesAdmins || []}
+        contractAdmins={contractAdmins || []}
+        recruitAdmins={recruitAdmins || []}
         eventCategories={programSelectData.eventCategories}
         fields={programSelectData.fields}
         occupations={programSelectData.occupations}

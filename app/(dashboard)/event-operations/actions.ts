@@ -27,6 +27,9 @@ type EventUpdateData = {
   estimate_file_url?: string | null
   comm_admin_id?: string | null
   sales_admin_id?: string | null
+  supplies_admin_id?: string | null
+  contract_admin_id?: string | null
+  recruit_admin_id?: string | null
   target_grade?: string | null
   budget?: number | null
   supplies_status?: string | null

@@ -21,6 +21,9 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
   const [superFilter, setSuperFilter] = useState<string | null>(null)
   const [salesFilter, setSalesFilter] = useState<string | null>(null)
   const [commFilter, setCommFilter] = useState<string | null>(null)
+  const [suppliesFilter, setSuppliesFilter] = useState<string | null>(null)
+  const [contractFilter, setContractFilter] = useState<string | null>(null)
+  const [recruitFilter, setRecruitFilter] = useState<string | null>(null)
   const [authFilter, setAuthFilter] = useState<string | null>(null)
 
   const visibleAdmins = useMemo(() => {
@@ -29,10 +32,13 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
       if (superFilter && (a.isSuper ? '예' : '아니오') !== superFilter) return false
       if (salesFilter && (a.isSales ? '예' : '아니오') !== salesFilter) return false
       if (commFilter && (a.isComm ? '예' : '아니오') !== commFilter) return false
+      if (suppliesFilter && (a.isSupplies ? '예' : '아니오') !== suppliesFilter) return false
+      if (contractFilter && (a.isContract ? '예' : '아니오') !== contractFilter) return false
+      if (recruitFilter && (a.isRecruit ? '예' : '아니오') !== recruitFilter) return false
       if (authFilter && (a.isAuthenticated ? '예' : '아니오') !== authFilter) return false
       return true
     })
-  }, [admins, showDeleted, superFilter, salesFilter, commFilter, authFilter])
+  }, [admins, showDeleted, superFilter, salesFilter, commFilter, suppliesFilter, contractFilter, recruitFilter, authFilter])
 
   const runAction = (id: string, action: () => Promise<void>) => {
     setBusyId(id)
@@ -55,7 +61,7 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
 
   const handleToggle = (
     id: string,
-    field: 'is_super' | 'is_authenticated' | 'is_sales' | 'is_comm',
+    field: 'is_super' | 'is_authenticated' | 'is_sales' | 'is_comm' | 'is_supplies' | 'is_contract' | 'is_recruit',
     value: boolean
   ) => {
     runAction(id, () => updateAdminFields(id, { [field]: value }))
@@ -110,6 +116,15 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
                 <HeaderFilter label="소통담당" options={YES_NO_OPTIONS} value={commFilter} onChange={setCommFilter} />
               </th>
               <th className={th}>
+                <HeaderFilter label="준비물담당" options={YES_NO_OPTIONS} value={suppliesFilter} onChange={setSuppliesFilter} />
+              </th>
+              <th className={th}>
+                <HeaderFilter label="계약담당" options={YES_NO_OPTIONS} value={contractFilter} onChange={setContractFilter} />
+              </th>
+              <th className={th}>
+                <HeaderFilter label="강사담당" options={YES_NO_OPTIONS} value={recruitFilter} onChange={setRecruitFilter} />
+              </th>
+              <th className={th}>
                 <HeaderFilter label="승인여부" options={YES_NO_OPTIONS} value={authFilter} onChange={setAuthFilter} />
               </th>
               <th className={th}>승인자</th>
@@ -121,7 +136,7 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
           <tbody>
             {visibleAdmins.length === 0 ? (
               <tr>
-                <td colSpan={11} className="py-16 text-center text-gray-400">
+                <td colSpan={14} className="py-16 text-center text-gray-400">
                   등록된 관리자가 없습니다.
                 </td>
               </tr>
@@ -162,6 +177,33 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
                         checked={a.isComm}
                         disabled={busy}
                         onChange={(e) => handleToggle(a.id, 'is_comm', e.target.checked)}
+                        className="w-4 h-4 accent-primary-600 cursor-pointer disabled:cursor-not-allowed"
+                      />
+                    </td>
+                    <td className={td}>
+                      <input
+                        type="checkbox"
+                        checked={a.isSupplies}
+                        disabled={busy}
+                        onChange={(e) => handleToggle(a.id, 'is_supplies', e.target.checked)}
+                        className="w-4 h-4 accent-primary-600 cursor-pointer disabled:cursor-not-allowed"
+                      />
+                    </td>
+                    <td className={td}>
+                      <input
+                        type="checkbox"
+                        checked={a.isContract}
+                        disabled={busy}
+                        onChange={(e) => handleToggle(a.id, 'is_contract', e.target.checked)}
+                        className="w-4 h-4 accent-primary-600 cursor-pointer disabled:cursor-not-allowed"
+                      />
+                    </td>
+                    <td className={td}>
+                      <input
+                        type="checkbox"
+                        checked={a.isRecruit}
+                        disabled={busy}
+                        onChange={(e) => handleToggle(a.id, 'is_recruit', e.target.checked)}
                         className="w-4 h-4 accent-primary-600 cursor-pointer disabled:cursor-not-allowed"
                       />
                     </td>

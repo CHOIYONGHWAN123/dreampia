@@ -12,6 +12,9 @@ export type AdminRow = {
   isAuthenticated: boolean
   isSales: boolean
   isComm: boolean
+  isSupplies: boolean
+  isContract: boolean
+  isRecruit: boolean
   isDeleted: boolean
   approvedAt: string | null
   approvedByName: string | null
@@ -22,7 +25,7 @@ export async function getAdmins(): Promise<AdminRow[]> {
   const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase
     .from('admins')
-    .select('id, name, email, phone, is_super, is_authenticated, is_sales, is_comm, is_deleted, approved_by, approved_at, created_at')
+    .select('id, name, email, phone, is_super, is_authenticated, is_sales, is_comm, is_supplies, is_contract, is_recruit, is_deleted, approved_by, approved_at, created_at')
     .order('created_at', { ascending: true })
   if (error) throw new Error(error.message)
 
@@ -41,6 +44,9 @@ export async function getAdmins(): Promise<AdminRow[]> {
     isAuthenticated: a.is_authenticated,
     isSales: a.is_sales,
     isComm: a.is_comm,
+    isSupplies: a.is_supplies,
+    isContract: a.is_contract,
+    isRecruit: a.is_recruit,
     isDeleted: a.is_deleted,
     approvedAt: a.approved_at,
     approvedByName: a.approved_by ? (approverMap.get(a.approved_by) ?? null) : null,
@@ -88,7 +94,15 @@ export async function approveAdmin(id: string): Promise<void> {
 
 export async function updateAdminFields(
   id: string,
-  fields: Partial<{ is_super: boolean; is_authenticated: boolean; is_sales: boolean; is_comm: boolean }>
+  fields: Partial<{
+    is_super: boolean
+    is_authenticated: boolean
+    is_sales: boolean
+    is_comm: boolean
+    is_supplies: boolean
+    is_contract: boolean
+    is_recruit: boolean
+  }>
 ): Promise<void> {
   const supabase = await createServerSupabaseClient()
   const { userId } = await getCurrentAdmin(supabase)

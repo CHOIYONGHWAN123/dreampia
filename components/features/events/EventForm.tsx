@@ -62,6 +62,9 @@ interface Props {
   institution: Institution | null
   salesAdmins: Admin[]
   commAdmins: Admin[]
+  suppliesAdmins: Admin[]
+  contractAdmins: Admin[]
+  recruitAdmins: Admin[]
   eventCategories: EventCategoryOption[]
   fields: FieldOption[]
   occupations: OccupationOption[]
@@ -195,6 +198,9 @@ function buildDefaultValues(
     final_budget: initialEvent.final_budget,
     comm_admin_id: initialEvent.comm_admin_id,
     comm_content: initialEvent.comm_content,
+    supplies_admin_id: initialEvent.supplies_admin_id,
+    contract_admin_id: initialEvent.contract_admin_id,
+    recruit_admin_id: initialEvent.recruit_admin_id,
   }
 }
 
@@ -212,6 +218,9 @@ export function EventForm({
   institution,
   salesAdmins,
   commAdmins,
+  suppliesAdmins,
+  contractAdmins,
+  recruitAdmins,
   eventCategories,
   fields,
   occupations,
@@ -450,6 +459,9 @@ export function EventForm({
         transaction_statement_file_url: transactionStatementFileUrl,
         comm_admin_id: data.comm_admin_id,
         comm_content: data.comm_content,
+        supplies_admin_id: data.supplies_admin_id,
+        contract_admin_id: data.contract_admin_id,
+        recruit_admin_id: data.recruit_admin_id,
         schedules,
         noticeFileUrls,
         eventRows: programUnits.map((u) => ({
@@ -1058,6 +1070,51 @@ export function EventForm({
                 >
                   <option value="">선택</option>
                   {commAdmins.map((a) => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>준비물담당자</td>
+              <td className={cellValueCls}>
+                <select
+                  {...register('supplies_admin_id', { setValueAs: (v) => v || null })}
+                  className={cellSelectCls}
+                >
+                  <option value="">선택</option>
+                  {suppliesAdmins.map((a) => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>계약담당자</td>
+              <td className={cellValueCls}>
+                <select
+                  {...register('contract_admin_id', { setValueAs: (v) => v || null })}
+                  className={cellSelectCls}
+                >
+                  <option value="">선택</option>
+                  {contractAdmins.map((a) => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+
+            <tr>
+              <td className={cellLabelCls}>강사담당자</td>
+              <td className={cellValueCls}>
+                <select
+                  {...register('recruit_admin_id', { setValueAs: (v) => v || null })}
+                  className={cellSelectCls}
+                >
+                  <option value="">선택</option>
+                  {recruitAdmins.map((a) => (
                     <option key={a.id} value={a.id}>{a.name}</option>
                   ))}
                 </select>

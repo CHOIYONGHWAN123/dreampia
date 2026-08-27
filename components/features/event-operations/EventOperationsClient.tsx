@@ -50,6 +50,12 @@ export type EventOperationRow = {
   adminDocsDelivered: boolean | null
   salesAdminId: string | null
   salesAdminName: string | null
+  suppliesAdminId: string | null
+  suppliesAdminName: string | null
+  contractAdminId: string | null
+  contractAdminName: string | null
+  recruitAdminId: string | null
+  recruitAdminName: string | null
   estimateFileUrl: string | null
   estimateDelivered: boolean | null
   transactionStatementFileUrl: string | null
@@ -1099,12 +1105,15 @@ export function EventOperationsClient({
               <th className={th} style={{ width: 80 }}>최종 예산</th>
               <th className={th} style={{ width: 100 }}>계약종류</th>
               <th className={th} style={{ width: 120 }}>계약<br />관련 메모</th>
+              <th className={th} style={{ width: 120 }}>계약담당자</th>
               <th className={th} style={{ width: 80 }}>행사체크</th>
               <th className={th} style={{ width: 80 }}>준비물</th>
+              <th className={th} style={{ width: 120 }}>준비물담당자</th>
               <th className={th} style={{ width: 72 }}>행사안내<br />(1주일전)</th>
               <th className={th} style={{ width: 120 }}>소통담당자</th>
               <th className={th} style={{ width: 80 }}>강사섭외현황</th>
               <th className={th} style={{ width: 72 }}>강사섭외<br />확정전달여부</th>
+              <th className={th} style={{ width: 120 }}>강사담당자</th>
               <th className={th} style={{ width: 120 }}>행사 단톡</th>
               <th className={th} style={{ width: 72 }}>학교요청<br />사항다운</th>
               <th className={th} style={{ width: 90 }}>학교요청<br />전달여부</th>
@@ -1135,7 +1144,7 @@ export function EventOperationsClient({
           <tbody>
             {filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={46} className="py-16 text-center text-gray-400">
+                <td colSpan={49} className="py-16 text-center text-gray-400">
                   {rows.length === 0 ? '해당 월의 행사가 없습니다.' : '필터에 해당하는 행사가 없습니다.'}
                 </td>
               </tr>
@@ -1224,6 +1233,15 @@ export function EventOperationsClient({
                       />
                     </td>
 
+                    {/* 계약담당 */}
+                    <td className={td}>
+                      <SingleAdminPicker
+                        adminId={row.contractAdminId}
+                        admins={admins}
+                        onSave={(id) => updateEventField(row.id, { contract_admin_id: id })}
+                      />
+                    </td>
+
                     {/* 행사체크 */}
                     <td className={td}>
                       <InlineSelect
@@ -1240,6 +1258,15 @@ export function EventOperationsClient({
                         value={row.suppliesStatus}
                         options={SUPPLIES_STATUS_OPTIONS}
                         onSave={(v) => updateEventField(row.id, { supplies_status: v })}
+                      />
+                    </td>
+
+                    {/* 준비물담당 */}
+                    <td className={td}>
+                      <SingleAdminPicker
+                        adminId={row.suppliesAdminId}
+                        admins={admins}
+                        onSave={(id) => updateEventField(row.id, { supplies_admin_id: id })}
                       />
                     </td>
 
@@ -1276,6 +1303,15 @@ export function EventOperationsClient({
                         trueLabel="완료"
                         falseLabel="예정"
                         onSave={(v) => updateEventField(row.id, { recruit_delivered: v })}
+                      />
+                    </td>
+
+                    {/* 강사담당 */}
+                    <td className={td}>
+                      <SingleAdminPicker
+                        adminId={row.recruitAdminId}
+                        admins={admins}
+                        onSave={(id) => updateEventField(row.id, { recruit_admin_id: id })}
                       />
                     </td>
 

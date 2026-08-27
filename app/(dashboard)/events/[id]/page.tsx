@@ -14,6 +14,9 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
     { data: institution },
     { data: salesAdmins },
     { data: commAdmins },
+    { data: suppliesAdmins },
+    { data: contractAdmins },
+    { data: recruitAdmins },
     programSelectData,
     signedResult,
     transactionStatementSignedResult,
@@ -23,6 +26,9 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       : Promise.resolve({ data: null }),
     supabase.from('admins').select('id, name').eq('is_sales', true).order('name'),
     supabase.from('admins').select('id, name').eq('is_comm', true).order('name'),
+    supabase.from('admins').select('id, name').eq('is_supplies', true).order('name'),
+    supabase.from('admins').select('id, name').eq('is_contract', true).order('name'),
+    supabase.from('admins').select('id, name').eq('is_recruit', true).order('name'),
     getEventProgramSelectData(),
     detail.event.estimate_file_url
       ? supabase.storage.from('events').createSignedUrl(detail.event.estimate_file_url, 60 * 60)
@@ -37,6 +43,9 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       institution={institution ?? null}
       salesAdmins={salesAdmins || []}
       commAdmins={commAdmins || []}
+      suppliesAdmins={suppliesAdmins || []}
+      contractAdmins={contractAdmins || []}
+      recruitAdmins={recruitAdmins || []}
       eventCategories={programSelectData.eventCategories}
       fields={programSelectData.fields}
       occupations={programSelectData.occupations}

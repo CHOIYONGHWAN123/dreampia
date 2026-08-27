@@ -48,9 +48,12 @@ export type Database = {
           id: string
           is_authenticated: boolean
           is_comm: boolean
+          is_contract: boolean
           is_deleted: boolean
+          is_recruit: boolean
           is_sales: boolean
           is_super: boolean
+          is_supplies: boolean
           name: string
           phone: string | null
         }
@@ -62,9 +65,12 @@ export type Database = {
           id: string
           is_authenticated?: boolean
           is_comm?: boolean
+          is_contract?: boolean
           is_deleted?: boolean
+          is_recruit?: boolean
           is_sales?: boolean
           is_super?: boolean
+          is_supplies?: boolean
           name: string
           phone?: string | null
         }
@@ -76,9 +82,12 @@ export type Database = {
           id?: string
           is_authenticated?: boolean
           is_comm?: boolean
+          is_contract?: boolean
           is_deleted?: boolean
+          is_recruit?: boolean
           is_sales?: boolean
           is_super?: boolean
+          is_supplies?: boolean
           name?: string
           phone?: string | null
         }
@@ -540,6 +549,7 @@ export type Database = {
           contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
+          contract_admin_id: string | null
           contract_delivered: boolean
           contract_memo: string | null
           contract_status: Database["public"]["Enums"]["contract_status"] | null
@@ -588,6 +598,7 @@ export type Database = {
           photo_sent: boolean | null
           pre_notice_sent: boolean
           prep_note: string | null
+          recruit_admin_id: string | null
           recruit_delivered: boolean | null
           recruit_start_date: string | null
           recruit_status: Database["public"]["Enums"]["recruit_status"] | null
@@ -598,6 +609,7 @@ export type Database = {
           school_request_note: string | null
           start_recruit_at: string | null
           student_rotation: string | null
+          supplies_admin_id: string | null
           supplies_status: Database["public"]["Enums"]["supplies_status"] | null
           target_grade: string | null
           teacher_name: string | null
@@ -613,6 +625,7 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
+          contract_admin_id?: string | null
           contract_delivered?: boolean
           contract_memo?: string | null
           contract_status?:
@@ -663,6 +676,7 @@ export type Database = {
           photo_sent?: boolean | null
           pre_notice_sent?: boolean
           prep_note?: string | null
+          recruit_admin_id?: string | null
           recruit_delivered?: boolean | null
           recruit_start_date?: string | null
           recruit_status?: Database["public"]["Enums"]["recruit_status"] | null
@@ -673,6 +687,7 @@ export type Database = {
           school_request_note?: string | null
           start_recruit_at?: string | null
           student_rotation?: string | null
+          supplies_admin_id?: string | null
           supplies_status?:
             | Database["public"]["Enums"]["supplies_status"]
             | null
@@ -690,6 +705,7 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
+          contract_admin_id?: string | null
           contract_delivered?: boolean
           contract_memo?: string | null
           contract_status?:
@@ -740,6 +756,7 @@ export type Database = {
           photo_sent?: boolean | null
           pre_notice_sent?: boolean
           prep_note?: string | null
+          recruit_admin_id?: string | null
           recruit_delivered?: boolean | null
           recruit_start_date?: string | null
           recruit_status?: Database["public"]["Enums"]["recruit_status"] | null
@@ -750,6 +767,7 @@ export type Database = {
           school_request_note?: string | null
           start_recruit_at?: string | null
           student_rotation?: string | null
+          supplies_admin_id?: string | null
           supplies_status?:
             | Database["public"]["Enums"]["supplies_status"]
             | null
@@ -761,6 +779,13 @@ export type Database = {
           {
             foreignKeyName: "events_comm_admin_id_fkey"
             columns: ["comm_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_contract_admin_id_fkey"
+            columns: ["contract_admin_id"]
             isOneToOne: false
             referencedRelation: "admins"
             referencedColumns: ["id"]
@@ -787,8 +812,22 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "events_recruit_admin_id_fkey"
+            columns: ["recruit_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "events_sales_admin_id_fkey"
             columns: ["sales_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_supplies_admin_id_fkey"
+            columns: ["supplies_admin_id"]
             isOneToOne: false
             referencedRelation: "admins"
             referencedColumns: ["id"]
