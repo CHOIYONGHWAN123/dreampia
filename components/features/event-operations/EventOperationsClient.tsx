@@ -9,6 +9,7 @@ import {
   updateEventFieldAdmins,
 } from '@/app/(dashboard)/event-operations/actions'
 import { createClient } from '@/lib/supabase'
+import { HeaderFilter } from '@/components/ui/HeaderFilter'
 
 // ── 타입 ──────────────────────────────────────────────────────────────
 
@@ -51,6 +52,7 @@ export type EventOperationRow = {
   salesAdminName: string | null
   estimateFileUrl: string | null
   estimateDelivered: boolean | null
+  transactionStatementFileUrl: string | null
   teacherName: string | null
   remarks: string | null
   groupChatStatus: string | null
@@ -107,90 +109,6 @@ function recruitDanger(status: string | null, startAt: string | null) {
   if (status !== '섭외진행중' || !startAt) return null
   const days = Math.floor((Date.now() - new Date(startAt).getTime()) / 86400000)
   return days >= 7 ? '위험' : null
-}
-
-// ── 지역1/지역2/행사구분 필터 — 스프레드시트 헤더처럼 컬럼 제목 클릭 시 드롭다운 ──
-
-function HeaderFilter({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string
-  options: string[]
-  value: string | null
-  onChange: (v: string | null) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [dropPos, setDropPos] = useState({ top: 0, left: 0 })
-  const btnRef = useRef<HTMLButtonElement>(null)
-  const dropRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (
-        dropRef.current && !dropRef.current.contains(e.target as Node) &&
-        btnRef.current && !btnRef.current.contains(e.target as Node)
-      ) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
-
-  const handleOpen = () => {
-    if (btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect()
-      setDropPos({ top: r.bottom + 2, left: r.left })
-    }
-    setOpen((o) => !o)
-  }
-
-  const handleSelect = (v: string | null) => {
-    onChange(v)
-    setOpen(false)
-  }
-
-  return (
-    <button
-      ref={btnRef}
-      type="button"
-      onClick={handleOpen}
-      className="inline-flex items-center gap-1"
-    >
-      <span>{label}</span>
-      <span className={`text-[8px] ${value !== null ? 'text-primary-500' : 'text-primary-300'}`}>▾</span>
-      {open && createPortal(
-        <div
-          ref={dropRef}
-          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, zIndex: 9999 }}
-          className="bg-white border border-gray-200 shadow-lg rounded min-w-24 max-h-60 overflow-y-auto text-left font-normal"
-        >
-          <div
-            className={`px-3 py-1.5 text-[11px] cursor-pointer hover:bg-gray-50 whitespace-nowrap ${
-              value === null ? 'font-bold text-gray-800' : 'text-gray-400'
-            }`}
-            onClick={() => handleSelect(null)}
-          >
-            전체
-          </div>
-          {options.map((opt) => (
-            <div
-              key={opt}
-              className={`px-3 py-1.5 text-[11px] cursor-pointer hover:bg-primary-50 whitespace-nowrap ${
-                value === opt ? 'bg-primary-50 font-bold text-primary-700' : 'text-gray-700'
-              }`}
-              onClick={() => handleSelect(opt)}
-            >
-              {opt}
-            </div>
-          ))}
-        </div>,
-        document.body
-      )}
-    </button>
-  )
 }
 
 // 계약 관련 메모 셀 — 엑셀 메모(코멘트)처럼 버튼을 누르면 해당 셀 위치에서
@@ -798,18 +716,113 @@ function InlineTextCell({
   )
 }
 
+// ── 인라인 링크 셀 (행정서류 폴더 등) ──────────────────────────────────
+// 값이 있으면 클릭 시 새 탭에서 해당 링크로 이동하고, 수정은 별도 버튼으로 분리한다.
+// 스킴(https://) 없이 입력해도 저장 시 자동으로 붙여 링크가 깨지지 않게 한다.
+
+function normalizeUrl(raw: string) {
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+}
+
+function InlineLinkCell({
+  value,
+  placeholder = '링크 입력',
+  onSave,
+}: {
+  value: string | null
+  placeholder?: string
+  onSave: (v: string | null) => Promise<void>
+}) {
+  const [editing, setEditing] = useState(false)
+  const [text, setText] = useState(value ?? '')
+  const [saving, setSaving] = useState(false)
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      await onSave(normalizeUrl(text))
+      setEditing(false)
+    } catch {
+      alert('저장에 실패했습니다.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1">
+        <input
+          autoFocus
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') save()
+            if (e.key === 'Escape') { setText(value ?? ''); setEditing(false) }
+          }}
+          className="text-[11px] border border-gray-300 rounded px-1 py-0.5 w-full focus:outline-none focus:border-primary-400"
+          placeholder={placeholder}
+        />
+        <button onClick={save} disabled={saving} className="text-[10px] px-1.5 py-0.5 text-white bg-primary-500 rounded whitespace-nowrap disabled:opacity-50">저장</button>
+        <button onClick={() => { setText(value ?? ''); setEditing(false) }} className="text-[10px] px-1.5 py-0.5 border border-gray-300 rounded whitespace-nowrap">취소</button>
+      </div>
+    )
+  }
+
+  if (!value) {
+    return (
+      <div
+        onClick={() => setEditing(true)}
+        className="cursor-pointer rounded px-1 min-h-5 flex items-center justify-center hover:bg-gray-50"
+      >
+        <span className="text-[10px] text-gray-300">{placeholder}</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center justify-center gap-1 min-h-5">
+      <a
+        href={value}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={value}
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors whitespace-nowrap"
+      >
+        🔗 열기
+      </a>
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className="text-[10px] px-1 py-0.5 border border-gray-300 rounded hover:bg-gray-50 whitespace-nowrap"
+      >
+        수정
+      </button>
+    </div>
+  )
+}
+
 // ── 예산 인라인 편집 셀 ───────────────────────────────────────────────
 
 function InlineBudgetCell({
   value,
   onSave,
+  fileUrl,
+  fileLabel = '견적서',
 }: {
   value: number | null
   onSave: (v: number | null) => Promise<void>
+  /** 전달되면 클릭 시 예산 수정 대신 이 URL의 파일을 다운로드하며, 더블클릭으로 예산을 수정한다 */
+  fileUrl?: string | null
+  /** 파일 미등록 시 경고 문구와 title에 쓰일 파일 종류 이름 */
+  fileLabel?: string
 }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(value != null ? String(value) : '')
   const [saving, setSaving] = useState(false)
+  const hasFileMode = fileUrl !== undefined
 
   const save = async () => {
     const raw = text.trim().replace(/,/g, '')
@@ -850,10 +863,24 @@ function InlineBudgetCell({
     )
   }
 
+  const handleClick = () => {
+    if (!hasFileMode) {
+      setEditing(true)
+      return
+    }
+    if (fileUrl) {
+      window.open(fileUrl, '_blank', 'noopener,noreferrer')
+    } else {
+      alert(`${fileLabel}가 등록되어있지 않습니다`)
+    }
+  }
+
   return (
     <div
-      onClick={() => setEditing(true)}
+      onClick={handleClick}
+      onDoubleClick={hasFileMode ? () => setEditing(true) : undefined}
       className="cursor-pointer rounded px-1 min-h-5 flex items-center justify-center hover:bg-gray-50"
+      title={hasFileMode ? `클릭: ${fileLabel} 다운로드 / 더블클릭: 예산 수정` : undefined}
     >
       {value != null ? (
         <span className="text-[11px] text-primary-600 underline">₩{value.toLocaleString()}</span>
@@ -1161,19 +1188,22 @@ export function EventOperationsClient({
                       />
                     </td>
 
-                    {/* 계약 예산 */}
+                    {/* 계약 예산 — 클릭 시 견적서 다운로드, 더블클릭 시 예산 수정 */}
                     <td className={td}>
                       <InlineBudgetCell
                         value={row.budget}
                         onSave={(v) => updateEventField(row.id, { budget: v })}
+                        fileUrl={row.estimateFileUrl}
                       />
                     </td>
 
-                    {/* 최종 예산 */}
+                    {/* 최종 예산 — 클릭 시 거래명세서 다운로드, 더블클릭 시 예산 수정 */}
                     <td className={td}>
                       <InlineBudgetCell
                         value={row.finalBudget}
                         onSave={(v) => updateEventField(row.id, { final_budget: v })}
+                        fileUrl={row.transactionStatementFileUrl}
+                        fileLabel="거래명세서"
                       />
                     </td>
 
@@ -1292,9 +1322,9 @@ export function EventOperationsClient({
                       <PlaceholderBtn label="다운" />
                     </td>
 
-                    {/* 행정서류 폴더 */}
+                    {/* 행정서류 폴더 — 클릭 시 새 탭에서 링크(구글 드라이브 등)로 이동 */}
                     <td className={tdL}>
-                      <InlineTextCell
+                      <InlineLinkCell
                         value={row.adminDocs}
                         placeholder="폴더 링크 입력"
                         onSave={(v) => updateEventField(row.id, { admin_docs: v })}
