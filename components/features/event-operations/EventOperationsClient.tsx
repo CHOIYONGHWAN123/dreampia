@@ -132,42 +132,53 @@ const tdL = tdLBase
 
 // ── 왼쪽 고정(freeze) 컬럼 ────────────────────────────────────────────
 // NO/지역1/지역2/기관/행사구분/현장담당/행사일시 7개 컬럼은 가로 스크롤을 해도 왼쪽에
-// 고정한다. 각 컬럼 폭이 이미 px로 고정돼 있으므로(아래 thead의 style width와 반드시
-// 동일하게 유지) 그 누적값을 그대로 sticky left 오프셋으로 쓴다.
+// 고정한다.
+//
+// [이전 구현의 문제] 컬럼마다 개별로 position:sticky를 준 적이 있었는데, 서로 다른
+// sticky 요소는 브라우저가 각자 독립된 합성 레이어로 그리기 때문에 스크롤 중 두 레이어의
+// sticky 오프셋이 서로 다른 서브픽셀로 반올림되면서 셀 사이에 개발자도구로도 선택되지
+// 않는 얇은 렌더링 틈(rendering seam)이 생겼다. 셀이 이웃 쪽으로 파고들게 하는 겹침
+// 트릭으로 완화를 시도했지만 완전히 없어지지 않았다 — 애초에 sticky 요소가 여러 개인
+// 것 자체가 근본 원인이라 겹침 폭을 늘리는 방식으로는 임시방편일 뿐이었다.
+//
+// [현재 구현] 고정 영역 전체를 컬럼당 하나가 아니라 행(row)당 "단 하나의" sticky
+// td/th(colSpan으로 7개 컬럼을 합침)로 감싸고, 그 안에서 각 컬럼을 일반 flex 자식
+// div로 나열한다. flex 자식은 sticky가 아니라 평범한 문서 흐름이라 브라우저가 같은
+// 레이어에서 한 번에 픽셀 정확하게 그리므로, 애초에 여러 sticky 레이어 사이의 이음새가
+// 생길 여지가 없다.
 const FROZEN_WIDTHS = [36, 48, 56, 120, 80, 120, 64]
-const frozenNaturalLeft = (index: number) => FROZEN_WIDTHS.slice(0, index).reduce((a, b) => a + b, 0)
-// border-separate + sticky 조합에서도 인접한 고정 셀 사이에 개발자도구로는 선택되지 않는
-// 서브픽셀 렌더링 틈(브라우저가 각 sticky 셀을 독립된 레이어로 그리면서 생기는 합성 이음새)이
-// 남아있어, 각 셀이 왼쪽 이웃 쪽으로 살짝 파고들게 만들어 이음새를 원천적으로 덮어버린다.
-// left만 당기면 폭은 그대로라 셀 전체가 누적으로 밀리므로, width도 같은 만큼 늘려 오른쪽
-// 경계(=다음 셀이 시작하는 지점)는 그대로 유지한다 — 그래야 스크롤 영역과의 마지막 경계도
-// 밀리지 않는다. 같은 z-index를 가진 형제 요소는 DOM 순서상 나중 요소가 위에 그려지므로,
-// 뒤 컬럼이 앞 컬럼의 오른쪽 끝 1px을 덮어써서 이음새가 사라진다.
-const FROZEN_OVERLAP = 2
-const frozenLeft = (index: number) => frozenNaturalLeft(index) - (index > 0 ? FROZEN_OVERLAP : 0)
-const frozenWidth = (index: number) => FROZEN_WIDTHS[index] + (index > 0 ? FROZEN_OVERLAP : 0)
+const FROZEN_TOTAL_WIDTH = FROZEN_WIDTHS.reduce((a, b) => a + b, 0)
 // 고정 영역의 마지막 컬럼은 스크롤 중에도 경계가 보이도록 진한 오른쪽 테두리를 준다.
 const frozenBoundaryCls = 'border-r-2 border-r-gray-300'
 
-// 헤더이면서 동시에 고정 컬럼인 좌상단 칸은 위/왼쪽 두 방향 다 sticky라
-// top만 고정인 나머지 헤더(z-10)나 left만 고정인 몸통 셀보다 z-index를 높게 줘야
-// 대각선으로 스크롤할 때 한쪽이 다른 쪽 밑에 깔리는 문제가 없다.
-const thFrozen = `${thBase} sticky top-0 z-20`
-// 몸통의 고정 셀은 배경을 명시적으로 칠해야 스크롤 시 뒤 컬럼 텍스트가 비쳐 보이는
-// 겹침 현상이 생기지 않는다. 행 hover는 tr의 hover:bg-gray-50가 고정 셀 배경에
-// 가려지므로 group-hover로 별도 지정해 나머지 컬럼과 동일하게 하이라이트되게 한다.
-//
-// table-layout이 auto(기본값)라 컬럼 폭은 그 컬럼의 가장 넓은 셀 내용에 맞춰 늘어날 수
-// 있는데, 그러면 실제 렌더링된 폭이 위 FROZEN_WIDTHS 가정과 어긋나 고정 셀 사이에
-// 스크롤 영역이 비쳐 보이는 틈이 생긴다. overflow-hidden으로 각 고정 셀의 폭을
-// 지정한 px로 강제로 못박아 이 틈을 원천 차단한다 — 기관명처럼 줄바꿈이 나아 보이는
-// 셀은 truncate 대신 break-words로 세로로만 늘어나게 한다(행 높이는 늘어나도
-// 가로 폭은 절대 넘지 않음).
-const tdFrozen = `${tdBase} sticky z-[1] bg-white group-hover:bg-gray-50 overflow-hidden text-ellipsis`
-const tdLFrozen = `${tdLBase} sticky z-[1] bg-white group-hover:bg-gray-50 overflow-hidden break-words`
+// 고정 영역을 감싸는 바깥 sticky 셀 — colSpan으로 7개 컬럼 폭을 합친 만큼만 차지한다.
+// 배경색과 아래쪽 구분선(border-b)은 안쪽 flex 자식이 아니라 이 바깥 셀에 직접 준다 —
+// 안쪽 flex 자식의 h-full(퍼센트 높이)이 sticky td 안에서 100%로 정확히 안 잡히는
+// 경우(브라우저별 편차) 안쪽 내용이 셀보다 짧아져 위아래에 여백이 남을 수 있는데,
+// 배경/테두리를 안쪽이 아니라 무조건 셀 자체 높이(테이블 행 높이 계산으로 항상 정확함)에
+// 거는 이 바깥 셀에 두면 그 여백 때문에 뒷배경이 비치거나 구분선이 행 경계와 어긋나
+// 보이는 문제가 원천적으로 생기지 않는다.
+// 헤더이면서 동시에 고정 컬럼인 좌상단 칸은 위/왼쪽 두 방향 다 sticky라 top만 고정인
+// 나머지 헤더(z-10)나 left만 고정인 몸통 셀보다 z-index를 높게 줘야 대각선 스크롤 시
+// 한쪽이 다른 쪽 밑에 깔리는 문제가 없다.
+const thFrozenOuter = 'sticky top-0 left-0 z-20 p-0 bg-primary-50 border-b border-primary-100'
+const tdFrozenOuter = 'sticky left-0 z-[1] p-0 bg-white group-hover:bg-gray-50 border-b border-gray-100'
+
+// 고정 영역 안의 "가상 컬럼" — 실제 th/td가 아니라 flex 자식 div이므로 세로 정렬은
+// align-middle 대신 items-center로 준다. 컬럼 사이의 세로 구분선(border-r)만 여기서
+// 담당하고, 배경/아래쪽 구분선은 바깥 셀(thFrozenOuter/tdFrozenOuter)이 담당한다.
+const vTh =
+  'shrink-0 flex items-center justify-center px-2 py-2 text-center text-[11px] font-bold text-primary-700 border-r border-primary-100 whitespace-nowrap'
+const vTd =
+  'shrink-0 flex items-center justify-center px-2 py-1.5 text-center text-[11px] text-gray-700 border-r border-gray-100 whitespace-nowrap overflow-hidden text-ellipsis'
+// 기관명처럼 줄바꿈이 나아 보이는 셀은 truncate 대신 break-words로 세로로만 늘어나게
+// 한다(행 높이는 늘어나도 가로 폭은 절대 넘지 않음).
+const vTdL =
+  'shrink-0 flex items-center px-2 py-1.5 text-left text-[11px] text-gray-700 border-r border-gray-100 overflow-hidden break-words'
 // 현장담당처럼 텍스트 여러 개 + 버튼이 함께 들어가는 셀은 한 줄로 잘라버리면 버튼이
 // 가려질 수 있어, 말줄임 대신 줄바꿈으로 폭만 막는다.
-const tdFrozenWrap = `${tdBase.replace('whitespace-nowrap', '')} sticky z-[1] bg-white group-hover:bg-gray-50 overflow-hidden`
+const vTdWrap =
+  'shrink-0 flex items-center justify-center flex-wrap px-2 py-1.5 text-center text-[11px] text-gray-700 border-r border-gray-100 overflow-hidden'
 const selectCls =
   'text-[11px] border border-gray-200 rounded-md px-1 py-0.5 bg-white w-full cursor-pointer focus:outline-none focus:border-primary-400 disabled:opacity-50'
 
@@ -929,27 +940,31 @@ export function EventOperationsClient({
         <table className="border-separate border-spacing-0 text-[11px]" style={{ minWidth: '4000px' }}>
           <thead>
             <tr>
-              <th className={thFrozen} style={{ width: frozenWidth(0), left: frozenLeft(0) }}>NO</th>
-              <th className={thFrozen} style={{ width: frozenWidth(1), left: frozenLeft(1) }}>
-                <HeaderFilter
-                  label="지역1"
-                  options={region1Options}
-                  value={region1Filter}
-                  onChange={(v) => {
-                    setRegion1Filter(v)
-                    setRegion2Filter(null)
-                  }}
-                />
+              <th className={thFrozenOuter} colSpan={7} style={{ width: FROZEN_TOTAL_WIDTH }}>
+                <div className="flex h-full">
+                  <div className={vTh} style={{ width: FROZEN_WIDTHS[0] }}>NO</div>
+                  <div className={vTh} style={{ width: FROZEN_WIDTHS[1] }}>
+                    <HeaderFilter
+                      label="지역1"
+                      options={region1Options}
+                      value={region1Filter}
+                      onChange={(v) => {
+                        setRegion1Filter(v)
+                        setRegion2Filter(null)
+                      }}
+                    />
+                  </div>
+                  <div className={vTh} style={{ width: FROZEN_WIDTHS[2] }}>
+                    <HeaderFilter label="지역2" options={region2Options} value={region2Filter} onChange={setRegion2Filter} />
+                  </div>
+                  <div className={vTh} style={{ width: FROZEN_WIDTHS[3] }}>기관</div>
+                  <div className={vTh} style={{ width: FROZEN_WIDTHS[4] }}>
+                    <HeaderFilter label="행사구분" options={categoryOptions} value={categoryFilter} onChange={setCategoryFilter} />
+                  </div>
+                  <div className={vTh} style={{ width: FROZEN_WIDTHS[5] }}>현장담당</div>
+                  <div className={`${vTh} ${frozenBoundaryCls}`} style={{ width: FROZEN_WIDTHS[6] }}>행사일시</div>
+                </div>
               </th>
-              <th className={thFrozen} style={{ width: frozenWidth(2), left: frozenLeft(2) }}>
-                <HeaderFilter label="지역2" options={region2Options} value={region2Filter} onChange={setRegion2Filter} />
-              </th>
-              <th className={thFrozen} style={{ width: frozenWidth(3), left: frozenLeft(3) }}>기관</th>
-              <th className={thFrozen} style={{ width: frozenWidth(4), left: frozenLeft(4) }}>
-                <HeaderFilter label="행사구분" options={categoryOptions} value={categoryFilter} onChange={setCategoryFilter} />
-              </th>
-              <th className={thFrozen} style={{ width: frozenWidth(5), left: frozenLeft(5) }}>현장담당</th>
-              <th className={`${thFrozen} ${frozenBoundaryCls}`} style={{ width: frozenWidth(6), left: frozenLeft(6) }}>행사일시</th>
               <th className={th} style={{ width: 56 }}>시작시간</th>
               <th className={th} style={{ width: 56 }}>종료시간</th>
               <th className={th} style={{ width: 64 }}>학년</th>
@@ -1007,37 +1022,41 @@ export function EventOperationsClient({
 
                 return (
                   <tr key={row.rowKey} className="group hover:bg-gray-50">
-                    <td className={tdFrozen} style={{ left: frozenLeft(0) }}>{idx + 1}</td>
-                    <td className={tdFrozen} style={{ left: frozenLeft(1) }}>{row.region1 ?? '-'}</td>
-                    <td className={tdFrozen} style={{ left: frozenLeft(2) }}>{row.region2 ?? '-'}</td>
+                    <td className={tdFrozenOuter} colSpan={7} style={{ width: FROZEN_TOTAL_WIDTH }}>
+                      <div className="flex h-full">
+                        <div className={vTd} style={{ width: FROZEN_WIDTHS[0] }}>{idx + 1}</div>
+                        <div className={vTd} style={{ width: FROZEN_WIDTHS[1] }}>{row.region1 ?? '-'}</div>
+                        <div className={vTd} style={{ width: FROZEN_WIDTHS[2] }}>{row.region2 ?? '-'}</div>
 
-                    {/* 기관 → 행사관리 페이지 링크 */}
-                    <td className={`${tdLFrozen} font-medium`} style={{ left: frozenLeft(3) }}>
-                      {row.institutionId ? (
-                        <a
-                          href={`/institutions/${row.institutionId}`}
-                          className="text-primary-600 hover:underline"
-                        >
-                          {row.institutionName ?? '-'}
-                        </a>
-                      ) : (
-                        <span className="text-gray-800">{row.institutionName ?? '-'}</span>
-                      )}
+                        {/* 기관 → 행사관리 페이지 링크 */}
+                        <div className={`${vTdL} font-medium`} style={{ width: FROZEN_WIDTHS[3] }}>
+                          {row.institutionId ? (
+                            <a
+                              href={`/institutions/${row.institutionId}`}
+                              className="text-primary-600 hover:underline"
+                            >
+                              {row.institutionName ?? '-'}
+                            </a>
+                          ) : (
+                            <span className="text-gray-800">{row.institutionName ?? '-'}</span>
+                          )}
+                        </div>
+
+                        {/* 행사구분 */}
+                        <div className={vTd} style={{ width: FROZEN_WIDTHS[4] }}>{row.eventCategoryName ?? '-'}</div>
+
+                        {/* 현장담당 — 다중 선택. 이름이 여러 개면 말줄임 대신 줄바꿈시켜 버튼이 가려지지 않게 한다 */}
+                        <div className={vTdWrap} style={{ width: FROZEN_WIDTHS[5] }}>
+                          <FieldAdminPicker
+                            adminIds={row.fieldAdminIds}
+                            admins={admins}
+                            onSave={(ids) => updateEventFieldAdmins(row.id, ids)}
+                          />
+                        </div>
+
+                        <div className={`${vTd} ${frozenBoundaryCls}`} style={{ width: FROZEN_WIDTHS[6] }}>{dateDisplay}</div>
+                      </div>
                     </td>
-
-                    {/* 행사구분 */}
-                    <td className={tdFrozen} style={{ left: frozenLeft(4) }}>{row.eventCategoryName ?? '-'}</td>
-
-                    {/* 현장담당 — 다중 선택. 이름이 여러 개면 말줄임 대신 줄바꿈시켜 버튼이 가려지지 않게 한다 */}
-                    <td className={tdFrozenWrap} style={{ left: frozenLeft(5) }}>
-                      <FieldAdminPicker
-                        adminIds={row.fieldAdminIds}
-                        admins={admins}
-                        onSave={(ids) => updateEventFieldAdmins(row.id, ids)}
-                      />
-                    </td>
-
-                    <td className={`${tdFrozen} ${frozenBoundaryCls}`} style={{ left: frozenLeft(6) }}>{dateDisplay}</td>
                     <td className={td}>{fmtTime(row.dayStart) ?? '-'}</td>
                     <td className={td}>{fmtTime(row.dayEnd) ?? '-'}</td>
 
