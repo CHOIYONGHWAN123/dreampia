@@ -36,6 +36,10 @@ export type MentorOption = {
 }
 export type ProgramUnitPhoto = { id: string; url: string }
 
+// 날짜 그룹 — B(그룹 단위) 항목을 공유할 날짜들의 묶음. id가 null이면 아직 저장 전(이번 제출에서
+// 새로 생성될 그룹)이고, 값이 있으면 기존 event_groups 행을 가리킨다.
+export type DateGroup = { id: string | null; name: string; dates: string[] }
+
 export type SelectedProgramUnit = {
   key: string
   rowId: string | null
@@ -146,6 +150,8 @@ export function EventProgramUnitSection({
   mentorsByUnit,
   value,
   onChange,
+  dateGroups,
+  onDateGroupsChange,
   defaultStartTime,
   defaultEndTime,
   photosByRow = {},
@@ -160,6 +166,8 @@ export function EventProgramUnitSection({
   mentorsByUnit: Record<string, MentorOption[]>
   value: SelectedProgramUnit[]
   onChange: (next: SelectedProgramUnit[]) => void
+  dateGroups: DateGroup[]
+  onDateGroupsChange: (next: DateGroup[]) => void
   defaultStartTime?: string
   defaultEndTime?: string
   photosByRow?: Record<string, ProgramUnitPhoto[]>
@@ -331,6 +339,61 @@ export function EventProgramUnitSection({
     const et = splitDateTime(v.endTime)
     const date = et.date || splitDateTime(v.startTime).date
     updateUnit(v.key, { endTime: joinDateTime(date, time) })
+  }
+
+  // ── 날짜 그룹 지정 ──────────────────────────────────────────────────
+  // 그룹은 "날짜" 단위로만 묶는다(프로그램 단위 부분 선택 없음) — 하루에 프로그램이 여러 개
+  // 있어도 체크하면 그날 프로그램이 전부 같이 딸려 들어간다. 그래서 여기서는 프로그램 행이
+  // 아니라 value에서 뽑아낸 distinct 날짜만 다룬다.
+  const [selectedDatesForGroup, setSelectedDatesForGroup] = useState<string[]>([])
+  const [newGroupName, setNewGroupName] = useState('')
+
+  const distinctDates = useMemo(() => {
+    const set = new Set<string>()
+    for (const v of value) {
+      const d = splitDateTime(v.startTime).date || splitDateTime(v.endTime).date
+      if (d) set.add(d)
+    }
+    return [...set].sort()
+  }, [value])
+
+  const dateToGroupIndex = useMemo(() => {
+    const map = new Map<string, number>()
+    dateGroups.forEach((g, i) => g.dates.forEach((d) => map.set(d, i)))
+    return map
+  }, [dateGroups])
+
+  const toggleDateForGroup = (date: string) => {
+    setSelectedDatesForGroup((prev) =>
+      prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date]
+    )
+  }
+
+  const createGroup = () => {
+    const name = newGroupName.trim()
+    if (selectedDatesForGroup.length < 2 || !name) return
+    // 선택한 날짜가 이미 다른 그룹에 속해있으면 거기서 빼고 새 그룹으로 옮긴다(날짜는 그룹 1개에만 속함).
+    const cleaned = dateGroups
+      .map((g) => ({ ...g, dates: g.dates.filter((d) => !selectedDatesForGroup.includes(d)) }))
+      .filter((g) => g.dates.length > 0)
+    onDateGroupsChange([
+      ...cleaned,
+      { id: null, name, dates: [...selectedDatesForGroup].sort() },
+    ])
+    setSelectedDatesForGroup([])
+    setNewGroupName('')
+  }
+
+  const removeDateFromGroup = (groupIndex: number, date: string) => {
+    onDateGroupsChange(
+      dateGroups
+        .map((g, i) => (i === groupIndex ? { ...g, dates: g.dates.filter((d) => d !== date) } : g))
+        .filter((g) => g.dates.length > 0)
+    )
+  }
+
+  const deleteGroup = (groupIndex: number) => {
+    onDateGroupsChange(dateGroups.filter((_, i) => i !== groupIndex))
   }
 
   return (
@@ -523,6 +586,101 @@ export function EventProgramUnitSection({
             >
               전체 적용
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 날짜 그룹 지정 — 행사안내/회보서/계약현황 등 그룹 단위(B) 항목을 공유할 날짜들을 묶는다.
+          그룹은 날짜 단위로만 지정된다: 체크하면 그날 프로그램이 전부 같이 그룹에 포함된다. */}
+      {distinctDates.length >= 2 && (
+        <div className="border border-primary-100 rounded-2xl p-3 space-y-3 bg-primary-50/40">
+          <p className="text-xs font-medium text-gray-600">
+            날짜 그룹 지정{' '}
+            <span className="text-gray-400 font-normal">
+              (묶은 날짜들은 행사안내·회보서·행사사진·계약현황 등의 값을 공유합니다)
+            </span>
+          </p>
+
+          {dateGroups.length > 0 && (
+            <div className="space-y-1.5">
+              {dateGroups.map((g, i) => (
+                <div key={g.id ?? `new-${i}`} className="flex items-center flex-wrap gap-1.5 bg-white rounded-xl px-2.5 py-1.5">
+                  <span className="text-xs font-bold text-primary-700 whitespace-nowrap">{g.name}</span>
+                  {g.dates.map((d) => (
+                    <span
+                      key={d}
+                      className="inline-flex items-center gap-1 text-xs bg-primary-100 text-primary-700 rounded-full px-2 py-0.5"
+                    >
+                      {d}
+                      <button
+                        type="button"
+                        onClick={() => removeDateFromGroup(i, d)}
+                        className="text-primary-500 hover:text-primary-800"
+                        aria-label={`${d} 그룹에서 빼기`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => deleteGroup(i)}
+                    className="ml-auto text-xs text-red-400 hover:text-red-600 whitespace-nowrap"
+                  >
+                    그룹 삭제
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center flex-wrap gap-2">
+            {distinctDates.map((d) => {
+              const groupIndex = dateToGroupIndex.get(d)
+              const inOtherGroup = groupIndex !== undefined
+              return (
+                <label
+                  key={d}
+                  className={`inline-flex items-center gap-1 text-xs rounded-full px-2.5 py-1 border cursor-pointer ${
+                    selectedDatesForGroup.includes(d)
+                      ? 'border-primary-400 bg-primary-100 text-primary-700'
+                      : 'border-gray-300 bg-white text-gray-600'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedDatesForGroup.includes(d)}
+                    onChange={() => toggleDateForGroup(d)}
+                    className="w-3.5 h-3.5 accent-primary-500"
+                  />
+                  {d}
+                  {inOtherGroup && (
+                    <span className="text-gray-400">({dateGroups[groupIndex].name})</span>
+                  )}
+                </label>
+              )
+            })}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              placeholder="그룹명 (예: 1차)"
+              className={`${fieldInputCls} max-w-40`}
+            />
+            <button
+              type="button"
+              onClick={createGroup}
+              disabled={selectedDatesForGroup.length < 2 || !newGroupName.trim()}
+              className="px-3 py-1.5 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 disabled:opacity-40 disabled:border-gray-300 disabled:text-gray-400 transition-colors whitespace-nowrap"
+            >
+              선택한 날짜 그룹으로 묶기
+            </button>
+            {selectedDatesForGroup.length === 1 && (
+              <span className="text-xs text-gray-400">날짜를 2개 이상 선택해주세요</span>
+            )}
           </div>
         </div>
       )}

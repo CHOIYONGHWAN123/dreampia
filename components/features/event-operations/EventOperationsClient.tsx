@@ -4,13 +4,23 @@ import { useRef, useState, useEffect, useMemo, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import {
-  updateCrimeCheckNotified,
   updateEventField,
-  updateEventFieldAdmins,
+  updateEventDateField,
+  updateEventDateFieldAdmins,
+  updateEventGroupField,
+  updateEventDateCrimeCheckNotified,
+  updateEventDateTargetGrade,
 } from '@/app/(dashboard)/event-operations/actions'
 import { createClient } from '@/lib/supabase'
 import { HeaderFilter } from '@/components/ui/HeaderFilter'
 import { ExpandableMemoCell } from '@/components/ui/ExpandableMemoCell'
+
+// B(그룹 단위) 필드 저장 — 그 날짜가 그룹에 속해있으면 event_groups를, 아니면
+// event_dates(그룹 미지정 시 기본값)를 갱신한다. C(날짜 단위) 필드는 항상 event_dates.
+type BFieldData = Parameters<typeof updateEventGroupField>[1]
+function saveDateField(row: EventOperationRow, data: BFieldData) {
+  return row.groupId ? updateEventGroupField(row.groupId, data) : updateEventDateField(row.id, row.dateKey, data)
+}
 
 // ── 타입 ──────────────────────────────────────────────────────────────
 
@@ -26,6 +36,8 @@ export type EventOperationRow = {
   fieldAdminIds: string[]
   fieldAdminNames: string[]
   eventDate: string | null
+  dateKey: string
+  groupId: string | null
   dayStart: string | null
   dayEnd: string | null
   targetGrade: string | null
@@ -33,7 +45,6 @@ export type EventOperationRow = {
   finalBudget: number | null
   contractType: string | null
   contractStatus: string | null
-  contractDelivered: boolean | null
   contractMemo: string | null
   eventCheckStatus: number
   suppliesStatus: string | null
@@ -882,10 +893,10 @@ export function EventOperationsClient({
     router.push(`/event-operations?year=${year}&month=${month}`)
   }
 
-  const handleCrimeCheckNotify = (eventId: string) => {
+  const handleCrimeCheckNotify = (eventId: string, dateKey: string) => {
     startTransition(async () => {
       try {
-        await updateCrimeCheckNotified(eventId)
+        await updateEventDateCrimeCheckNotified(eventId, dateKey)
       } catch (e) {
         alert(e instanceof Error ? e.message : '오류가 발생했습니다.')
       }
@@ -1050,7 +1061,7 @@ export function EventOperationsClient({
                           <FieldAdminPicker
                             adminIds={row.fieldAdminIds}
                             admins={admins}
-                            onSave={(ids) => updateEventFieldAdmins(row.id, ids)}
+                            onSave={(ids) => updateEventDateFieldAdmins(row.id, row.dateKey, ids)}
                           />
                         </div>
 
@@ -1064,7 +1075,7 @@ export function EventOperationsClient({
                       <InlineTextCell
                         value={row.targetGrade}
                         placeholder="학년 입력"
-                        onSave={(v) => updateEventField(row.id, { target_grade: v })}
+                        onSave={(v) => updateEventDateTargetGrade(row.id, row.dateKey, v)}
                       />
                     </td>
 
@@ -1120,7 +1131,7 @@ export function EventOperationsClient({
                         value={String(row.eventCheckStatus)}
                         options={EVENT_CHECK_OPTIONS}
                         onSave={(v) =>
-                          updateEventField(row.id, { event_check_status: v ? parseInt(v) : null })
+                          updateEventDateField(row.id, row.dateKey, { event_check_status: v ? parseInt(v) : null })
                         }
                       />
                     </td>
@@ -1129,7 +1140,7 @@ export function EventOperationsClient({
                       <InlineSelect
                         value={row.suppliesStatus}
                         options={SUPPLIES_STATUS_OPTIONS}
-                        onSave={(v) => updateEventField(row.id, { supplies_status: v })}
+                        onSave={(v) => updateEventDateField(row.id, row.dateKey, { supplies_status: v })}
                       />
                     </td>
 
@@ -1138,7 +1149,7 @@ export function EventOperationsClient({
                       <SingleAdminPicker
                         adminId={row.suppliesAdminId}
                         admins={admins}
-                        onSave={(id) => updateEventField(row.id, { supplies_admin_id: id })}
+                        onSave={(id) => updateEventDateField(row.id, row.dateKey, { supplies_admin_id: id })}
                       />
                     </td>
 
@@ -1147,7 +1158,7 @@ export function EventOperationsClient({
                         value={row.preNoticeSent}
                         trueLabel="발송"
                         falseLabel="예정"
-                        onSave={(v) => updateEventField(row.id, { pre_notice_sent: v })}
+                        onSave={(v) => saveDateField(row, { pre_notice_sent: v })}
                       />
                     </td>
 
@@ -1192,7 +1203,7 @@ export function EventOperationsClient({
                       <InlineSelect
                         value={row.groupChatStatus}
                         options={GROUP_CHAT_STATUS_OPTIONS}
-                        onSave={(v) => updateEventField(row.id, { group_chat_status: v })}
+                        onSave={(v) => updateEventDateField(row.id, row.dateKey, { group_chat_status: v })}
                       />
                     </td>
 
@@ -1206,7 +1217,7 @@ export function EventOperationsClient({
                         value={row.institutionRequestDelivered}
                         trueLabel="완료"
                         falseLabel="예정"
-                        onSave={(v) => updateEventField(row.id, { institution_request_delivered: v })}
+                        onSave={(v) => saveDateField(row, { institution_request_delivered: v })}
                       />
                     </td>
 
@@ -1222,7 +1233,7 @@ export function EventOperationsClient({
                       <InlineTextCell
                         value={row.remarks}
                         placeholder="비고 입력"
-                        onSave={(v) => updateEventField(row.id, { remarks: v })}
+                        onSave={(v) => updateEventDateField(row.id, row.dateKey, { remarks: v })}
                       />
                     </td>
 
@@ -1284,7 +1295,7 @@ export function EventOperationsClient({
                       ) : (
                         <button
                           type="button"
-                          onClick={() => handleCrimeCheckNotify(row.id)}
+                          onClick={() => handleCrimeCheckNotify(row.id, row.dateKey)}
                           disabled={isPending}
                           className="px-2 py-0.5 text-[11px] border border-primary-300 text-primary-600 rounded hover:bg-primary-50 transition-colors disabled:opacity-50 whitespace-nowrap"
                         >
@@ -1315,7 +1326,7 @@ export function EventOperationsClient({
                       <InlineSelect
                         value={row.crimeCheckDelivered}
                         options={CRIME_CHECK_DELIVERED_OPTIONS}
-                        onSave={(v) => updateEventField(row.id, { crime_check_delivered: v })}
+                        onSave={(v) => saveDateField(row, { crime_check_delivered: v })}
                       />
                     </td>
 
@@ -1339,7 +1350,7 @@ export function EventOperationsClient({
                         value={row.photoSent}
                         trueLabel="발송"
                         falseLabel="미발송"
-                        onSave={(v) => updateEventField(row.id, { photo_sent: v })}
+                        onSave={(v) => saveDateField(row, { photo_sent: v })}
                       />
                     </td>
 
@@ -1374,7 +1385,7 @@ export function EventOperationsClient({
                       <InlineSelect
                         value={row.contractStatus}
                         options={CONTRACT_STATUS_OPTIONS}
-                        onSave={(v) => updateEventField(row.id, { contract_status: v })}
+                        onSave={(v) => saveDateField(row, { contract_status: v })}
                       />
                     </td>
 

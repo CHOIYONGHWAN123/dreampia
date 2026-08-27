@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { deleteEvent } from "@/app/(dashboard)/events/actions";
+import { updateEventDateField } from "@/app/(dashboard)/event-operations/actions";
 
 type Institution = {
   id: string;
@@ -28,6 +29,8 @@ type Event = {
   admin_docs_delivered: boolean | null;
   contract_status: string | null;
   supplies_status: string | null;
+  dateKey: string | null;
+  hasMultipleDates: boolean;
 };
 
 const DISABLED_BTN =
@@ -95,9 +98,16 @@ export function InstitutionDetailClient({
     if (!error) patchEvent(eventId, { [field]: value } as Partial<Event>);
   };
 
-  // 준비물 준비 상태를 "준비 완료"로 바꾸면 work_logs에 로그를 남긴다.
-  const handleSuppliesStatusChange = async (eventId: string, value: string) => {
-    await handleUpdateField(eventId, "supplies_status", value);
+  // 준비물(supplies_status)은 이제 날짜별 값이라 events가 아니라 event_dates에 쓴다.
+  // "준비 완료"로 바꾸면 work_logs에 로그를 남긴다.
+  const handleSuppliesStatusChange = async (eventId: string, dateKey: string, value: string) => {
+    try {
+      await updateEventDateField(eventId, dateKey, { supplies_status: value });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "저장에 실패했습니다.");
+      return;
+    }
+    patchEvent(eventId, { supplies_status: value });
     if (value === "준비 완료") {
       const {
         data: { user },
@@ -430,21 +440,30 @@ export function InstitutionDetailClient({
                       </Link>
                     </td>
 
-                    {/* 준비물 준비 */}
+                    {/* 준비물 준비 — 날짜가 여러 개인 행사는 한 셀로 대표할 수 없어 행사운영확인표로 안내 */}
                     <td className="px-3 py-2.5 text-center">
-                      <select
-                        value={event.supplies_status ?? "체크 전"}
-                        onChange={(e) =>
-                          handleSuppliesStatusChange(event.id, e.target.value)
-                        }
-                        className={SELECT_CLS}
-                      >
-                        {SUPPLIES_STATUS_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
+                      {event.hasMultipleDates || !event.dateKey ? (
+                        <Link
+                          href="/event-operations"
+                          className="text-xs text-primary-600 underline whitespace-nowrap"
+                        >
+                          행사운영확인표에서 확인
+                        </Link>
+                      ) : (
+                        <select
+                          value={event.supplies_status ?? "체크 전"}
+                          onChange={(e) =>
+                            handleSuppliesStatusChange(event.id, event.dateKey as string, e.target.value)
+                          }
+                          className={SELECT_CLS}
+                        >
+                          {SUPPLIES_STATUS_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </td>
 
                     {/* 강사섭외일자 */}

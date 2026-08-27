@@ -30,6 +30,7 @@ import {
   type UnitOption,
   type MentorOption,
   type SelectedProgramUnit,
+  type DateGroup,
 } from './EventProgramUnitSection'
 
 type Institution = {
@@ -79,6 +80,7 @@ interface Props {
   initialTransactionStatementFileUrl?: string | null
   initialPhotosByRow?: Record<string, EventRowPhoto[]>
   initialNoticeFiles?: EventNoticeFile[]
+  initialDateGroups?: DateGroup[]
 }
 
 function splitDateTime(value: string | null): { date: string; time: string } {
@@ -235,6 +237,7 @@ export function EventForm({
   initialTransactionStatementFileUrl,
   initialPhotosByRow,
   initialNoticeFiles,
+  initialDateGroups,
 }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -248,6 +251,7 @@ export function EventForm({
   const [programUnits, setProgramUnits] = useState<SelectedProgramUnit[]>(() =>
     buildInitialProgramUnits(initialEventRows, units, programs, occupations, fields)
   )
+  const [dateGroups, setDateGroups] = useState<DateGroup[]>(initialDateGroups ?? [])
   const [scheduleEntries, setScheduleEntries] = useState<ScheduleEntry[]>(() =>
     buildInitialSchedules(initialSchedules)
   )
@@ -486,6 +490,7 @@ export function EventForm({
           dreampia_material_cost:
             u.dreampiaMaterialCost === u.dreampiaMaterialCostDefault ? null : u.dreampiaMaterialCost,
         })),
+        dateGroups: dateGroups.map((g) => ({ id: g.id, name: g.name, dates: g.dates })),
       }
 
       try {
@@ -1158,6 +1163,8 @@ export function EventForm({
           mentorsByUnit={mentorsByUnit}
           value={programUnits}
           onChange={setProgramUnits}
+          dateGroups={dateGroups}
+          onDateGroupsChange={setDateGroups}
           photosByRow={initialPhotosByRow}
           defaultStartTime={(() => {
             const d = watch('event_start_date'), t = watch('event_start_at_time')

@@ -5,10 +5,12 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { HeaderFilter } from '@/components/ui/HeaderFilter'
+import { updateEventDateField } from '@/app/(dashboard)/event-operations/actions'
 
 export type SuppliesTaskRow = {
   no: number
   id: string
+  dateKey: string
   institutionId: string | null
   institutionName: string | null
   eventStartAt: string | null
@@ -100,11 +102,13 @@ export function SuppliesTaskClient({ rows }: { rows: SuppliesTaskRow[] }) {
     })
   }, [rows, startDate, endDate, salesAdminFilter, commAdminFilter])
 
-  // "준비 완료"로 바꾸면 work_logs에 로그를 남긴다.
-  const handleSuppliesStatusChange = async (eventId: string, value: string) => {
-    const { error } = await supabase.from('events').update({ supplies_status: value }).eq('id', eventId)
-    if (error) {
-      alert(error.message)
+  // "준비 완료"로 바꾸면 work_logs에 로그를 남긴다. 준비물(supplies_status)은 C(날짜 단위)라
+  // 그룹 여부와 무관하게 항상 event_dates에 쓴다.
+  const handleSuppliesStatusChange = async (eventId: string, dateKey: string, value: string) => {
+    try {
+      await updateEventDateField(eventId, dateKey, { supplies_status: value })
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
       return
     }
     if (value === '준비 완료') {
@@ -161,7 +165,7 @@ export function SuppliesTaskClient({ rows }: { rows: SuppliesTaskRow[] }) {
           <tbody>
             {filteredRows.length > 0 ? (
               filteredRows.map((row, index) => (
-                <tr key={row.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
+                <tr key={row.id + row.dateKey} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
                   <td className="px-4 py-2.5 text-center text-gray-600">{index + 1}</td>
                   <td className="px-4 py-2.5 text-center text-gray-800 whitespace-nowrap">
                     {fmtEventDateRange(row.eventStartAt, row.eventEndAt)}
@@ -183,7 +187,7 @@ export function SuppliesTaskClient({ rows }: { rows: SuppliesTaskRow[] }) {
                   <td className="px-4 py-2.5 text-center">
                     <select
                       value={row.suppliesStatus ?? '체크 전'}
-                      onChange={(e) => handleSuppliesStatusChange(row.id, e.target.value)}
+                      onChange={(e) => handleSuppliesStatusChange(row.id, row.dateKey, e.target.value)}
                       className={SELECT_CLS}
                     >
                       {SUPPLIES_STATUS_OPTIONS.map((option) => (

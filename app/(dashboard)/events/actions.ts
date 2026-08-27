@@ -60,6 +60,87 @@ async function insertSupplyLogs(supabase: Supabase, logs: SupplyLogEntry[]) {
   if (error) throw new Error(error.message)
 }
 
+// ── 날짜 그룹(event_dates / event_groups) 동기화 ────────────────────────
+
+type DateGroupInput = { id?: string | null; name: string; dates: string[] }
+
+/**
+ * event_rows 저장이 끝난 뒤 호출한다. 이 행사의 실제 수업일마다 event_dates 행이 있도록
+ * 맞추고(새 날짜는 기본값으로 생성, 더 이상 없는 날짜는 삭제), 제출된 dateGroups를 기준으로
+ * event_groups/event_dates.group_id를 통째로 다시 맞춘다(일정표·공지파일과 동일하게
+ * "제출된 상태로 완전히 교체" 방식 — 그룹은 event_rows 외에 다른 곳에서 참조하지 않는다).
+ */
+async function syncEventDatesAndGroups(
+  supabase: Supabase,
+  eventId: string,
+  dateGroups: DateGroupInput[] | undefined
+) {
+  const { data: rows } = await supabase
+    .from('event_rows')
+    .select('start_time')
+    .eq('event_id', eventId)
+    .not('start_time', 'is', null)
+  const distinctDates = [...new Set((rows ?? []).map((r) => (r.start_time as string).slice(0, 10)))]
+
+  const { data: existingDates } = await supabase.from('event_dates').select('id, date').eq('event_id', eventId)
+
+  const staleIds = (existingDates ?? []).filter((d) => !distinctDates.includes(d.date)).map((d) => d.id)
+  if (staleIds.length > 0) {
+    const { error } = await supabase.from('event_dates').delete().in('id', staleIds)
+    if (error) throw new Error(error.message)
+  }
+
+  const existingDateSet = new Set((existingDates ?? []).map((d) => d.date))
+  const newDates = distinctDates.filter((d) => !existingDateSet.has(d))
+  if (newDates.length > 0) {
+    const { error } = await supabase
+      .from('event_dates')
+      .insert(newDates.map((date) => ({ event_id: eventId, date })))
+    if (error) throw new Error(error.message)
+  }
+
+  // 그룹 배정은 통째로 다시 계산한다 — 먼저 전부 해제한 뒤, 제출된 그룹 정보로 다시 지정.
+  const { error: clearErr } = await supabase
+    .from('event_dates')
+    .update({ group_id: null })
+    .eq('event_id', eventId)
+  if (clearErr) throw new Error(clearErr.message)
+
+  const groups = (dateGroups ?? []).filter((g) => g.dates.length >= 2 && g.name.trim())
+  const keptGroupIds: string[] = []
+  for (const g of groups) {
+    let groupId = g.id ?? null
+    if (groupId) {
+      const { error } = await supabase.from('event_groups').update({ name: g.name }).eq('id', groupId)
+      if (error) throw new Error(error.message)
+    } else {
+      const { data: newGroup, error } = await supabase
+        .from('event_groups')
+        .insert({ event_id: eventId, name: g.name })
+        .select('id')
+        .single()
+      if (error) throw new Error(error.message)
+      groupId = newGroup.id
+    }
+    if (!groupId) continue
+    keptGroupIds.push(groupId)
+    const { error: assignErr } = await supabase
+      .from('event_dates')
+      .update({ group_id: groupId })
+      .eq('event_id', eventId)
+      .in('date', g.dates)
+    if (assignErr) throw new Error(assignErr.message)
+  }
+
+  // 더 이상 어떤 날짜도 가리키지 않게 된 기존 그룹은 정리한다.
+  const { data: allGroups } = await supabase.from('event_groups').select('id').eq('event_id', eventId)
+  const orphanIds = (allGroups ?? []).map((g) => g.id).filter((gid) => !keptGroupIds.includes(gid))
+  if (orphanIds.length > 0) {
+    const { error } = await supabase.from('event_groups').delete().in('id', orphanIds)
+    if (error) throw new Error(error.message)
+  }
+}
+
 // ──────────────────────────────────────────────────────────────────
 
 type ScheduleInput = {
@@ -194,26 +275,31 @@ export type EventRowDetailData = {
 export type EventRowPhoto = { id: string; url: string }
 export type EventNoticeFile = { id: string; url: string }
 
+export type EventDateGroup = { id: string | null; name: string; dates: string[] }
+
 export async function getEventDetail(id: string): Promise<{
   event: EventDetailData
   schedules: EventScheduleRow[]
   eventRows: EventRowDetailData[]
   photosByRow: Record<string, EventRowPhoto[]>
   noticeFiles: EventNoticeFile[]
+  dateGroups: EventDateGroup[]
 } | null> {
   const supabase = await createServerSupabaseClient()
-  const [{ data: event }, { data: schedules }, { data: eventRows }, { data: noticeFiles }] = await Promise.all([
-    supabase.from('events').select(EVENT_DETAIL_COLUMNS).eq('id', id).single(),
-    supabase.from('event_schedules').select('label, start_time, end_time').eq('event_id', id).order('sort_order'),
-    supabase
-      .from('event_rows')
-      .select(
-        'id, occupation_program_unit_id, start_time, end_time, classroom, instructor_waiting_room, target, lecture_fee, headcount, session_headcount, mentor_id, school_request_response, remarks, attendance, criminal_background_check, supplies_prepared, mentor_material_cost, dreampia_material_cost'
-      )
-      .eq('event_id', id)
-      .order('start_time', { ascending: true, nullsFirst: false }),
-    supabase.from('event_notice_files').select('id, url').eq('event_id', id).order('created_at'),
-  ])
+  const [{ data: event }, { data: schedules }, { data: eventRows }, { data: noticeFiles }, { data: eventDates }] =
+    await Promise.all([
+      supabase.from('events').select(EVENT_DETAIL_COLUMNS).eq('id', id).single(),
+      supabase.from('event_schedules').select('label, start_time, end_time').eq('event_id', id).order('sort_order'),
+      supabase
+        .from('event_rows')
+        .select(
+          'id, occupation_program_unit_id, start_time, end_time, classroom, instructor_waiting_room, target, lecture_fee, headcount, session_headcount, mentor_id, school_request_response, remarks, attendance, criminal_background_check, supplies_prepared, mentor_material_cost, dreampia_material_cost'
+        )
+        .eq('event_id', id)
+        .order('start_time', { ascending: true, nullsFirst: false }),
+      supabase.from('event_notice_files').select('id, url').eq('event_id', id).order('created_at'),
+      supabase.from('event_dates').select('date, group_id').eq('event_id', id).not('group_id', 'is', null),
+    ])
   if (!event) return null
 
   const rowIds = (eventRows ?? []).map((r) => r.id)
@@ -228,7 +314,26 @@ export async function getEventDetail(id: string): Promise<{
     photosByRow[p.event_rows_id] = list
   }
 
-  return { event, schedules: schedules ?? [], eventRows: eventRows ?? [], photosByRow, noticeFiles: noticeFiles ?? [] }
+  // 날짜 그룹 복원 — group_id별로 날짜를 묶고, 그룹 이름은 event_groups에서 조회.
+  const groupIds = [...new Set((eventDates ?? []).map((d) => d.group_id).filter(Boolean))] as string[]
+  const { data: groups } = groupIds.length
+    ? await supabase.from('event_groups').select('id, name').in('id', groupIds)
+    : { data: [] as { id: string; name: string }[] }
+  const groupNameMap = new Map((groups ?? []).map((g) => [g.id, g.name]))
+  const datesByGroup = new Map<string, string[]>()
+  for (const d of eventDates ?? []) {
+    if (!d.group_id) continue
+    const list = datesByGroup.get(d.group_id) ?? []
+    list.push(d.date)
+    datesByGroup.set(d.group_id, list)
+  }
+  const dateGroups: EventDateGroup[] = [...datesByGroup.entries()].map(([groupId, dates]) => ({
+    id: groupId,
+    name: groupNameMap.get(groupId) ?? '',
+    dates: dates.sort(),
+  }))
+
+  return { event, schedules: schedules ?? [], eventRows: eventRows ?? [], photosByRow, noticeFiles: noticeFiles ?? [], dateGroups }
 }
 
 export async function getEventProgramSelectData(): Promise<EventProgramSelectData> {
@@ -350,6 +455,7 @@ export async function createEvent(data: {
   schedules?: ScheduleInput[]
   eventRows?: EventRowInput[]
   noticeFileUrls?: string[]
+  dateGroups?: DateGroupInput[]
 }) {
   const supabase = await createServerSupabaseClient()
 
@@ -479,6 +585,8 @@ export async function createEvent(data: {
     await insertSupplyLogs(supabase, supplyLogs)
   }
 
+  await syncEventDatesAndGroups(supabase, event.id, data.dateGroups)
+
   revalidatePath('/institutions')
   return event.id
 }
@@ -526,6 +634,7 @@ export async function updateEvent(
     schedules?: ScheduleInput[]
     eventRows?: EventRowInput[]
     noticeFileUrls?: string[]
+    dateGroups?: DateGroupInput[]
   }
 ) {
   const supabase = await createServerSupabaseClient()
@@ -715,8 +824,11 @@ export async function updateEvent(
 
   await insertSupplyLogs(supabase, supplyLogs)
 
+  await syncEventDatesAndGroups(supabase, id, data.dateGroups)
+
   revalidatePath('/institutions')
   revalidatePath(`/events/${id}`)
+  revalidatePath('/event-operations')
 }
 
 // 회보서(criminal_background_check)는 멘토가 직접 앱에서 올리는 것이 기본이지만,

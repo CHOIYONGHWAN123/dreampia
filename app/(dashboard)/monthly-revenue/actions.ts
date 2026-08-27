@@ -1,6 +1,7 @@
 'use server'
 
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { fetchResolvedEventDates, toDateKey } from '@/lib/event-dates'
 
 // 행사가 여러 달에 걸치더라도 계약금(budget)은 행사 단위 값이라 나눠 배분할 수 없으므로,
 // 행사 시작월(event_start_at) 하나에만 귀속시킨다(이중집계 방지).
@@ -55,7 +56,7 @@ export async function getMonthlyRevenue(year: number, month: number): Promise<Mo
 
   const { data: events } = await supabase
     .from('events')
-    .select('id, name, institution_id, budget, contract_status, event_start_at')
+    .select('id, name, institution_id, budget, event_start_at')
     .gte('event_start_at', monthStart)
     .lt('event_start_at', monthEnd)
     .order('event_start_at')
@@ -68,7 +69,7 @@ export async function getMonthlyRevenue(year: number, month: number): Promise<Mo
   const eventIds = events.map((e) => e.id)
   const institutionIds = [...new Set(events.map((e) => e.institution_id).filter(Boolean))] as string[]
 
-  const [eventRowsRes, institutionsRes] = await Promise.all([
+  const [eventRowsRes, institutionsRes, resolvedDates] = await Promise.all([
     supabase
       .from('event_rows')
       .select('event_id, headcount, lecture_fee, occupation_program_unit_id, mentor_material_cost, dreampia_material_cost')
@@ -76,6 +77,7 @@ export async function getMonthlyRevenue(year: number, month: number): Promise<Mo
     institutionIds.length > 0
       ? supabase.from('institutions').select('id, name').in('id', institutionIds)
       : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+    fetchResolvedEventDates(supabase, eventIds),
   ])
 
   const eventRows = eventRowsRes.data ?? []
@@ -133,12 +135,15 @@ export async function getMonthlyRevenue(year: number, month: number): Promise<Mo
     }
     const contractAmount = e.budget ?? 0
     const revenue = contractAmount - lectureFeeTotal - materialCostTotal
+    // 계약현황(contract_status)은 이제 날짜별(그룹 있으면 그룹) 값이라, 이 리포트가 행사를
+    // 귀속시키는 기준일(event_start_at)의 값을 대표값으로 보여준다.
+    const resolved = e.event_start_at ? resolvedDates.get(`${e.id}|${toDateKey(new Date(e.event_start_at))}`) : undefined
     return {
       eventId: e.id,
       eventName: e.name,
       institutionName: e.institution_id ? (institutionMap.get(e.institution_id) ?? '-') : '-',
       eventStartAt: e.event_start_at,
-      contractStatus: e.contract_status,
+      contractStatus: resolved?.contractStatus ?? null,
       contractAmount,
       lectureFeeTotal,
       materialCostTotal,

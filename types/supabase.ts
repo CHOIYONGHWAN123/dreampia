@@ -209,6 +209,184 @@ export type Database = {
           },
         ]
       }
+      event_dates: {
+        Row: {
+          contract_status: Database["public"]["Enums"]["contract_status"] | null
+          crime_check_delivered:
+            | Database["public"]["Enums"]["crime_check_delivered_status"]
+            | null
+          crime_check_notified: boolean | null
+          date: string
+          event_check_status: number
+          event_id: string
+          field_admin_ids: string[] | null
+          group_chat_status: string | null
+          group_id: string | null
+          id: string
+          institution_request_delivered: boolean | null
+          photo_sent: boolean | null
+          pre_notice_sent: boolean
+          remarks: string | null
+          supplies_admin_id: string | null
+          supplies_status: Database["public"]["Enums"]["supplies_status"] | null
+        }
+        Insert: {
+          contract_status?:
+            | Database["public"]["Enums"]["contract_status"]
+            | null
+          crime_check_delivered?:
+            | Database["public"]["Enums"]["crime_check_delivered_status"]
+            | null
+          crime_check_notified?: boolean | null
+          date: string
+          event_check_status?: number
+          event_id: string
+          field_admin_ids?: string[] | null
+          group_chat_status?: string | null
+          group_id?: string | null
+          id?: string
+          institution_request_delivered?: boolean | null
+          photo_sent?: boolean | null
+          pre_notice_sent?: boolean
+          remarks?: string | null
+          supplies_admin_id?: string | null
+          supplies_status?:
+            | Database["public"]["Enums"]["supplies_status"]
+            | null
+        }
+        Update: {
+          contract_status?:
+            | Database["public"]["Enums"]["contract_status"]
+            | null
+          crime_check_delivered?:
+            | Database["public"]["Enums"]["crime_check_delivered_status"]
+            | null
+          crime_check_notified?: boolean | null
+          date?: string
+          event_check_status?: number
+          event_id?: string
+          field_admin_ids?: string[] | null
+          group_chat_status?: string | null
+          group_id?: string | null
+          id?: string
+          institution_request_delivered?: boolean | null
+          photo_sent?: boolean | null
+          pre_notice_sent?: boolean
+          remarks?: string | null
+          supplies_admin_id?: string | null
+          supplies_status?:
+            | Database["public"]["Enums"]["supplies_status"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_dates_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_dates_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_dates_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_invitation_requests"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_dates_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "event_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_dates_supplies_admin_id_fkey"
+            columns: ["supplies_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_groups: {
+        Row: {
+          contract_status: Database["public"]["Enums"]["contract_status"] | null
+          created_at: string
+          crime_check_delivered:
+            | Database["public"]["Enums"]["crime_check_delivered_status"]
+            | null
+          crime_check_notified: boolean | null
+          event_id: string
+          id: string
+          institution_request_delivered: boolean | null
+          name: string
+          photo_sent: boolean | null
+          pre_notice_sent: boolean
+        }
+        Insert: {
+          contract_status?:
+            | Database["public"]["Enums"]["contract_status"]
+            | null
+          created_at?: string
+          crime_check_delivered?:
+            | Database["public"]["Enums"]["crime_check_delivered_status"]
+            | null
+          crime_check_notified?: boolean | null
+          event_id: string
+          id?: string
+          institution_request_delivered?: boolean | null
+          name: string
+          photo_sent?: boolean | null
+          pre_notice_sent?: boolean
+        }
+        Update: {
+          contract_status?:
+            | Database["public"]["Enums"]["contract_status"]
+            | null
+          created_at?: string
+          crime_check_delivered?:
+            | Database["public"]["Enums"]["crime_check_delivered_status"]
+            | null
+          crime_check_notified?: boolean | null
+          event_id?: string
+          id?: string
+          institution_request_delivered?: boolean | null
+          name?: string
+          photo_sent?: boolean | null
+          pre_notice_sent?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_groups_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_groups_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_groups_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_invitation_requests"
+            referencedColumns: ["event_id"]
+          },
+        ]
+      }
       event_notice_files: {
         Row: {
           created_at: string

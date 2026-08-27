@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { HeaderFilter } from '@/components/ui/HeaderFilter'
+import { updateEventDateField, updateEventGroupField } from '@/app/(dashboard)/event-operations/actions'
 
 export type PhotoDeliveryRow = {
   no: number
   id: string
+  dateKey: string
+  groupId: string | null
   institutionId: string | null
   institutionName: string | null
   eventStartAt: string | null
@@ -86,16 +89,16 @@ export function PhotoDeliveryClient({ rows }: { rows: PhotoDeliveryRow[] }) {
     })
   }, [rows, startDate, endDate, salesAdminFilter, commAdminFilter])
 
-  const handleMarkSent = async (eventId: string) => {
+  const handleMarkSent = async (row: PhotoDeliveryRow) => {
     if (!confirm('행사 사진 전달을 완료하셨습니까?')) return
 
-    setUpdatingId(eventId)
+    setUpdatingId(row.id + row.dateKey)
     try {
-      const { error } = await supabase
-        .from('events')
-        .update({ photo_sent: true })
-        .eq('id', eventId)
-      if (error) throw new Error(error.message)
+      if (row.groupId) {
+        await updateEventGroupField(row.groupId, { photo_sent: true })
+      } else {
+        await updateEventDateField(row.id, row.dateKey, { photo_sent: true })
+      }
 
       const {
         data: { user },
@@ -103,7 +106,7 @@ export function PhotoDeliveryClient({ rows }: { rows: PhotoDeliveryRow[] }) {
       if (user) {
         const { error: logErr } = await supabase
           .from('work_logs')
-          .insert({ admin_id: user.id, event_id: eventId, task_type: '행사 사진 전달' })
+          .insert({ admin_id: user.id, event_id: row.id, task_type: '행사 사진 전달' })
         if (logErr) throw new Error(logErr.message)
       }
 
@@ -156,7 +159,7 @@ export function PhotoDeliveryClient({ rows }: { rows: PhotoDeliveryRow[] }) {
           <tbody>
             {filteredRows.length > 0 ? (
               filteredRows.map((row) => (
-                <tr key={row.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
+                <tr key={row.id + row.dateKey} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
                   <td className="px-4 py-2.5 text-center text-gray-600">{row.no}</td>
                   <td className="px-4 py-2.5 text-center text-gray-800 whitespace-nowrap">
                     {fmtEventDateRange(row.eventStartAt, row.eventEndAt)}
@@ -178,11 +181,11 @@ export function PhotoDeliveryClient({ rows }: { rows: PhotoDeliveryRow[] }) {
                   <td className="px-4 py-2.5 text-center">
                     <button
                       type="button"
-                      disabled={updatingId === row.id}
-                      onClick={() => handleMarkSent(row.id)}
+                      disabled={updatingId === row.id + row.dateKey}
+                      onClick={() => handleMarkSent(row)}
                       className="px-3 py-1 text-xs bg-primary-500 text-white rounded-full hover:bg-primary-600 transition-colors disabled:opacity-50 whitespace-nowrap"
                     >
-                      {updatingId === row.id ? '처리중...' : '전달 완료'}
+                      {updatingId === row.id + row.dateKey ? '처리중...' : '전달 완료'}
                     </button>
                   </td>
                 </tr>
