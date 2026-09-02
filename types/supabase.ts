@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   graphql_public: {
     Tables: {
@@ -1533,6 +1533,7 @@ export type Database = {
           created_at: string
           criminal_record_consent_file_url: string | null
           detail_address: string | null
+          has_vehicle: boolean | null
           id: string
           id_card_file_url: string | null
           id_number: string | null
@@ -1547,6 +1548,7 @@ export type Database = {
           terms_agreed_at: string | null
           terms_version_id: string | null
           user_id: string | null
+          vehicle_info: string | null
         }
         Insert: {
           address?: string | null
@@ -1560,6 +1562,7 @@ export type Database = {
           created_at?: string
           criminal_record_consent_file_url?: string | null
           detail_address?: string | null
+          has_vehicle?: boolean | null
           id?: string
           id_card_file_url?: string | null
           id_number?: string | null
@@ -1574,6 +1577,7 @@ export type Database = {
           terms_agreed_at?: string | null
           terms_version_id?: string | null
           user_id?: string | null
+          vehicle_info?: string | null
         }
         Update: {
           address?: string | null
@@ -1587,6 +1591,7 @@ export type Database = {
           created_at?: string
           criminal_record_consent_file_url?: string | null
           detail_address?: string | null
+          has_vehicle?: boolean | null
           id?: string
           id_card_file_url?: string | null
           id_number?: string | null
@@ -1601,6 +1606,7 @@ export type Database = {
           terms_agreed_at?: string | null
           terms_version_id?: string | null
           user_id?: string | null
+          vehicle_info?: string | null
         }
         Relationships: [
           {
@@ -2035,12 +2041,19 @@ export type Database = {
           attendance: boolean | null
           classroom: string | null
           crime_check_info: string | null
+          crime_check_method:
+            | Database["public"]["Enums"]["crime_check_method"]
+            | null
           criminal_background_check: string | null
           dreampia_material_cost: number | null
           end_time: string | null
+          event_category_name: string | null
           event_id: string | null
           event_name: string | null
           event_row_id: string | null
+          event_schedules: Json | null
+          floor_map_url: string | null
+          has_elevator: Database["public"]["Enums"]["elevator_status"] | null
           headcount: number | null
           indoor_shoes_note: string | null
           institution_address: string | null
@@ -2062,10 +2075,12 @@ export type Database = {
           prep_by: Database["public"]["Enums"]["prep_by"] | null
           preparing: boolean | null
           program_name: string | null
+          school_request_note: string | null
           session_headcount: string | null
           start_time: string | null
           student_rotation: string | null
           target: string | null
+          target_grade: string | null
           unit_id: string | null
           unit_title: string | null
         }
@@ -2254,12 +2269,17 @@ export type Database = {
           attendance: boolean
           classroom: string
           crime_check_info: string
+          crime_check_method: Database["public"]["Enums"]["crime_check_method"]
           criminal_background_check: string
           dreampia_material_cost: number
           end_time: string
+          event_category_name: string
           event_id: string
           event_name: string
           event_row_id: string
+          event_schedules: Json
+          floor_map_url: string
+          has_elevator: Database["public"]["Enums"]["elevator_status"]
           headcount: number
           indoor_shoes_note: string
           institution_address: string
@@ -2281,10 +2301,12 @@ export type Database = {
           prep_by: Database["public"]["Enums"]["prep_by"]
           preparing: boolean
           program_name: string
+          school_request_note: string
           session_headcount: string
           start_time: string
           student_rotation: string
           target: string
+          target_grade: string
           unit_id: string
           unit_title: string
         }[]
@@ -2416,12 +2438,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2445,11 +2467,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2470,11 +2492,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2495,11 +2517,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2512,11 +2534,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
