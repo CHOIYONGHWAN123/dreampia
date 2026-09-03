@@ -60,6 +60,26 @@ async function insertSupplyLogs(supabase: Supabase, logs: SupplyLogEntry[]) {
   if (error) throw new Error(error.message)
 }
 
+// ── Storage 정리 헬퍼 ──────────────────────────────────────────────
+
+// 공개 버킷은 값이 전체 공개 URL로 저장되어 있을 수 있고(getPublicUrl 결과 그대로 저장),
+// private 버킷(events 등)은 버킷 내부 경로만 저장된다(criminal-background-check의
+// toCbcStoragePath와 동일한 패턴). 두 경우 모두 처리할 수 있게 마커로 경로만 뽑아낸다.
+function extractStoragePath(bucket: string, value: string): string {
+  const marker = `/object/public/${bucket}/`
+  const idx = value.indexOf(marker)
+  return idx >= 0 ? value.slice(idx + marker.length) : value
+}
+
+// 행사/일정 삭제 시 딸려있던 파일도 함께 지운다. DB row는 이미 지워졌거나 지워질 것이므로,
+// 여기서 실패해도(네트워크 오류 등) 삭제 자체를 막을 이유는 없어 best-effort로 로그만 남긴다.
+async function removeStorageObjects(supabase: Supabase, bucket: string, values: (string | null)[]) {
+  const paths = [...new Set(values.filter((v): v is string => !!v).map((v) => extractStoragePath(bucket, v)))]
+  if (paths.length === 0) return
+  const { error } = await supabase.storage.from(bucket).remove(paths)
+  if (error) console.error(`[deleteEvent] storage remove failed (${bucket})`, error.message)
+}
+
 // ── 날짜 그룹(event_dates / event_groups) 동기화 ────────────────────────
 
 type DateGroupInput = { id?: string | null; name: string; dates: string[] }
@@ -639,6 +659,47 @@ export async function updateEvent(
 ) {
   const supabase = await createServerSupabaseClient()
 
+  const { data: existingEvent, error: existingEventErr } = await supabase
+    .from('events')
+    .select('payment_confirmed')
+    .eq('id', id)
+    .single()
+  if (existingEventErr) throw new Error(existingEventErr.message)
+
+  // event_rows는 attendance 등 폼 외부에서 채워지는 값이 있으므로 통째로 갈아엎지 않고
+  // event_row id 기준으로 매칭해 갱신한다 (동일 프로그램 유닛이 여러 행으로 존재할 수 있으므로
+  // occupation_program_unit_id가 아닌 행 고유 id로 매칭해야 한다). 폼에서 제거된 행만 삭제한다.
+  const { data: existingRows, error: existingErr } = await supabase
+    .from('event_rows')
+    .select('id, occupation_program_unit_id, headcount, lecture_fee, lecture_fee_after_tax')
+    .eq('event_id', id)
+  if (existingErr) throw new Error(existingErr.message)
+
+  const existingById = new Map((existingRows ?? []).map((r) => [r.id, r]))
+  const incomingIds = new Set((data.eventRows ?? []).map((r) => r.id).filter(Boolean) as string[])
+  const rowsToDelete = (existingRows ?? []).filter((r) => !incomingIds.has(r.id))
+
+  // 강사료 지급이 이미 확정(payment_confirmed)된 행사는 정산에 영향을 주는 변경(일정 추가/삭제,
+  // 인원수·강의료 변경)을 막는다 — 강사료 정산 화면이 event_rows를 실시간 조회하는 구조라,
+  // 지급 이후 이 값들이 바뀌면 "이미 지급한 금액"과 "화면에 표시되는 금액"이 조용히 어긋난다.
+  if (existingEvent.payment_confirmed) {
+    const hasRemoved = rowsToDelete.length > 0
+    const hasAdded = (data.eventRows ?? []).some((r) => !r.id)
+    const hasFeeChange = (data.eventRows ?? []).some((r) => {
+      if (!r.id) return false
+      const existing = existingById.get(r.id)
+      if (!existing) return false
+      return (
+        (r.headcount ?? null) !== (existing.headcount ?? null) ||
+        (r.lecture_fee ?? null) !== (existing.lecture_fee ?? null) ||
+        (r.lecture_fee_after_tax ?? null) !== (existing.lecture_fee_after_tax ?? null)
+      )
+    })
+    if (hasRemoved || hasAdded || hasFeeChange) {
+      throw new Error('강사료 지급이 확정된 행사입니다. 일정 구성/인원수/강의료를 변경하려면 먼저 지급확정을 해제해주세요.')
+    }
+  }
+
   const payload: Record<string, unknown> = {
     name: data.name,
     institution_id: data.institution_id || null,
@@ -714,19 +775,7 @@ export async function updateEvent(
     if (noticeFilesErr) throw new Error(noticeFilesErr.message)
   }
 
-  // event_rows는 attendance 등 폼 외부에서 채워지는 값이 있으므로 통째로 갈아엎지 않고
-  // event_row id 기준으로 매칭해 갱신한다 (동일 프로그램 유닛이 여러 행으로 존재할 수 있으므로
-  // occupation_program_unit_id가 아닌 행 고유 id로 매칭해야 한다). 폼에서 제거된 행만 삭제한다.
-  const { data: existingRows, error: existingErr } = await supabase
-    .from('event_rows')
-    .select('id, occupation_program_unit_id, headcount')
-    .eq('event_id', id)
-  if (existingErr) throw new Error(existingErr.message)
-
-  const existingById = new Map((existingRows ?? []).map((r) => [r.id, r]))
-  const incomingIds = new Set((data.eventRows ?? []).map((r) => r.id).filter(Boolean) as string[])
-
-  const rowsToDelete = (existingRows ?? []).filter((r) => !incomingIds.has(r.id))
+  // existingRows/existingById/incomingIds/rowsToDelete는 위 payment_confirmed 가드에서 이미 조회했다.
   const idsToDelete = rowsToDelete.map((r) => r.id)
   if (idsToDelete.length > 0) {
     const { error: delErr } = await supabase.from('event_rows').delete().in('id', idsToDelete)
@@ -850,10 +899,24 @@ export async function updateEventRowCriminalBackgroundCheck(
 export async function deleteEvent(id: string) {
   const supabase = await createServerSupabaseClient()
 
-  // 삭제 전 event_rows 조회 → 차감됐던 재고 복원
+  const { data: existingEvent, error: existingEventErr } = await supabase
+    .from('events')
+    .select('payment_confirmed, floor_map_url, estimate_file_url, transaction_statement_file_url')
+    .eq('id', id)
+    .single()
+  if (existingEventErr) throw new Error(existingEventErr.message)
+
+  // 강사료 지급이 이미 확정된 행사는 정산 근거(event_rows)가 통째로 사라지는 걸 막기 위해
+  // 삭제를 차단한다. 삭제하려면 먼저 지급확정을 해제해야 한다.
+  if (existingEvent.payment_confirmed) {
+    throw new Error('강사료 지급이 확정된 행사입니다. 삭제하려면 먼저 지급확정을 해제해주세요.')
+  }
+
+  // 삭제 전 event_rows 조회 → 차감됐던 재고 복원, 배정된 강사 알림, 진행 중인 섭외 취소,
+  // 회보서 파일 정리에 사용
   const { data: rows } = await supabase
     .from('event_rows')
-    .select('id, occupation_program_unit_id, headcount')
+    .select('id, occupation_program_unit_id, headcount, mentor_id, criminal_background_check')
     .eq('event_id', id)
 
   if (rows && rows.length > 0) {
@@ -874,10 +937,69 @@ export async function deleteEvent(id: string) {
       })
     }
     await insertSupplyLogs(supabase, supplyLogs)
+
+    // 배정된 강사가 있는 일정은 mentor_id를 먼저 null로 되돌린다. event_rows를 바로 CASCADE
+    // 삭제하면 배정 취소 알림 트리거(event_rows_notify_assignment_cancelled, mentor_id가
+    // UPDATE로 null이 될 때만 발동)가 걸리지 않아 강사가 아무 통보도 받지 못하기 때문이다.
+    const assignedRowIds = rows.filter((r) => r.mentor_id).map((r) => r.id)
+    if (assignedRowIds.length > 0) {
+      const { error: unassignErr } = await supabase
+        .from('event_rows')
+        .update({ mentor_id: null, preparing: false, attendance: false })
+        .in('id', assignedRowIds)
+      if (unassignErr) throw new Error(unassignErr.message)
+    }
+
+    // 응답 대기 중이던 강사 섭외(invitation)도 함께 정리한다. invitation_event_rows FK가
+    // event_rows에 대해 on delete set null이라 그냥 두면 '발송중' 상태로 데이터에 남는다.
+    const rowIds = rows.map((r) => r.id)
+    const { data: invRows } = await supabase
+      .from('invitation_event_rows')
+      .select('invitation_id')
+      .in('event_row_id', rowIds)
+    const invitationIds = [...new Set((invRows ?? []).map((r) => r.invitation_id))]
+    if (invitationIds.length > 0) {
+      const { error: cancelInvErr } = await supabase
+        .from('invitations')
+        .update({ status: '취소' })
+        .in('id', invitationIds)
+        .eq('status', '발송중')
+      if (cancelInvErr) throw new Error(cancelInvErr.message)
+
+      const { error: cancelMentorsErr } = await supabase
+        .from('invitation_mentors')
+        .update({ status: '마감', responded_at: new Date().toISOString() })
+        .in('invitation_id', invitationIds)
+        .eq('status', '대기')
+      if (cancelMentorsErr) throw new Error(cancelMentorsErr.message)
+    }
   }
+
+  // 삭제될 event_photos(행사 사진)의 파일 URL도 DB row가 사라지기 전에 미리 확보해둔다.
+  const rowIds = (rows ?? []).map((r) => r.id)
+  const { data: photos } =
+    rowIds.length > 0
+      ? await supabase.from('event_photos').select('url').in('event_rows_id', rowIds)
+      : { data: [] as { url: string }[] }
 
   const { error } = await supabase.from('events').delete().eq('id', id)
   if (error) throw new Error(error.message)
 
+  // DB 삭제가 끝난 뒤 딸려있던 Storage 파일을 정리한다(best-effort — 실패해도 삭제 자체는 이미 완료됨).
+  await Promise.all([
+    removeStorageObjects(supabase, 'files', [existingEvent.floor_map_url]),
+    removeStorageObjects(supabase, 'events', [
+      existingEvent.estimate_file_url,
+      existingEvent.transaction_statement_file_url,
+    ]),
+    removeStorageObjects(
+      supabase,
+      'criminal-background-check',
+      (rows ?? []).map((r) => r.criminal_background_check)
+    ),
+    removeStorageObjects(supabase, 'event-photos', (photos ?? []).map((p) => p.url)),
+  ])
+
   revalidatePath('/institutions')
+  revalidatePath(`/events/${id}/recruiting`)
 }

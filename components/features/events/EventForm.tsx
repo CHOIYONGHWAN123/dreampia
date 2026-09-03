@@ -501,8 +501,8 @@ export function EventForm({
           await createEvent(payload)
           router.push('/institutions')
         }
-      } catch {
-        alert('저장에 실패했습니다.')
+      } catch (e) {
+        alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
       }
     })
   }
