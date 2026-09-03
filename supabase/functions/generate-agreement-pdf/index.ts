@@ -56,9 +56,6 @@ const CRIMINAL_RECORD_POSITIONS = {
   name: { x: 330, y: 654, size: 11 },
   idNumber: { x: 390, y: 604, size: 11 },
   phone: { x: 245, y: 557, size: 11 },
-  dateYear: { x: 405, y: 376, size: 10 },
-  dateMonth: { x: 457, y: 376, size: 10 },
-  dateDay: { x: 510, y: 376, size: 10 },
   signerName: { x: 362, y: 329, size: 9 },
   signature: { x: 408, y: 320, width: 60, height: 24 },
 } as const;
@@ -69,9 +66,6 @@ const ADMIN_INFO_POSITIONS = {
   name: { x: 336, y: 147, size: 10 },
   birthDate: { x: 336, y: 128, size: 10 },
   phone: { x: 336, y: 109, size: 10 },
-  dateYear: { x: 335, y: 186, size: 10 },
-  dateMonth: { x: 392, y: 186, size: 10 },
-  dateDay: { x: 422, y: 186, size: 10 },
   signature: { x: 430, y: 142, width: 68, height: 22 },
 } as const;
 
@@ -79,23 +73,9 @@ const ADMIN_INFO_POSITIONS = {
 const CONTRACT_POSITIONS = {
   pageIndex: 3,
   pageHeight: 840,
-  dateYear: { x: 215, y: 382, size: 10 },
-  dateMonth: { x: 278, y: 382, size: 10 },
-  dateDay: { x: 316, y: 382, size: 10 },
   name: { x: 408, y: 314, size: 10 },
   signature: { x: 452, y: 310, width: 56, height: 18 },
 } as const;
-
-function getKoreaDateParts(): { year: string; month: string; day: string } {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-  });
-  const parts = Object.fromEntries(formatter.formatToParts(new Date()).map((p) => [p.type, p.value]));
-  return { year: parts.year, month: parts.month, day: parts.day };
-}
 
 // 주민등록번호 앞 6자리 + 성별 구분 숫자로 생년월일을 계산한다 (1·2·5·6 → 1900년대, 3·4·7·8 → 2000년대).
 function birthDateFromIdNumber(idNumber: string | null): string {
@@ -176,7 +156,6 @@ Deno.serve(async (req) => {
     }
 
     const fontBytes = decodeBase64(PRETENDARD_REGULAR_BASE64);
-    const { year, month, day } = getKoreaDateParts();
     const name = mentor.name ?? "";
     const phone = mentor.phone ?? "";
     const idNumber = mentor.id_number ?? "";
@@ -205,9 +184,6 @@ Deno.serve(async (req) => {
       draw(name, p.name);
       draw(idNumber, p.idNumber);
       draw(phone, p.phone);
-      draw(year, p.dateYear);
-      draw(month, p.dateMonth);
-      draw(day, p.dateDay);
       draw(name, p.signerName);
       page.drawImage(signatureImage, p.signature);
       return pdfDoc.save();
@@ -224,9 +200,6 @@ Deno.serve(async (req) => {
       draw(name, p.name);
       draw(birthDate, p.birthDate);
       draw(phone, p.phone);
-      draw(year, p.dateYear);
-      draw(month, p.dateMonth);
-      draw(day, p.dateDay);
       page.drawImage(signatureImage, p.signature);
       return pdfDoc.save();
     })();
@@ -238,9 +211,6 @@ Deno.serve(async (req) => {
       const p = CONTRACT_POSITIONS;
       const draw = (text: string, pos: { x: number; y: number; size: number }) =>
         page.drawText(text, { x: pos.x, y: pos.y, size: pos.size, font, color: rgb(0, 0, 0) });
-      draw(year, p.dateYear);
-      draw(month, p.dateMonth);
-      draw(day, p.dateDay);
       draw(name, p.name);
       page.drawImage(signatureImage, p.signature);
       return pdfDoc.save();
