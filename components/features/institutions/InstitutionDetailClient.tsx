@@ -489,11 +489,14 @@ export function InstitutionDetailClient({
                       </select>
                     </td>
 
-                    {/* 학교요청사항 다운 - 비활성화 */}
+                    {/* 학교요청사항 다운 */}
                     <td className="px-3 py-2.5 text-center">
-                      <button type="button" disabled className={DISABLED_BTN}>
+                      <a
+                        href={`/my-tasks/institution-request/${event.id}/download`}
+                        className="inline-block px-3 py-1 text-xs bg-white border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap"
+                      >
                         다운
-                      </button>
+                      </a>
                     </td>
 
                     {/* 학교요청사항 */}
