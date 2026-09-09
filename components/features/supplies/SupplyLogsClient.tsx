@@ -53,14 +53,14 @@ export function SupplyLogsClient({
 }: Props) {
   const router = useRouter();
 
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  const twoWeeksLater = new Date();
+  twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
 
   const [filterSupplyId, setFilterSupplyId] = useState(defaultSupplyId ?? "");
   const [filterStockType, setFilterStockType] = useState("");
   const [filterDirection, setFilterDirection] = useState("");
-  const [startDate, setStartDate] = useState(toInputDate(oneMonthAgo));
-  const [endDate, setEndDate] = useState(toInputDate(new Date()));
+  const [startDate, setStartDate] = useState(toInputDate(new Date()));
+  const [endDate, setEndDate] = useState(toInputDate(twoWeeksLater));
 
   const filtered = useMemo(() => {
     const start = startDate ? new Date(startDate) : null;
@@ -233,8 +233,8 @@ export function SupplyLogsClient({
             setFilterSupplyId("");
             setFilterStockType("");
             setFilterDirection("");
-            setStartDate(toInputDate(oneMonthAgo));
-            setEndDate(toInputDate(new Date()));
+            setStartDate(toInputDate(new Date()));
+            setEndDate(toInputDate(twoWeeksLater));
           }}
           className="px-3 py-1.5 text-xs border border-gray-300 rounded-full hover:bg-gray-50 transition-colors self-end"
         >
