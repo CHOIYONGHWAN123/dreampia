@@ -14,6 +14,7 @@ import {
 import { createClient } from '@/lib/supabase'
 import { HeaderFilter } from '@/components/ui/HeaderFilter'
 import { ExpandableMemoCell } from '@/components/ui/ExpandableMemoCell'
+import { getReportConfig } from '@/lib/report-templates/config'
 
 // B(그룹 단위) 필드 저장 — 그 날짜가 그룹에 속해있으면 event_groups를, 아니면
 // event_dates(그룹 미지정 시 기본값)를 갱신한다. C(날짜 단위) 필드는 항상 event_dates.
@@ -222,6 +223,19 @@ const PlaceholderBtn = ({ label }: { label: string }) => (
     {label}
   </button>
 )
+
+// 결과보고서 다운로드 — 행사구분이 자동 생성을 지원하지 않으면(진로박람회 등) 비활성 버튼 유지
+const ReportDownloadBtn = ({ eventId, categoryName }: { eventId: string; categoryName: string | null }) => {
+  if (!getReportConfig(categoryName)) return <PlaceholderBtn label="다운" />
+  return (
+    <a
+      href={`/events/${eventId}/report/download`}
+      className="inline-block px-2 py-0.5 text-[11px] border border-primary-300 text-primary-600 rounded hover:bg-primary-50 transition-colors whitespace-nowrap"
+    >
+      다운
+    </a>
+  )
+}
 
 // ── 인라인 셀렉트 (enum) ──────────────────────────────────────────────
 
@@ -1355,7 +1369,7 @@ export function EventOperationsClient({
                     </td>
 
                     <td className={td}>
-                      <PlaceholderBtn label="다운" />
+                      <ReportDownloadBtn eventId={row.id} categoryName={row.eventCategoryName} />
                     </td>
 
                     {/* 보고서 발송여부 */}

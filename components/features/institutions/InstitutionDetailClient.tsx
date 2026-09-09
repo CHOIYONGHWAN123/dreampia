@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { deleteEvent } from "@/app/(dashboard)/events/actions";
 import { updateEventDateField } from "@/app/(dashboard)/event-operations/actions";
+import { getReportConfig } from "@/lib/report-templates/config";
 
 type Institution = {
   id: string;
@@ -31,6 +32,7 @@ type Event = {
   supplies_status: string | null;
   dateKey: string | null;
   hasMultipleDates: boolean;
+  eventCategoryName: string | null;
 };
 
 const DISABLED_BTN =
@@ -591,11 +593,20 @@ export function InstitutionDetailClient({
                       </button>
                     </td>
 
-                    {/* 보고서 다운받기 - 비활성화 (보고서 양식 준비 전) */}
+                    {/* 보고서 다운받기 - 자동 생성 미지원 행사구분(진로박람회 등)은 비활성 유지 */}
                     <td className="px-3 py-2.5 text-center">
-                      <button type="button" disabled className={DISABLED_BTN}>
-                        다운받기
-                      </button>
+                      {getReportConfig(event.eventCategoryName) ? (
+                        <a
+                          href={`/events/${event.id}/report/download`}
+                          className="inline-block px-3 py-1 text-xs bg-white border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap"
+                        >
+                          다운받기
+                        </a>
+                      ) : (
+                        <button type="button" disabled className={DISABLED_BTN} title="지원 예정">
+                          다운받기
+                        </button>
+                      )}
                     </td>
 
                     {/* 삭제 */}

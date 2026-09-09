@@ -7,14 +7,16 @@ export default async function InstitutionDetailPage({ params }: { params: Promis
   const { id } = await params
   const supabase = await createServerSupabaseClient()
 
-  const [{ data: institution }, eventsResult] = await Promise.all([
+  const [{ data: institution }, eventsResult, { data: categories }] = await Promise.all([
     supabase.from('institutions').select('id, name, address, is_deleted').eq('id', id).single(),
     supabase
       .from('events')
-      .select('id, name, memo, teacher_name, recruit_status, event_start_at, event_end_at, start_recruit_at, recruit_delivered, institution_request_status, estimate_file_url, admin_docs_delivered')
+      .select('id, name, memo, teacher_name, recruit_status, event_start_at, event_end_at, start_recruit_at, recruit_delivered, institution_request_status, estimate_file_url, admin_docs_delivered, event_category_id')
       .eq('institution_id', id)
       .order('created_at', { ascending: true }),
+    supabase.from('event_categories').select('id, name'),
   ])
+  const categoryNameById = new Map((categories ?? []).map((c) => [c.id, c.name]))
 
   if (!institution) notFound()
 
@@ -54,6 +56,7 @@ export default async function InstitutionDetailPage({ params }: { params: Promis
       hasMultipleDates: dateKeys.length > 1,
       contract_status: singleDateKey ? (resolved?.contractStatus ?? null) : null,
       supplies_status: singleDateKey ? (resolved?.suppliesStatus ?? null) : null,
+      eventCategoryName: e.event_category_id ? (categoryNameById.get(e.event_category_id) ?? null) : null,
     }
   })
 
