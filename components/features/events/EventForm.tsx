@@ -93,6 +93,13 @@ function toDatetimeLocal(value: string | null): string {
   return value ? value.slice(0, 16) : ''
 }
 
+// "YYYY-MM-DDTHH:mm" 형식은 문자열 정렬이 곧 시간 순 정렬이라 Date 파싱 없이 min/max를 구한다.
+function getEarliestAndLatest(units: SelectedProgramUnit[]): { earliestStart: string; latestEnd: string } {
+  const starts = units.map((u) => u.startTime).filter(Boolean).sort()
+  const ends = units.map((u) => u.endTime).filter(Boolean).sort()
+  return { earliestStart: starts[0] ?? '', latestEnd: ends[ends.length - 1] ?? '' }
+}
+
 function buildInitialProgramUnits(
   initialEventRows: EventRowDetailData[] | undefined,
   units: UnitOption[],
@@ -188,7 +195,6 @@ function buildDefaultValues(
     notice: initialEvent.notice,
     prep_note: initialEvent.prep_note,
     memo: initialEvent.memo,
-    school_request_note: initialEvent.school_request_note,
     contact_name: initialEvent.contact_name,
     contact_email: initialEvent.contact_email,
     contact_phone: initialEvent.contact_phone,
@@ -252,6 +258,23 @@ export function EventForm({
     buildInitialProgramUnits(initialEventRows, units, programs, occupations, fields)
   )
   const [dateGroups, setDateGroups] = useState<DateGroup[]>(initialDateGroups ?? [])
+
+  // 프로그램 목록(교실별 일정)이 바뀔 때마다 그 중 가장 이른 시작시각/가장 늦은 종료시각으로
+  // 상단 시작일시/종료일시를 자동으로 맞춘다.
+  const handleProgramUnitsChange = (next: SelectedProgramUnit[]) => {
+    setProgramUnits(next)
+    const { earliestStart, latestEnd } = getEarliestAndLatest(next)
+    if (earliestStart) {
+      const s = splitDateTime(earliestStart)
+      setValue('event_start_date', s.date, { shouldValidate: true })
+      setValue('event_start_at_time', s.time, { shouldValidate: true })
+    }
+    if (latestEnd) {
+      const e = splitDateTime(latestEnd)
+      setValue('event_end_date', e.date, { shouldValidate: true })
+      setValue('event_end_at_time', e.time, { shouldValidate: true })
+    }
+  }
   const [scheduleEntries, setScheduleEntries] = useState<ScheduleEntry[]>(() =>
     buildInitialSchedules(initialSchedules)
   )
@@ -450,7 +473,6 @@ export function EventForm({
         notice: data.notice,
         prep_note: data.prep_note,
         memo: data.memo,
-        school_request_note: data.school_request_note,
         contact_name: data.contact_name,
         contact_email: data.contact_email,
         contact_phone: data.contact_phone,
@@ -845,18 +867,6 @@ export function EventForm({
                 </div>
               </td>
             </tr>
-
-            <tr>
-              <td className={cellLabelCls}>학교요청사항(행사 전체)</td>
-              <td className={cellValueCls}>
-                <textarea
-                  {...register('school_request_note')}
-                  rows={2}
-                  placeholder="이 행사 전체에 공통으로 적용되는 학교 요청사항"
-                  className={`${cellInputCls} resize-none`}
-                />
-              </td>
-            </tr>
           </tbody>
         </table>
         </div>
@@ -1162,7 +1172,7 @@ export function EventForm({
           units={units}
           mentorsByUnit={mentorsByUnit}
           value={programUnits}
-          onChange={setProgramUnits}
+          onChange={handleProgramUnitsChange}
           dateGroups={dateGroups}
           onDateGroupsChange={setDateGroups}
           photosByRow={initialPhotosByRow}

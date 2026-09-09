@@ -36,7 +36,6 @@ export const eventSchema = z.object({
   notice: nullableString,
   prep_note: nullableString,
   memo: nullableString,
-  school_request_note: nullableString,
   contact_name: nullableString,
   contact_email: nullableString,
   contact_phone: nullableString,
