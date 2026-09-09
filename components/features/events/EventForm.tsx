@@ -809,7 +809,7 @@ export function EventForm({
               <td className={cellValueCls}>
                 <textarea
                   {...register('notice')}
-                  rows={2}
+                  rows={10}
                   className={`${cellInputCls} resize-none`}
                 />
               </td>
