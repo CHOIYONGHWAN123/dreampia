@@ -124,7 +124,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
   const sheet = workbook.addWorksheet('요청사항')
 
   sheet.columns = [
-    { width: 16 }, // A 라벨
+    { width: 42 }, // A 라벨
     { width: 26 }, // B 값
     { width: 12 }, // C 일자
     { width: 14 }, // D 교시
@@ -156,6 +156,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
   // 학교명 행 + 그리드 상단 헤더("직업군 별 요청사항")
   const schoolRow = r++
   sheet.getCell(schoolRow, 1).value = '학교명'
+  sheet.getCell(schoolRow, 1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
   sheet.getCell(schoolRow, 2).value = institutionName
   sheet.mergeCells(schoolRow, 3, schoolRow, COL_COUNT)
   const gridTitleCell = sheet.getCell(schoolRow, 3)
@@ -166,6 +167,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
   // 그리드 헤더 행
   const gridHeaderRow = r++
   sheet.getCell(gridHeaderRow, 1).value = '행사 일자'
+  sheet.getCell(gridHeaderRow, 1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
   const gridHeaders = [
     '일자',
     '교시',
@@ -236,6 +238,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
     sheet.mergeCells(gridDataStartRow, 2, gridDataEndRow, 2)
   }
   sheet.getCell(gridDataStartRow, 1).value = '행사 시간'
+  sheet.getCell(gridDataStartRow, 1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
   sheet.getCell(gridDataStartRow, 2).value = fmtTimeRange(event.event_start_at, event.event_end_at)
 
   // 기관/행사 정보 (초록 칸 - 기관에서 확인 후 필요시 수정)
@@ -254,7 +257,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
 
   for (const info of infoRows) {
     sheet.getCell(r, 1).value = info.label
-    sheet.getCell(r, 1).alignment = { vertical: 'middle', wrapText: true }
+    sheet.getCell(r, 1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
     sheet.getCell(r, 1).font = { bold: true }
     const valueCell = sheet.getCell(r, 2)
     if (info.label === '학교 배치도' && floorMapUrl) {
@@ -279,7 +282,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
   const PERIOD_LABELS = ['1교시', '2교시', '3교시', '4교시', '5교시', '6교시']
   PERIOD_LABELS.forEach((label, i) => {
     sheet.getCell(r, 1).value = label
-    sheet.getCell(r, 1).alignment = { vertical: 'middle', wrapText: true }
+    sheet.getCell(r, 1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
     sheet.getCell(r, 1).font = { bold: true }
     const valueCell = sheet.getCell(r, 2)
     if (i === 0) {
