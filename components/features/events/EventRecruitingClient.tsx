@@ -743,6 +743,35 @@ export function EventRecruitingClient({
                     </button>
                   )}
                 </div>
+                <div className="overflow-x-auto mb-2">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-gray-400">
+                        <th className="text-left font-normal pr-3 py-1">일자</th>
+                        <th className="text-left font-normal pr-3 py-1">시작</th>
+                        <th className="text-left font-normal pr-3 py-1">종료</th>
+                        <th className="text-left font-normal pr-3 py-1">대상</th>
+                        <th className="text-left font-normal pr-3 py-1">프로그램</th>
+                        <th className="text-left font-normal pr-3 py-1">강사명</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {inv.eventRowIds.map((rowId) => {
+                        const row = rows.find((r) => r.id === rowId)
+                        return (
+                          <tr key={rowId} className="text-gray-600">
+                            <td className="pr-3 py-0.5">{fmtDate(row?.startTime ?? null)}</td>
+                            <td className="pr-3 py-0.5">{fmtTime(row?.startTime ?? null)}</td>
+                            <td className="pr-3 py-0.5">{fmtEndTime(row?.startTime ?? null, row?.endTime ?? null)}</td>
+                            <td className="pr-3 py-0.5">{row?.target ?? '-'}</td>
+                            <td className="pr-3 py-0.5">{row?.unitTitle ?? '-'}</td>
+                            <td className="pr-3 py-0.5">{row?.mentorName ?? '-'}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {inv.mentors.map((m) => (
                     <span key={m.id} className={`${badgeCls} bg-gray-50 text-gray-600 border border-gray-200`}>
