@@ -495,7 +495,7 @@ export async function addMentorOccupationProgram(
 
 export type AddProgramSelectData = {
   eventCategories: { id: string; name: string }[]
-  fields: { id: string; name: string; event_category_ids: string[] }[]
+  fields: { id: string; name: string; event_category_ids: string[]; is_common: boolean }[]
   occupations: { id: string; name: string; field_id: string | null }[]
   programs: { id: string; name: string; occupation_id: string | null }[]
   units: { id: string; title: string; occupation_programs_id: string | null; school_level: string | null }[]
@@ -506,7 +506,7 @@ export async function getAddProgramSelectData(): Promise<AddProgramSelectData> {
   const supabase = await createServerSupabaseClient()
   const [eventCategoriesRes, fieldsRes, fieldEcRes, occsRes, progsRes, unitsRes, mentorsRes] = await Promise.all([
     supabase.from('event_categories').select('id, name').order('sort_order'),
-    supabase.from('fields').select('id, name').order('name'),
+    supabase.from('fields').select('id, name, is_common').order('name'),
     supabase.from('field_event_categories').select('field_id, event_category_id'),
     supabase.from('occupations').select('id, name, field_id').order('name'),
     supabase.from('occupation_programs').select('id, name, occupation_id').order('name'),

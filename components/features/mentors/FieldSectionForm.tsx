@@ -25,7 +25,7 @@ export function FieldSectionForm({
 }: {
   section: FieldSectionState
   eventCategories: { id: string; name: string }[]
-  fields: { id: string; name: string; event_category_ids: string[] }[]
+  fields: { id: string; name: string; event_category_ids: string[]; is_common: boolean }[]
   occupations: { id: string; name: string; field_id: string | null }[]
   programs: { id: string; name: string; occupation_id: string | null }[]
   units: UnitOption[]
@@ -36,7 +36,10 @@ export function FieldSectionForm({
   onRemove?: () => void
 }) {
   const filteredFields = useMemo(
-    () => fields.filter((f) => !section.eventCategoryId || f.event_category_ids.includes(section.eventCategoryId)),
+    () =>
+      fields.filter(
+        (f) => f.is_common || !section.eventCategoryId || f.event_category_ids.includes(section.eventCategoryId)
+      ),
     [fields, section.eventCategoryId]
   )
 

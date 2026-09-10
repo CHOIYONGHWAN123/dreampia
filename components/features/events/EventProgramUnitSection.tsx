@@ -9,7 +9,7 @@ import { SignedFileCellWithUpload, uploadPrivateFile } from '@/components/featur
 import { updateEventRowCriminalBackgroundCheck } from '@/app/(dashboard)/events/actions'
 
 export type EventCategoryOption = { id: string; name: string }
-export type FieldOption = { id: string; name: string; event_category_ids: string[] }
+export type FieldOption = { id: string; name: string; event_category_ids: string[]; is_common: boolean }
 export type OccupationOption = { id: string; name: string; field_id: string | null }
 export type ProgramOption = { id: string; name: string; occupation_id: string | null }
 export type UnitOption = {
@@ -203,8 +203,10 @@ export function EventProgramUnitSection({
     }
   }
 
+  // school_level이 null인 유닛은 특정 교급으로 한정되지 않는 프로그램(예: 공연류, 현장운영자)이라
+  // 교급 필터와 무관하게 항상 노출한다.
   const schoolLevelFilteredUnits = useMemo(
-    () => (schoolLevel ? units.filter((u) => u.school_level === schoolLevel) : units),
+    () => (schoolLevel ? units.filter((u) => u.school_level === schoolLevel || u.school_level === null) : units),
     [units, schoolLevel]
   )
 
@@ -214,8 +216,20 @@ export function EventProgramUnitSection({
     return schoolLevelFilteredUnits.filter((u) => u.title.includes(q)).slice(0, 8)
   }, [schoolLevelFilteredUnits, search])
 
+  // 공통 분야(예: 현장운영자) 소속 유닛은 분야>직종>프로그램 드릴다운 없이 바로 추가할 수 있게 버튼으로 노출한다.
+  const commonUnits = useMemo(() => {
+    return schoolLevelFilteredUnits.filter((u) => {
+      const program = u.occupation_programs_id ? programMap.get(u.occupation_programs_id) : undefined
+      const occupation = program?.occupation_id ? occupationMap.get(program.occupation_id) : undefined
+      const field = occupation?.field_id ? fieldMap.get(occupation.field_id) : undefined
+      return field?.is_common ?? false
+    })
+  }, [schoolLevelFilteredUnits, programMap, occupationMap, fieldMap])
+
+  // is_common(공통 분야, 예: 현장운영자)은 행사구분 선택 여부와 무관하게 항상 노출한다.
   const filteredFields = useMemo(
-    () => (eventCategoryId ? fields.filter((f) => f.event_category_ids.includes(eventCategoryId)) : []),
+    () =>
+      fields.filter((f) => f.is_common || (eventCategoryId != null && f.event_category_ids.includes(eventCategoryId))),
     [fields, eventCategoryId]
   )
   const filteredOccupations = useMemo(
@@ -444,6 +458,23 @@ export function EventProgramUnitSection({
           </div>
         )}
       </div>
+
+      {/* 공통 분야(현장운영자 등) 바로 추가 */}
+      {commonUnits.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-gray-400">바로 추가</span>
+          {commonUnits.map((u) => (
+            <button
+              key={u.id}
+              type="button"
+              onClick={() => addUnit(u)}
+              className="px-3 py-1 text-xs bg-primary-50 text-primary-600 border border-primary-200 rounded-full font-medium hover:bg-primary-100 transition-colors"
+            >
+              + {formatUnitTitle(u.title, u.school_level)}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="text-xs text-gray-400">
         또는 분야 &gt; 직종 &gt; 프로그램 &gt; 프로그램 유닛 순으로 선택

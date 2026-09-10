@@ -1052,14 +1052,17 @@ export type Database = {
       fields: {
         Row: {
           id: string
+          is_common: boolean
           name: string
         }
         Insert: {
           id?: string
+          is_common?: boolean
           name: string
         }
         Update: {
           id?: string
+          is_common?: boolean
           name?: string
         }
         Relationships: []

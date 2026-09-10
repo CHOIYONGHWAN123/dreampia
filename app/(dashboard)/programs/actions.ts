@@ -16,6 +16,7 @@ export interface FieldData {
   id: string
   name: string
   event_category_ids: string[]
+  is_common: boolean
 }
 
 export interface OccupationData {
@@ -203,7 +204,7 @@ export async function deleteEventCategoryCascade(id: string): Promise<void> {
 export async function getFields(): Promise<FieldData[]> {
   const supabase = await createServerSupabaseClient()
   const [{ data: fields, error }, { data: links, error: linksError }] = await Promise.all([
-    supabase.from('fields').select('id, name').order('name'),
+    supabase.from('fields').select('id, name, is_common').order('name'),
     supabase.from('field_event_categories').select('field_id, event_category_id'),
   ])
   if (error) throw new Error(error.message)
@@ -219,12 +220,18 @@ export async function getFields(): Promise<FieldData[]> {
   return (fields || []).map((f) => ({ ...f, event_category_ids: idsByField.get(f.id) ?? [] }))
 }
 
-export async function createField(eventCategoryIds: string[], name: string): Promise<void> {
+// isCommon(공통 분야)이면 특정 행사구분에 매이지 않고 모든 행사구분에서 노출되므로
+// eventCategoryIds 연결은 무의미하다 — 저장하지 않는다.
+export async function createField(eventCategoryIds: string[], name: string, isCommon: boolean): Promise<void> {
   const supabase = await createServerSupabaseClient()
-  const { data: field, error } = await supabase.from('fields').insert({ name }).select('id').single()
+  const { data: field, error } = await supabase
+    .from('fields')
+    .insert({ name, is_common: isCommon })
+    .select('id')
+    .single()
   if (error) throw new Error(error.message)
 
-  if (eventCategoryIds.length) {
+  if (!isCommon && eventCategoryIds.length) {
     const { error: linkError } = await supabase
       .from('field_event_categories')
       .insert(eventCategoryIds.map((eventCategoryId) => ({ field_id: field.id, event_category_id: eventCategoryId })))
@@ -233,15 +240,20 @@ export async function createField(eventCategoryIds: string[], name: string): Pro
   revalidatePath('/programs')
 }
 
-export async function updateField(id: string, name: string, eventCategoryIds: string[]): Promise<void> {
+export async function updateField(
+  id: string,
+  name: string,
+  eventCategoryIds: string[],
+  isCommon: boolean
+): Promise<void> {
   const supabase = await createServerSupabaseClient()
-  const { error } = await supabase.from('fields').update({ name }).eq('id', id)
+  const { error } = await supabase.from('fields').update({ name, is_common: isCommon }).eq('id', id)
   if (error) throw new Error(error.message)
 
   const { error: deleteError } = await supabase.from('field_event_categories').delete().eq('field_id', id)
   if (deleteError) throw new Error(deleteError.message)
 
-  if (eventCategoryIds.length) {
+  if (!isCommon && eventCategoryIds.length) {
     const { error: linkError } = await supabase
       .from('field_event_categories')
       .insert(eventCategoryIds.map((eventCategoryId) => ({ field_id: id, event_category_id: eventCategoryId })))

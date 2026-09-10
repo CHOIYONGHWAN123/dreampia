@@ -90,8 +90,9 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
   }
 
   const fieldsInView = useMemo(() => {
-    if (viewingUnassigned) return fields.filter((f) => f.event_category_ids.length === 0)
-    if (selectedEventCategoryId) return fields.filter((f) => f.event_category_ids.includes(selectedEventCategoryId))
+    if (viewingUnassigned) return fields.filter((f) => !f.is_common && f.event_category_ids.length === 0)
+    if (selectedEventCategoryId)
+      return fields.filter((f) => f.is_common || f.event_category_ids.includes(selectedEventCategoryId))
     return []
   }, [fields, selectedEventCategoryId, viewingUnassigned])
 
@@ -169,12 +170,12 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
   }
 
   // ── 분야 ──
-  const handleAddField = async (name: string, eventCategoryIds: string[]) => {
-    await createField(eventCategoryIds, name)
+  const handleAddField = async (name: string, eventCategoryIds: string[], isCommon: boolean) => {
+    await createField(eventCategoryIds, name, isCommon)
     setFields(await getFields())
   }
-  const handleEditField = async (id: string, name: string, eventCategoryIds: string[]) => {
-    await updateField(id, name, eventCategoryIds)
+  const handleEditField = async (id: string, name: string, eventCategoryIds: string[], isCommon: boolean) => {
+    await updateField(id, name, eventCategoryIds, isCommon)
     setFields(await getFields())
   }
   const handleDeleteField = async (id: string) => {

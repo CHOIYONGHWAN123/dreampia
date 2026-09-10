@@ -6,6 +6,7 @@ interface FieldItem {
   id: string
   name: string
   event_category_ids: string[]
+  is_common: boolean
 }
 
 interface Props {
@@ -14,8 +15,8 @@ interface Props {
   eventCategories: { id: string; name: string }[]
   selectedId: string | null
   onSelect: (id: string) => void
-  onAdd: (name: string, eventCategoryIds: string[]) => Promise<void>
-  onEdit: (id: string, name: string, eventCategoryIds: string[]) => Promise<void>
+  onAdd: (name: string, eventCategoryIds: string[], isCommon: boolean) => Promise<void>
+  onEdit: (id: string, name: string, eventCategoryIds: string[], isCommon: boolean) => Promise<void>
   onDelete: (id: string) => Promise<void>
   emptyMessage: string
   disabled?: boolean
@@ -42,6 +43,7 @@ export function FieldColumn({
   const [popup, setPopup] = useState<{ open: boolean; id: string | null }>({ open: false, id: null })
   const [name, setName] = useState('')
   const [eventCategoryIds, setEventCategoryIds] = useState<string[]>([])
+  const [isCommon, setIsCommon] = useState(false)
   const [pending, setPending] = useState(false)
 
   const toggleEventCategory = (id: string) =>
@@ -50,12 +52,14 @@ export function FieldColumn({
   const openAdd = () => {
     setName('')
     setEventCategoryIds(defaultEventCategoryIds)
+    setIsCommon(false)
     setPopup({ open: true, id: null })
   }
 
   const openEdit = (item: FieldItem) => {
     setName(item.name)
     setEventCategoryIds(item.event_category_ids)
+    setIsCommon(item.is_common)
     setPopup({ open: true, id: item.id })
   }
 
@@ -79,9 +83,9 @@ export function FieldColumn({
     setPending(true)
     try {
       if (popup.id) {
-        await onEdit(popup.id, trimmed, eventCategoryIds)
+        await onEdit(popup.id, trimmed, eventCategoryIds, isCommon)
       } else {
-        await onAdd(trimmed, eventCategoryIds)
+        await onAdd(trimmed, eventCategoryIds, isCommon)
       }
       closePopup()
     } catch (e) {
@@ -170,25 +174,41 @@ export function FieldColumn({
               autoFocus
               className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
             />
-            <label className="text-xs text-gray-500 mt-3 mb-1 block">
-              행사 구분 <span className="text-gray-300">(복수 선택 가능, 미선택 시 미분류)</span>
+            <label className="flex items-center gap-2 mt-3">
+              <input
+                type="checkbox"
+                checked={isCommon}
+                onChange={(e) => setIsCommon(e.target.checked)}
+                className="w-4 h-4 accent-primary-500"
+              />
+              <span className="text-xs text-gray-600">
+                공통 분야 <span className="text-gray-300">(행사구분과 무관하게 항상 노출, 예: 현장운영자)</span>
+              </span>
             </label>
-            <div className="flex flex-wrap gap-1">
-              {eventCategories.map((ec) => (
-                <button
-                  key={ec.id}
-                  type="button"
-                  onClick={() => toggleEventCategory(ec.id)}
-                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                    eventCategoryIds.includes(ec.id)
-                      ? 'bg-primary-100 text-primary-700 border-primary-300 font-medium'
-                      : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  {ec.name}
-                </button>
-              ))}
-            </div>
+
+            {!isCommon && (
+              <>
+                <label className="text-xs text-gray-500 mt-3 mb-1 block">
+                  행사 구분 <span className="text-gray-300">(복수 선택 가능, 미선택 시 미분류)</span>
+                </label>
+                <div className="flex flex-wrap gap-1">
+                  {eventCategories.map((ec) => (
+                    <button
+                      key={ec.id}
+                      type="button"
+                      onClick={() => toggleEventCategory(ec.id)}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                        eventCategoryIds.includes(ec.id)
+                          ? 'bg-primary-100 text-primary-700 border-primary-300 font-medium'
+                          : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      {ec.name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
             <div className="flex justify-center gap-2 mt-6">
               <button
                 onClick={handleSave}
