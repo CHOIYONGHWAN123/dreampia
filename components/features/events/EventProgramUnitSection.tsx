@@ -234,6 +234,12 @@ export function EventProgramUnitSection({
   // 동일한 프로그램 유닛을 여러 일정(예: 같은 프로그램을 여러 날짜에 진행)으로 중복 추가할 수 있어야 하므로
   // unitId가 아닌 별도의 key로 각 행을 구분한다.
   const addUnit = (unit: UnitOption) => {
+    // 행사가 여러 날짜(예: 9/30~10/20)에 걸쳐 있어도 프로그램 한 행은 하루짜리 수업이므로,
+    // 종료 시각의 날짜는 (행사 종료일이 아니라) 시작 시각과 같은 날로 맞춘다. 이 행 입력표에는
+    // "일자" 칸이 하나뿐이라 시작/종료 날짜가 어긋나도 화면에 드러나지 않는다 — 어긋난 채로
+    // 저장되면 관리자가 알아챌 방법이 없다.
+    const defaultDate = splitDateTime(defaultStartTime ?? '').date
+    const defaultEndTimeOfDay = splitDateTime(defaultEndTime ?? '').time
     onChange([
       ...value,
       {
@@ -254,7 +260,7 @@ export function EventProgramUnitSection({
         prepBy: unit.prep_by,
         suppliesPrepared: false,
         startTime: defaultStartTime ?? '',
-        endTime: defaultEndTime ?? '',
+        endTime: defaultDate ? joinDateTime(defaultDate, defaultEndTimeOfDay) : defaultEndTime ?? '',
         classroom: '',
         instructorWaitingRoom: '',
         target: '',
