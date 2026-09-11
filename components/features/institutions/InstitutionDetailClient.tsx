@@ -90,6 +90,9 @@ export function InstitutionDetailClient({
   const [sendingCrimeCheckId, setSendingCrimeCheckId] = useState<
     string | null
   >(null);
+  const [downloadingDocsId, setDownloadingDocsId] = useState<string | null>(
+    null,
+  );
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const inProgressEvents = localEvents.filter(
@@ -167,6 +170,54 @@ export function InstitutionDetailClient({
       alert(e instanceof Error ? e.message : "알림 발송에 실패했습니다.");
     } finally {
       setSendingCrimeCheckId(null);
+    }
+  };
+
+  // 강사별 프로필/강의계획안/범죄경력서류/행정정보동의서를 모아 zip으로 압축해 내려받는다.
+  // 서버에서 여러 파일을 병렬로 가져오긴 하지만 강사 수에 따라 시간이 걸릴 수 있어
+  // "생성중..." 로딩 상태를 보여주고, 일부 서류가 없으면 완료 후 어떤 서류가 빠졌는지 알려준다.
+  const handleDownloadAdminDocs = async (event: Event) => {
+    setDownloadingDocsId(event.id);
+    try {
+      const res = await fetch(`/events/${event.id}/admin-docs/download`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? "다운로드에 실패했습니다.");
+      }
+
+      const missingCount = Number(
+        res.headers.get("X-Admin-Docs-Missing-Count") ?? "0",
+      );
+      const missingSummary = res.headers.get("X-Admin-Docs-Missing");
+
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const match = disposition.match(/filename\*=UTF-8''([^;]+)/);
+      const fileName = match
+        ? decodeURIComponent(match[1])
+        : `${event.name}_행정서류.zip`;
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      if (missingCount > 0) {
+        const list = missingSummary
+          ? decodeURIComponent(missingSummary).split("|")
+          : [];
+        alert(
+          `일부 서류가 없어 압축파일에서 제외되었습니다 (${missingCount}건)\n\n${list.join("\n")}`,
+        );
+      }
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "다운로드에 실패했습니다.");
+    } finally {
+      setDownloadingDocsId(null);
     }
   };
 
@@ -628,10 +679,18 @@ export function InstitutionDetailClient({
                       </button>
                     </td>
 
-                    {/* 행정서류 다운받기 - 비활성화 */}
+                    {/* 행정서류 다운받기 — 강사별 프로필/강의계획안/범죄경력서류/행정정보동의서를
+                        모아 zip으로 내려받는다. 배정된 강사가 없으면 만들 파일이 없어 비활성화. */}
                     <td className="px-3 py-2.5 text-center">
-                      <button type="button" disabled className={DISABLED_BTN}>
-                        다운받기
+                      <button
+                        type="button"
+                        disabled={downloadingDocsId === event.id}
+                        className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap disabled:opacity-50"
+                        onClick={() => handleDownloadAdminDocs(event)}
+                      >
+                        {downloadingDocsId === event.id
+                          ? "생성중..."
+                          : "다운받기"}
                       </button>
                     </td>
 
