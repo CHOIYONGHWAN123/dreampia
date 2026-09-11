@@ -11,7 +11,7 @@ export default async function InstitutionDetailPage({ params }: { params: Promis
     supabase.from('institutions').select('id, name, address, is_deleted').eq('id', id).single(),
     supabase
       .from('events')
-      .select('id, name, memo, teacher_name, recruit_status, event_start_at, event_end_at, start_recruit_at, recruit_delivered, institution_request_status, estimate_file_url, admin_docs_delivered, event_category_id')
+      .select('id, name, memo, teacher_name, recruit_status, event_start_at, event_end_at, start_recruit_at, recruit_delivered, institution_request_status, estimate_file_url, admin_docs_delivered, event_category_id, crime_check_method, crime_check_info, crime_check_notified')
       .eq('institution_id', id)
       .order('created_at', { ascending: true }),
     supabase.from('event_categories').select('id, name'),

@@ -75,3 +75,102 @@ export async function createInstitution(data: InstitutionData) {
   if (error) throw new Error(error.message)
   revalidatePath('/institutions')
 }
+
+// 범죄경력회보서 조회 요청 알림 — 회보서를 아직 등록하지 않은, 이 행사에 배정된 강사에게
+// Expo 푸시로 등록 요청을 보낸다. 재촉이 여러 번 필요할 수 있어 재발송 제한은 두지 않는다
+// (crime_check_notified는 "한 번이라도 보냈는지" 표시용일 뿐 발송을 막지 않는다).
+// mentor_devices/push_notifications는 멘토 본인만 RLS로 접근 가능해 관리자는 service-role
+// 클라이언트로 조회/기록한다.
+export async function sendCrimeCheckNotification(eventId: string) {
+  const supabase = await createServerSupabaseClient()
+
+  const { data: event, error: eventError } = await supabase
+    .from('events')
+    .select('id, name, institution_id, crime_check_method, crime_check_info')
+    .eq('id', eventId)
+    .single()
+  if (eventError || !event) throw new Error(eventError?.message ?? '행사를 찾을 수 없습니다.')
+  if (event.crime_check_method !== '회보서' || !event.crime_check_info?.trim()) {
+    throw new Error('회보서 조회 요청을 보낼 수 없는 행사입니다.')
+  }
+
+  const { data: institution } = await supabase
+    .from('institutions')
+    .select('name')
+    .eq('id', event.institution_id)
+    .maybeSingle()
+
+  const { data: rows, error: rowsError } = await supabase
+    .from('event_rows')
+    .select('mentor_id')
+    .eq('event_id', eventId)
+    .is('criminal_background_check', null)
+    .not('mentor_id', 'is', null)
+  if (rowsError) throw new Error(rowsError.message)
+
+  const mentorIds = [...new Set((rows ?? []).map((r) => r.mentor_id as string))]
+  if (mentorIds.length === 0) {
+    throw new Error('회보서 등록이 필요한 배정 강사가 없습니다.')
+  }
+
+  const { createAdminSupabaseClient } = await import('@/lib/supabase-admin')
+  const admin = createAdminSupabaseClient()
+
+  const { data: devices, error: devicesError } = await admin
+    .from('mentor_devices')
+    .select('mentor_id, expo_push_token')
+    .in('mentor_id', mentorIds)
+  if (devicesError) throw new Error(devicesError.message)
+
+  const title = `${institution?.name ?? '기관'} 범죄경력회보서 등록 요청`
+  const body = `${event.name} 강의를 위한 회보서를 등록해주세요.`
+  // url 쿼리파라미터(eventId)로 딥링크하면 멘토 앱의 회보서 나의 할일 화면이 이 행사 건을
+  // 맨 위로 올리고 강조 표시한다(criminal-record-todo.tsx 참고).
+  const notifyData = { url: `/criminal-record-todo?eventId=${eventId}`, eventId }
+
+  const messages = (devices ?? []).map((d) => ({
+    to: d.expo_push_token,
+    title,
+    body,
+    data: notifyData,
+    sound: 'default',
+  }))
+
+  let expoResult: unknown = null
+  let sendError: string | null = null
+  if (messages.length > 0) {
+    try {
+      const res = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'Accept-encoding': 'gzip, deflate' },
+        body: JSON.stringify(messages),
+      })
+      expoResult = await res.json()
+      if (!res.ok) sendError = JSON.stringify(expoResult)
+    } catch (e) {
+      sendError = e instanceof Error ? e.message : String(e)
+    }
+  }
+
+  const logRows = mentorIds.map((mentorId) => {
+    const hasDevice = (devices ?? []).some((d) => d.mentor_id === mentorId)
+    return {
+      mentor_id: mentorId,
+      title,
+      body,
+      data: notifyData,
+      expo_ticket: hasDevice ? expoResult : null,
+      status: !hasDevice ? 'no_device' : sendError ? 'failed' : 'sent',
+      error: hasDevice ? sendError : null,
+    }
+  })
+  const { error: logError } = await admin.from('push_notifications').insert(logRows)
+  if (logError) console.error('[sendCrimeCheckNotification] push_notifications insert failed', logError.message)
+
+  if (sendError) throw new Error(`푸시 발송 중 오류가 발생했습니다: ${sendError}`)
+
+  const { error: updateError } = await supabase.from('events').update({ crime_check_notified: true }).eq('id', eventId)
+  if (updateError) throw new Error(updateError.message)
+
+  revalidatePath(`/institutions/${event.institution_id}`)
+}

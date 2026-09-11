@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { deleteEvent } from "@/app/(dashboard)/events/actions";
 import { updateEventDateField } from "@/app/(dashboard)/event-operations/actions";
+import { sendCrimeCheckNotification } from "@/app/(dashboard)/institutions/actions";
 import { getReportConfig } from "@/lib/report-templates/config";
 
 type Institution = {
@@ -33,6 +34,9 @@ type Event = {
   dateKey: string | null;
   hasMultipleDates: boolean;
   eventCategoryName: string | null;
+  crime_check_method: string | null;
+  crime_check_info: string | null;
+  crime_check_notified: boolean | null;
 };
 
 const DISABLED_BTN =
@@ -65,6 +69,13 @@ function getEventStatus(event: Event): "진행중" | "종료" {
   return "진행중";
 }
 
+function canSendCrimeCheckNotification(event: Event) {
+  return (
+    event.crime_check_method === "회보서" &&
+    !!event.crime_check_info?.trim()
+  );
+}
+
 export function InstitutionDetailClient({
   institution,
   events,
@@ -76,6 +87,9 @@ export function InstitutionDetailClient({
   const supabase = createClient();
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [localEvents, setLocalEvents] = useState<Event[]>(events);
+  const [sendingCrimeCheckId, setSendingCrimeCheckId] = useState<
+    string | null
+  >(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const inProgressEvents = localEvents.filter(
@@ -102,7 +116,11 @@ export function InstitutionDetailClient({
 
   // 준비물(supplies_status)은 이제 날짜별 값이라 events가 아니라 event_dates에 쓴다.
   // "준비 완료"로 바꾸면 work_logs에 로그를 남긴다.
-  const handleSuppliesStatusChange = async (eventId: string, dateKey: string, value: string) => {
+  const handleSuppliesStatusChange = async (
+    eventId: string,
+    dateKey: string,
+    value: string,
+  ) => {
     try {
       await updateEventDateField(eventId, dateKey, { supplies_status: value });
     } catch (e) {
@@ -115,9 +133,11 @@ export function InstitutionDetailClient({
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        await supabase
-          .from("work_logs")
-          .insert({ admin_id: user.id, event_id: eventId, task_type: "준비물 준비" });
+        await supabase.from("work_logs").insert({
+          admin_id: user.id,
+          event_id: eventId,
+          task_type: "준비물 준비",
+        });
       }
     }
   };
@@ -129,6 +149,24 @@ export function InstitutionDetailClient({
       setLocalEvents((prev) => prev.filter((e) => e.id !== eventId));
     } catch (e) {
       alert(e instanceof Error ? e.message : "삭제에 실패했습니다.");
+    }
+  };
+
+  const handleSendCrimeCheckNotification = async (event: Event) => {
+    if (
+      !confirm(
+        "아직 회보서를 등록하지 않은 배정 강사에게 등록 요청 알림을 보내시겠습니까?",
+      )
+    )
+      return;
+    setSendingCrimeCheckId(event.id);
+    try {
+      await sendCrimeCheckNotification(event.id);
+      patchEvent(event.id, { crime_check_notified: true });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "알림 발송에 실패했습니다.");
+    } finally {
+      setSendingCrimeCheckId(null);
     }
   };
 
@@ -167,7 +205,8 @@ export function InstitutionDetailClient({
 
       {institution.is_deleted && (
         <div className="mb-6 p-3 bg-red-50 rounded-2xl text-sm text-red-600">
-          삭제된 기관입니다. 기존 기록은 그대로 보존되어 있으며, 새 행사는 등록할 수 없습니다.
+          삭제된 기관입니다. 기존 기록은 그대로 보존되어 있으며, 새 행사는
+          등록할 수 없습니다.
         </div>
       )}
 
@@ -197,9 +236,7 @@ export function InstitutionDetailClient({
       <div className="mb-8">
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-gray-800">
-              등록된 행사
-            </span>
+            <span className="text-sm font-bold text-gray-800">등록된 행사</span>
             {localEvents.length > 0 && (
               <span className="text-xs font-bold text-primary-600">
                 {localEvents.length}
@@ -364,9 +401,8 @@ export function InstitutionDetailClient({
                   학교요청사항
                 </th>
                 <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-36 min-w-36">
-                  성범조 조회서
-                  <br />
-                  등록 알림
+                  범죄경력회보서 <br />
+                  조회 요청
                 </th>
                 <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
                   견적서
@@ -455,7 +491,11 @@ export function InstitutionDetailClient({
                         <select
                           value={event.supplies_status ?? "체크 전"}
                           onChange={(e) =>
-                            handleSuppliesStatusChange(event.id, event.dateKey as string, e.target.value)
+                            handleSuppliesStatusChange(
+                              event.id,
+                              event.dateKey as string,
+                              e.target.value,
+                            )
                           }
                           className={SELECT_CLS}
                         >
@@ -520,11 +560,43 @@ export function InstitutionDetailClient({
                       </select>
                     </td>
 
-                    {/* 성범조 조회서 등록 알림 - 비활성화 */}
+                    {/* 범죄경력회보서 조회 요청 알림 — 진행방식이 회보서이고 기관아이디/검증번호가
+                        입력된 행사만 발송 가능. 회보서 등록 재촉이 여러 번 필요할 수 있어
+                        보낸 뒤에도 계속 재발송할 수 있게 두고, 발송 이력만 배지로 표시한다. */}
                     <td className="px-3 py-2.5 text-center">
-                      <button type="button" disabled className={DISABLED_BTN}>
-                        알림보내기
-                      </button>
+                      <div className="flex flex-col items-center gap-1">
+                        {event.crime_check_notified && (
+                          <span className="text-[10px] font-semibold text-green-600 whitespace-nowrap">
+                            발송 이력 있음
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          disabled={
+                            !canSendCrimeCheckNotification(event) ||
+                            sendingCrimeCheckId === event.id
+                          }
+                          className={
+                            canSendCrimeCheckNotification(event)
+                              ? "px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap disabled:opacity-50"
+                              : DISABLED_BTN
+                          }
+                          title={
+                            canSendCrimeCheckNotification(event)
+                              ? undefined
+                              : "범죄경력 진행방식이 회보서이고 기관아이디/검증번호가 입력된 경우에만 발송할 수 있습니다."
+                          }
+                          onClick={() =>
+                            handleSendCrimeCheckNotification(event)
+                          }
+                        >
+                          {sendingCrimeCheckId === event.id
+                            ? "발송중..."
+                            : event.crime_check_notified
+                              ? "재발송"
+                              : "알림보내기"}
+                        </button>
+                      </div>
                     </td>
 
                     {/* 견적서 파일 업로드 */}
@@ -603,7 +675,12 @@ export function InstitutionDetailClient({
                           다운받기
                         </a>
                       ) : (
-                        <button type="button" disabled className={DISABLED_BTN} title="지원 예정">
+                        <button
+                          type="button"
+                          disabled
+                          className={DISABLED_BTN}
+                          title="지원 예정"
+                        >
                           다운받기
                         </button>
                       )}
