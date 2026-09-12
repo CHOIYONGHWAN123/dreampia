@@ -369,7 +369,11 @@ export function EventForm({
 
   const addNoticeFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return
-    setNewNoticeFiles((prev) => [...prev, ...Array.from(files)])
+    // input.value를 초기화하면 살아있는 FileList도 같이 비워져서, setState 업데이터 함수
+    // 안에서 뒤늦게 Array.from(files)를 하면 이미 빈 배열이 된다 — 여기서 즉시 배열로
+    // 떼어내 스냅샷을 넘긴다.
+    const fileArray = Array.from(files)
+    setNewNoticeFiles((prev) => [...prev, ...fileArray])
   }
 
   const removeExistingNoticeFile = (id: string) => {
