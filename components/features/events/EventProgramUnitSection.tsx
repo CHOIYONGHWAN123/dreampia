@@ -726,26 +726,26 @@ export function EventProgramUnitSection({
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">시작 시간</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">종료 시간</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36">대상</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40">강사 배정</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">요청직업군</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">프로그램</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">특이사항</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40">강사 배정</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강사 연락처</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">준비주체</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">준비물 준비</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">인원수</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">차시별 인원수</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의실</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">대기실</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-20 min-w-20">출석</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-48 min-w-48">학교요청사항</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">답변</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">회보서</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의료</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">강의료 입금자명</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">준비주체</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">준비물 준비</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36 whitespace-nowrap">1인당 강사 재료비</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40 whitespace-nowrap">1인당 드림피아 재료비</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">인원수</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">차시별 인원수</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">재료비 입금자명</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-48 min-w-48">학교요청사항</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">답변</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강사 연락처</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">사진</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">강사등급</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">소속구분</th>
@@ -813,6 +813,9 @@ export function EventProgramUnitSection({
                         className={fieldInputCls}
                       />
                     </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {assignedMentor ? assignedMentor.name : '미배정'}
+                    </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">{v.occupationName}</td>
                     <td className="px-2 py-1.5 align-top">
                       <div className="font-medium text-gray-800">{formatUnitTitle(v.title, v.schoolLevel)}</div>
@@ -829,53 +832,6 @@ export function EventProgramUnitSection({
                         className={`${fieldInputCls} resize-none`}
                       />
                     </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {assignedMentor ? assignedMentor.name : '미배정'}
-                    </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {assignedMentor ? (assignedMentor.phone ?? '-') : '-'}
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <input
-                        type="text"
-                        value={v.classroom}
-                        onChange={(e) => updateUnit(v.key, { classroom: e.target.value })}
-                        placeholder="예: 1-1반"
-                        className={fieldInputCls}
-                      />
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <input
-                        type="text"
-                        value={v.instructorWaitingRoom}
-                        onChange={(e) => updateUnit(v.key, { instructorWaitingRoom: e.target.value })}
-                        placeholder="예: 2층 2학년 학년연구실"
-                        className={fieldInputCls}
-                      />
-                    </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {v.attendance === true ? '출석' : v.attendance === false ? '미출석' : '-'}
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <SignedFileCellWithUpload
-                        bucket="criminal-background-check"
-                        path={v.criminalBackgroundCheck ? toCbcStoragePath(v.criminalBackgroundCheck) : null}
-                        uploading={uploadingCbc[v.key] ?? false}
-                        onUpload={(file) => handleCriminalBackgroundCheckUpload(v, file)}
-                      />
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={formatThousands(v.lectureFee)}
-                        onChange={(e) => updateUnit(v.key, { lectureFee: parseThousands(e.target.value) })}
-                        className={fieldInputCls}
-                      />
-                    </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {assignedMentor ? (assignedMentor.lectureFeePayerName ?? '-') : '-'}
-                    </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">{v.prepBy ?? '-'}</td>
                     <td className="px-2 py-1.5 text-center">
                       <input
@@ -883,24 +839,6 @@ export function EventProgramUnitSection({
                         checked={v.suppliesPrepared}
                         onChange={(e) => updateUnit(v.key, { suppliesPrepared: e.target.checked })}
                         className="w-4 h-4 accent-primary-500"
-                      />
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={formatThousands(v.mentorMaterialCost)}
-                        onChange={(e) => updateUnit(v.key, { mentorMaterialCost: parseThousands(e.target.value) })}
-                        className={fieldInputCls}
-                      />
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={formatThousands(v.dreampiaMaterialCost)}
-                        onChange={(e) => updateUnit(v.key, { dreampiaMaterialCost: parseThousands(e.target.value) })}
-                        className={fieldInputCls}
                       />
                     </td>
                     <td className="px-2 py-1.5">
@@ -926,8 +864,26 @@ export function EventProgramUnitSection({
                         className={fieldInputCls}
                       />
                     </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="text"
+                        value={v.classroom}
+                        onChange={(e) => updateUnit(v.key, { classroom: e.target.value })}
+                        placeholder="예: 1-1반"
+                        className={fieldInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="text"
+                        value={v.instructorWaitingRoom}
+                        onChange={(e) => updateUnit(v.key, { instructorWaitingRoom: e.target.value })}
+                        placeholder="예: 2층 2학년 학년연구실"
+                        className={fieldInputCls}
+                      />
+                    </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {assignedMentor ? (assignedMentor.materialFeePayerName ?? '-') : '-'}
+                      {v.attendance === true ? '출석' : v.attendance === false ? '미출석' : '-'}
                     </td>
                     <td className="px-2 py-1.5 align-top text-xs text-gray-600 whitespace-pre-wrap">
                       {v.schoolRequestNote && <div>{v.schoolRequestNote}</div>}
@@ -946,6 +902,50 @@ export function EventProgramUnitSection({
                         rows={2}
                         className={`${fieldInputCls} resize-none`}
                       />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <SignedFileCellWithUpload
+                        bucket="criminal-background-check"
+                        path={v.criminalBackgroundCheck ? toCbcStoragePath(v.criminalBackgroundCheck) : null}
+                        uploading={uploadingCbc[v.key] ?? false}
+                        onUpload={(file) => handleCriminalBackgroundCheckUpload(v, file)}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={formatThousands(v.lectureFee)}
+                        onChange={(e) => updateUnit(v.key, { lectureFee: parseThousands(e.target.value) })}
+                        className={fieldInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {assignedMentor ? (assignedMentor.lectureFeePayerName ?? '-') : '-'}
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={formatThousands(v.mentorMaterialCost)}
+                        onChange={(e) => updateUnit(v.key, { mentorMaterialCost: parseThousands(e.target.value) })}
+                        className={fieldInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={formatThousands(v.dreampiaMaterialCost)}
+                        onChange={(e) => updateUnit(v.key, { dreampiaMaterialCost: parseThousands(e.target.value) })}
+                        className={fieldInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {assignedMentor ? (assignedMentor.materialFeePayerName ?? '-') : '-'}
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {assignedMentor ? (assignedMentor.phone ?? '-') : '-'}
                     </td>
                     <td className="px-2 py-1.5 align-top text-xs">
                       {!v.rowId ? (
