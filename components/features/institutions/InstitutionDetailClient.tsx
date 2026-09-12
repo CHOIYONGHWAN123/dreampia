@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { deleteEvent } from "@/app/(dashboard)/events/actions";
 import { updateEventDateField } from "@/app/(dashboard)/event-operations/actions";
-import { sendCrimeCheckNotification } from "@/app/(dashboard)/institutions/actions";
+import {
+  sendCrimeCheckNotification,
+  sendEventNotice,
+} from "@/app/(dashboard)/institutions/actions";
 import { getReportConfig } from "@/lib/report-templates/config";
 
 type Institution = {
@@ -76,6 +80,109 @@ function canSendCrimeCheckNotification(event: Event) {
   );
 }
 
+// 행사별 공지사항 작성 모달. 전체 공지(announcements)와 달리 매번 제목/내용을 받아
+// event_notices에 새 글을 남기고, 그 행사에 배정된 강사에게만 푸시로 알린다.
+function EventNoticeModal({
+  event,
+  onClose,
+}: {
+  event: Event;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!title.trim() || !content.trim()) return;
+    setSending(true);
+    try {
+      const result = await sendEventNotice(event.id, title, content);
+      if (result.warning) {
+        alert(result.warning);
+      } else if (result.targetMentorCount === 0) {
+        alert(
+          "공지가 등록됐지만 현재 배정된 강사가 없어 알림은 발송되지 않았습니다.",
+        );
+      } else if (result.notifiedCount === 0) {
+        alert(
+          "공지가 등록됐지만 배정된 강사 중 알림을 받을 수 있는 기기가 없어 발송되지 않았습니다.",
+        );
+      } else if (result.notifiedCount < result.targetMentorCount) {
+        alert(
+          `강사 ${result.notifiedCount}명에게 발송했습니다. (배정 강사 ${result.targetMentorCount}명 중 일부는 기기 미등록으로 제외)`,
+        );
+      } else {
+        alert(`강사 ${result.notifiedCount}명에게 공지 알림을 발송했습니다.`);
+      }
+      onClose();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "공지 발송에 실패했습니다.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return createPortal(
+    <div
+      className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg shadow-2xl w-md p-5 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-sm font-bold text-gray-900 mb-1">
+          공지사항 알림보내기
+        </h3>
+        <p className="text-xs text-gray-400 mb-4">
+          {event.name}에 배정된 강사에게 발송됩니다.
+        </p>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">제목</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-300"
+              placeholder="공지 제목"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">내용</label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={5}
+              className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-300 resize-none"
+              placeholder="공지 내용"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!title.trim() || !content.trim() || sending}
+            className="px-3 py-1.5 text-sm bg-primary-500 text-white rounded hover:bg-primary-600 disabled:opacity-50"
+          >
+            {sending ? "발송 중…" : "발송"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export function InstitutionDetailClient({
   institution,
   events,
@@ -91,6 +198,9 @@ export function InstitutionDetailClient({
     string | null
   >(null);
   const [downloadingDocsId, setDownloadingDocsId] = useState<string | null>(
+    null,
+  );
+  const [noticeModalEvent, setNoticeModalEvent] = useState<Event | null>(
     null,
   );
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -717,9 +827,14 @@ export function InstitutionDetailClient({
                       {event.contract_status ?? "-"}
                     </td>
 
-                    {/* 공지사항 알림보내기 - 비활성화 */}
+                    {/* 공지사항 알림보내기 — 제목/내용을 입력받아 event_notices에 새 글을
+                        남기고 배정 강사에게 푸시로 알린다. 여러 번 보낼 수 있다. */}
                     <td className="px-3 py-2.5 text-center">
-                      <button type="button" disabled className={DISABLED_BTN}>
+                      <button
+                        type="button"
+                        className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap"
+                        onClick={() => setNoticeModalEvent(event)}
+                      >
                         알림보내기
                       </button>
                     </td>
@@ -768,6 +883,13 @@ export function InstitutionDetailClient({
           </table>
         </div>
       </div>
+
+      {noticeModalEvent && (
+        <EventNoticeModal
+          event={noticeModalEvent}
+          onClose={() => setNoticeModalEvent(null)}
+        />
+      )}
     </div>
   );
 }
