@@ -108,6 +108,18 @@ const selCls =
 const fieldInputCls =
   'w-full border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-primary-400'
 
+// 엑셀 열 고정처럼 앞 5개 컬럼(일자~강사 배정)을 가로 스크롤해도 화면에 고정한다.
+// 각 값은 그 앞 컬럼들의 너비(px, 헤더의 w-* 클래스와 동일한 값)를 누적한 sticky left 오프셋이다.
+const FROZEN_LEFT = {
+  date: 0,
+  startTime: 176, // 일자(w-44 = 176px)
+  endTime: 272, // + 시작 시간(w-24 = 96px)
+  target: 368, // + 종료 시간(w-24 = 96px)
+  mentor: 512, // + 대상(w-36 = 144px)
+} as const
+// 고정 영역의 마지막 컬럼(강사 배정)에만 스크롤 경계를 표시하는 그림자를 준다.
+const FROZEN_EDGE_SHADOW = 'shadow-[4px_0_6px_-4px_rgba(0,0,0,0.15)]'
+
 // startTime/endTime은 "YYYY-MM-DDTHH:mm" 형태로 그대로 저장하되, 입력은
 // 일자 하나 + 시작/종료 시간 두 개로 나눠 받기 위한 변환 헬퍼.
 function splitDateTime(value: string): { date: string; time: string } {
@@ -719,14 +731,42 @@ export function EventProgramUnitSection({
 
       {/* 추가된 프로그램 목록 - 엑셀 시트처럼 프로그램 1개당 1행 */}
       <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] max-h-[75vh] overflow-auto">
-        <table className="text-sm border-collapse" style={{ minWidth: '3520px' }}>
+        {/* table-layout: fixed로 각 컬럼 너비를 w-*(th)에 지정한 값 그대로 고정한다 — 아니면
+            내용에 따라 실제 렌더링 너비가 달라져서 아래 고정 컬럼(sticky left)의 px 오프셋이
+            어긋난다. minWidth는 전체 30개 컬럼 w-* 값의 합(px)과 정확히 일치해야 한다. */}
+        <table className="text-sm border-collapse" style={{ minWidth: '3872px', tableLayout: 'fixed' }}>
           <thead>
             <tr>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-44 min-w-44">일자</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">시작 시간</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">종료 시간</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36">대상</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40">강사 배정</th>
+              <th
+                className="sticky top-0 z-20 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-44 min-w-44"
+                style={{ left: FROZEN_LEFT.date }}
+              >
+                일자
+              </th>
+              <th
+                className="sticky top-0 z-20 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24"
+                style={{ left: FROZEN_LEFT.startTime }}
+              >
+                시작 시간
+              </th>
+              <th
+                className="sticky top-0 z-20 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24"
+                style={{ left: FROZEN_LEFT.endTime }}
+              >
+                종료 시간
+              </th>
+              <th
+                className="sticky top-0 z-20 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36"
+                style={{ left: FROZEN_LEFT.target }}
+              >
+                대상
+              </th>
+              <th
+                className={`sticky top-0 z-20 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40 ${FROZEN_EDGE_SHADOW}`}
+                style={{ left: FROZEN_LEFT.mentor }}
+              >
+                강사 배정
+              </th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">요청직업군</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">프로그램</th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">특이사항</th>
@@ -769,7 +809,7 @@ export function EventProgramUnitSection({
                   : undefined
                 return (
                   <tr key={v.key} className="border-b border-gray-100 last:border-b-0">
-                    <td className="px-2 py-1.5">
+                    <td className="sticky z-10 bg-white px-2 py-1.5" style={{ left: FROZEN_LEFT.date }}>
                       {(() => {
                         const rowDate = splitDateTime(v.startTime).date || splitDateTime(v.endTime).date
                         const weekday = getWeekdayLabel(rowDate)
@@ -788,7 +828,7 @@ export function EventProgramUnitSection({
                         )
                       })()}
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td className="sticky z-10 bg-white px-2 py-1.5" style={{ left: FROZEN_LEFT.startTime }}>
                       <input
                         type="time"
                         value={splitDateTime(v.startTime).time}
@@ -796,7 +836,7 @@ export function EventProgramUnitSection({
                         className={fieldInputCls}
                       />
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td className="sticky z-10 bg-white px-2 py-1.5" style={{ left: FROZEN_LEFT.endTime }}>
                       <input
                         type="time"
                         value={splitDateTime(v.endTime).time}
@@ -804,7 +844,7 @@ export function EventProgramUnitSection({
                         className={fieldInputCls}
                       />
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td className="sticky z-10 bg-white px-2 py-1.5" style={{ left: FROZEN_LEFT.target }}>
                       <input
                         type="text"
                         value={v.target}
@@ -813,7 +853,10 @@ export function EventProgramUnitSection({
                         className={fieldInputCls}
                       />
                     </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                    <td
+                      className={`sticky z-10 bg-white px-2 py-1.5 text-center text-xs text-gray-600 ${FROZEN_EDGE_SHADOW}`}
+                      style={{ left: FROZEN_LEFT.mentor }}
+                    >
                       {assignedMentor ? assignedMentor.name : '미배정'}
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">{v.occupationName}</td>
