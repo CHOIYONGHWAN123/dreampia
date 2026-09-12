@@ -1,6 +1,7 @@
 import JSZip from 'jszip'
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { toCbcStoragePath } from '@/lib/criminal-background-check'
 
 type ServerSupabase = Awaited<ReturnType<typeof createServerSupabaseClient>>
 
@@ -124,7 +125,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       unitIdsByMentor.set(row.mentor_id, set)
     }
     if (row.criminal_background_check && !crimeCheckPathByMentor.has(row.mentor_id)) {
-      crimeCheckPathByMentor.set(row.mentor_id, row.criminal_background_check)
+      crimeCheckPathByMentor.set(row.mentor_id, toCbcStoragePath(row.criminal_background_check))
     }
   }
 

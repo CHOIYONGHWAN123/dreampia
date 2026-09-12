@@ -5,6 +5,7 @@ import { generateId } from '@/lib/generate-id'
 import { formatThousands, parseThousands } from '@/lib/format-number'
 import { formatScoreWithGrade } from '@/lib/mentor-grade'
 import { formatUnitTitle } from '@/lib/format-unit-title'
+import { toCbcStoragePath } from '@/lib/criminal-background-check'
 import { SignedFileCellWithUpload, uploadPrivateFile } from '@/components/features/mentors/shared'
 import { updateEventRowCriminalBackgroundCheck } from '@/app/(dashboard)/events/actions'
 
@@ -117,12 +118,6 @@ function splitDateTime(value: string): { date: string; time: string } {
 // criminal-background-check 버킷이 한때 public이었을 때 저장된 값은 전체 공개 URL일 수
 // 있다. private 버킷의 signed URL 발급에는 버킷 내부 경로만 필요하므로, 공개 URL 형태면
 // 경로 부분만 추출한다(경로만 저장된 값은 그대로 반환).
-function toCbcStoragePath(value: string): string {
-  const marker = '/object/public/criminal-background-check/'
-  const idx = value.indexOf(marker)
-  return idx >= 0 ? value.slice(idx + marker.length) : value
-}
-
 // 일자(YYYY-MM-DD)로부터 요일 라벨을 계산. 일요일은 빨강, 토요일은 파랑으로 표시.
 function getWeekdayLabel(date: string): { label: string; colorCls: string } | null {
   if (!date) return null

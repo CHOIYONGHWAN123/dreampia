@@ -73,7 +73,9 @@ function getEventStatus(event: Event): "진행중" | "종료" {
   return "진행중";
 }
 
-function canSendCrimeCheckNotification(event: Event) {
+// 범죄경력 진행방식이 회보서이고 기관아이디/검증번호가 입력된 행사인지 — 조회 요청
+// 알림보내기 버튼과 회보서 다운로드 버튼 둘 다 이 조건으로 활성화 여부를 판단한다.
+function usesCrimeReportFlow(event: Event) {
   return (
     event.crime_check_method === "회보서" &&
     !!event.crime_check_info?.trim()
@@ -198,6 +200,9 @@ export function InstitutionDetailClient({
     string | null
   >(null);
   const [downloadingDocsId, setDownloadingDocsId] = useState<string | null>(
+    null,
+  );
+  const [downloadingCbcId, setDownloadingCbcId] = useState<string | null>(
     null,
   );
   const [noticeModalEvent, setNoticeModalEvent] = useState<Event | null>(
@@ -328,6 +333,51 @@ export function InstitutionDetailClient({
       alert(e instanceof Error ? e.message : "다운로드에 실패했습니다.");
     } finally {
       setDownloadingDocsId(null);
+    }
+  };
+
+  // 등록된 회보서(event_rows.criminal_background_check) 전부를 강사별 폴더로 묶어 zip으로
+  // 내려받는다. 행정서류 zip과 달리 강사당 하나로 추리지 않고 교시별로 등록된 걸 전부 담는다.
+  const handleDownloadCriminalBackgroundChecks = async (event: Event) => {
+    setDownloadingCbcId(event.id);
+    try {
+      const res = await fetch(
+        `/events/${event.id}/criminal-background-checks/download`,
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? "다운로드에 실패했습니다.");
+      }
+
+      const missingCount = Number(
+        res.headers.get("X-Cbc-Missing-Count") ?? "0",
+      );
+
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const match = disposition.match(/filename\*=UTF-8''([^;]+)/);
+      const fileName = match
+        ? decodeURIComponent(match[1])
+        : `${event.name}_회보서.zip`;
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      if (missingCount > 0) {
+        alert(
+          `일부 회보서를 불러오지 못해 압축파일에서 제외되었습니다 (${missingCount}건)`,
+        );
+      }
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "다운로드에 실패했습니다.");
+    } finally {
+      setDownloadingCbcId(null);
     }
   };
 
@@ -516,7 +566,7 @@ export function InstitutionDetailClient({
         </div>
 
         <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
-          <table className="text-sm" style={{ minWidth: "2280px" }}>
+          <table className="text-sm" style={{ minWidth: "2408px" }}>
             <thead>
               <tr className="bg-primary-50 border-b border-primary-100">
                 <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-12 min-w-12">
@@ -564,6 +614,10 @@ export function InstitutionDetailClient({
                 <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-36 min-w-36">
                   범죄경력회보서 <br />
                   조회 요청
+                </th>
+                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
+                  회보서 <br />
+                  다운로드
                 </th>
                 <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
                   견적서
@@ -734,16 +788,16 @@ export function InstitutionDetailClient({
                         <button
                           type="button"
                           disabled={
-                            !canSendCrimeCheckNotification(event) ||
+                            !usesCrimeReportFlow(event) ||
                             sendingCrimeCheckId === event.id
                           }
                           className={
-                            canSendCrimeCheckNotification(event)
+                            usesCrimeReportFlow(event)
                               ? "px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap disabled:opacity-50"
                               : DISABLED_BTN
                           }
                           title={
-                            canSendCrimeCheckNotification(event)
+                            usesCrimeReportFlow(event)
                               ? undefined
                               : "범죄경력 진행방식이 회보서이고 기관아이디/검증번호가 입력된 경우에만 발송할 수 있습니다."
                           }
@@ -758,6 +812,35 @@ export function InstitutionDetailClient({
                               : "알림보내기"}
                         </button>
                       </div>
+                    </td>
+
+                    {/* 회보서 다운로드 — 등록된 event_rows.criminal_background_check 전부를
+                        강사별로 묶어 zip으로 내려받는다(조회 요청과 같은 조건으로 활성화). */}
+                    <td className="px-3 py-2.5 text-center">
+                      <button
+                        type="button"
+                        disabled={
+                          !usesCrimeReportFlow(event) ||
+                          downloadingCbcId === event.id
+                        }
+                        className={
+                          usesCrimeReportFlow(event)
+                            ? "px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap disabled:opacity-50"
+                            : DISABLED_BTN
+                        }
+                        title={
+                          usesCrimeReportFlow(event)
+                            ? undefined
+                            : "범죄경력 진행방식이 회보서이고 기관아이디/검증번호가 입력된 경우에만 다운로드할 수 있습니다."
+                        }
+                        onClick={() =>
+                          handleDownloadCriminalBackgroundChecks(event)
+                        }
+                      >
+                        {downloadingCbcId === event.id
+                          ? "생성중..."
+                          : "다운로드"}
+                      </button>
                     </td>
 
                     {/* 견적서 파일 업로드 */}
@@ -874,7 +957,7 @@ export function InstitutionDetailClient({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={20} className="py-10 text-center text-gray-400">
+                  <td colSpan={21} className="py-10 text-center text-gray-400">
                     진행 중인 행사가 없습니다.
                   </td>
                 </tr>
