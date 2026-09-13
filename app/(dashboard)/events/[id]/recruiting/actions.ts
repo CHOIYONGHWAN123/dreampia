@@ -492,6 +492,114 @@ export async function cancelAssignment(eventId: string, eventRowId: string): Pro
   revalidatePath(`/events/${eventId}/recruiting`)
 }
 
+export type MentorExclusionReason = 'time_conflict' | 'declined_same_set'
+export type MentorExclusion = {
+  mentorId: string
+  reason: MentorExclusionReason
+}
+
+// 지정 섭외(부분수락/모든수락) 강사 선택 목록에서, 재섭외 시 굳이 다시 보여줄 필요가
+// 없는 강사를 걸러내기 위한 판단 정보. 목록에서 완전히 숨기지 않고 화면에서 회색
+// 처리 + 사유 표시로만 쓴다(관리자가 "왜 이 강사가 빠졌지"를 바로 알 수 있어야 함).
+//
+// ① 이미 다른 강의 일정을 수락(배정)한 강사 — assignMentorDirectly와 동일하게 앞뒤 1시간
+//    버퍼를 두고, 행사 구분 없이 전체 event_rows 기준으로 시간이 겹치는지 검사한다.
+// ② 지금 선택한 일정 조합과 완전히 똑같은 조합을 거절한 강사 — 조합이 조금이라도
+//    다르면(예: 이번엔 일정이 하나 더 추가됨) 제외하지 않고 다시 후보로 보여준다.
+export async function getMentorExclusions(
+  eventRowIds: string[],
+  mentorIds: string[]
+): Promise<MentorExclusion[]> {
+  if (eventRowIds.length === 0 || mentorIds.length === 0) return []
+
+  const supabase = await createServerSupabaseClient()
+  const exclusions: MentorExclusion[] = []
+  const excludedSet = new Set<string>()
+
+  const { data: selectedRows, error: selectedErr } = await supabase
+    .from('event_rows')
+    .select('id, start_time, end_time')
+    .in('id', eventRowIds)
+  if (selectedErr) throw new Error(selectedErr.message)
+
+  const BUFFER_MS = 60 * 60 * 1000
+  const selectedRanges = (selectedRows ?? [])
+    .filter((r) => r.start_time && r.end_time)
+    .map((r) => ({ start: new Date(r.start_time as string).getTime(), end: new Date(r.end_time as string).getTime() }))
+
+  if (selectedRanges.length > 0) {
+    // 선택된 일정(eventRowIds)은 아직 배정 전(mentor_id가 null)이라 이 조회에 섞여
+    // 들어올 일이 없으므로 별도로 제외하지 않아도 된다.
+    const { data: assignedRows, error: assignedErr } = await supabase
+      .from('event_rows')
+      .select('mentor_id, start_time, end_time')
+      .in('mentor_id', mentorIds)
+    if (assignedErr) throw new Error(assignedErr.message)
+
+    for (const row of assignedRows ?? []) {
+      if (!row.mentor_id || !row.start_time || !row.end_time || excludedSet.has(row.mentor_id)) continue
+      const start = new Date(row.start_time).getTime()
+      const end = new Date(row.end_time).getTime()
+      const conflicts = selectedRanges.some((r) => start < r.end + BUFFER_MS && end > r.start - BUFFER_MS)
+      if (conflicts) {
+        excludedSet.add(row.mentor_id)
+        exclusions.push({ mentorId: row.mentor_id, reason: 'time_conflict' })
+      }
+    }
+  }
+
+  const { data: linkedRows, error: linkedErr } = await supabase
+    .from('invitation_event_rows')
+    .select('invitation_id, event_row_id')
+    .in('event_row_id', eventRowIds)
+  if (linkedErr) throw new Error(linkedErr.message)
+
+  const matchCountByInvitation = new Map<string, number>()
+  for (const lr of linkedRows ?? []) {
+    matchCountByInvitation.set(lr.invitation_id, (matchCountByInvitation.get(lr.invitation_id) ?? 0) + 1)
+  }
+  // 선택한 eventRowIds 전부와 매칭되는 invitation만 후보로 남긴다(부분적으로만 겹치면 제외).
+  const candidateInvitationIds = [...matchCountByInvitation.entries()]
+    .filter(([, count]) => count === eventRowIds.length)
+    .map(([id]) => id)
+
+  if (candidateInvitationIds.length > 0) {
+    // 그 invitation이 선택한 조합 "정확히 그것만" 가지고 있는지(더 넓은 조합의 일부로
+    // 포함된 게 아닌지) 확인하기 위해 전체 연결 건수를 다시 센다.
+    const { data: allLinkedRows, error: allLinkedErr } = await supabase
+      .from('invitation_event_rows')
+      .select('invitation_id, event_row_id')
+      .in('invitation_id', candidateInvitationIds)
+    if (allLinkedErr) throw new Error(allLinkedErr.message)
+
+    const totalCountByInvitation = new Map<string, number>()
+    for (const lr of allLinkedRows ?? []) {
+      totalCountByInvitation.set(lr.invitation_id, (totalCountByInvitation.get(lr.invitation_id) ?? 0) + 1)
+    }
+    const exactMatchInvitationIds = candidateInvitationIds.filter(
+      (id) => totalCountByInvitation.get(id) === eventRowIds.length
+    )
+
+    if (exactMatchInvitationIds.length > 0) {
+      const { data: declinedMentors, error: declinedErr } = await supabase
+        .from('invitation_mentors')
+        .select('mentor_id, invitation_id')
+        .in('invitation_id', exactMatchInvitationIds)
+        .eq('status', '거절')
+        .in('mentor_id', mentorIds)
+      if (declinedErr) throw new Error(declinedErr.message)
+
+      for (const dm of declinedMentors ?? []) {
+        if (excludedSet.has(dm.mentor_id)) continue
+        excludedSet.add(dm.mentor_id)
+        exclusions.push({ mentorId: dm.mentor_id, reason: 'declined_same_set' })
+      }
+    }
+  }
+
+  return exclusions
+}
+
 // 관리자가 초대(수락 대기) 절차 없이 즉시 특정 강사를 배정한다. 강사에게 별도 알림은
 // 가지 않으며(관리자 재량 배정), 자동섭외 후보 탐색과 동일하게 앞뒤 1시간 버퍼를 두고
 // 그 강사의 다른 배정과 시간이 겹치면 막는다. 이미 다른 강사가 배정된 일정이면 막는다

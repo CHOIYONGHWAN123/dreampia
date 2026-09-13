@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatScoreWithGrade } from '@/lib/mentor-grade'
 import {
@@ -10,13 +10,21 @@ import {
   cancelInvitation,
   cancelAssignment,
   assignMentorDirectly,
+  getMentorExclusions,
 } from '@/app/(dashboard)/events/[id]/recruiting/actions'
 import type {
   RecruitingEventRow,
   CandidateMentor,
   InvitationSummary,
   BundlePlanGroup,
+  MentorExclusion,
+  MentorExclusionReason,
 } from '@/app/(dashboard)/events/[id]/recruiting/actions'
+
+const EXCLUSION_LABEL: Record<MentorExclusionReason, string> = {
+  time_conflict: '다른 일정 수락함',
+  declined_same_set: '이 일정 거절함',
+}
 
 type InviteType = 'partial' | 'all'
 
@@ -117,6 +125,8 @@ export function EventRecruitingClient({
   const [directAssignSelection, setDirectAssignSelection] = useState<Record<string, string>>({})
   const [isCancelingInvitation, startCancelInvitationTransition] = useTransition()
   const [cancelingInvitationId, setCancelingInvitationId] = useState<string | null>(null)
+  const [showInvitations, setShowInvitations] = useState(false)
+  const [exclusions, setExclusions] = useState<Record<string, MentorExclusionReason>>({})
   const [isAutoPending, startAutoTransition] = useTransition()
   const [autoError, setAutoError] = useState<string | null>(null)
   const [isPreviewPending, startPreviewTransition] = useTransition()
@@ -200,6 +210,32 @@ export function EventRecruitingClient({
     return first.filter((m) => rest.every((list) => list.some((m2) => m2.id === m.id)))
   }, [pendingType, timeConflictAmongSelected, selectedRows, mentorsByUnit])
 
+  // 후보 강사가 바뀔 때마다(일정 선택 변경 포함) 재섭외 제외 대상(다른 일정 수락함 /
+  // 이 일정 거절함)을 다시 조회한다. 목록에서 완전히 숨기지 않고 회색+사유 표시만 하므로,
+  // 조회에 실패해도 조용히 넘어가고(전부 선택 가능한 상태로 둔다) 발송 자체를 막지 않는다.
+  useEffect(() => {
+    let cancelled = false
+    const mentorIds = eligibleMentors.map((m) => m.id)
+    const rowIds = [...selectedRowIds]
+    const task: Promise<MentorExclusion[]> =
+      pendingType && mentorIds.length > 0 && rowIds.length > 0
+        ? getMentorExclusions(rowIds, mentorIds)
+        : Promise.resolve([])
+    task
+      .then((result) => {
+        if (cancelled) return
+        const map: Record<string, MentorExclusionReason> = {}
+        for (const ex of result) map[ex.mentorId] = ex.reason
+        setExclusions(map)
+      })
+      .catch(() => {
+        if (!cancelled) setExclusions({})
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [pendingType, eligibleMentors, selectedRowIds])
+
   const openPicker = (type: InviteType) => {
     setPendingType(type)
     setSelectedMentorIds(new Set())
@@ -212,6 +248,15 @@ export function EventRecruitingClient({
     setError(null)
   }
 
+  // 선택해둔 강사가 이후 일정 재선택 등으로 강의불가/미인증/제외 대상이 되면 화면/발송 대상에서는
+  // 빠져야 하므로, 별도 state로 동기화하는 대신 렌더링 시점에 걸러낸 값을 파생시켜 사용한다.
+  const validSelectedMentorIds = useMemo(() => {
+    const eligibleIds = new Set(
+      eligibleMentors.filter((m) => m.isAvailable && m.isAuthenticated && !exclusions[m.id]).map((m) => m.id)
+    )
+    return new Set([...selectedMentorIds].filter((id) => eligibleIds.has(id)))
+  }, [selectedMentorIds, eligibleMentors, exclusions])
+
   const toggleMentor = (id: string) => {
     setSelectedMentorIds((prev) => {
       const next = new Set(prev)
@@ -223,7 +268,7 @@ export function EventRecruitingClient({
 
   const handleSubmit = () => {
     if (!pendingType) return
-    if (selectedMentorIds.size === 0) {
+    if (validSelectedMentorIds.size === 0) {
       setError('초대할 강사를 1명 이상 선택해주세요.')
       return
     }
@@ -234,7 +279,7 @@ export function EventRecruitingClient({
           eventId,
           eventRowIds: [...selectedRowIds],
           isAllApprovalRequired: pendingType === 'all',
-          mentorIds: [...selectedMentorIds],
+          mentorIds: [...validSelectedMentorIds],
         })
         if (result.error) {
           setError(result.error)
@@ -666,7 +711,9 @@ export function EventRecruitingClient({
                       ? '강의불가'
                       : !m.isAuthenticated
                         ? '미인증'
-                        : null
+                        : exclusions[m.id]
+                          ? EXCLUSION_LABEL[exclusions[m.id]]
+                          : null
                     return (
                       <label
                         key={m.id}
@@ -676,7 +723,7 @@ export function EventRecruitingClient({
                       >
                         <input
                           type="checkbox"
-                          checked={selectedMentorIds.has(m.id)}
+                          checked={validSelectedMentorIds.has(m.id)}
                           disabled={!!disabledReason}
                           onChange={() => toggleMentor(m.id)}
                         />
@@ -717,10 +764,17 @@ export function EventRecruitingClient({
         </div>
       )}
 
-      {/* 발송된 초대 목록 */}
+      {/* 발송된 초대 목록 - 평소엔 접어두고, 필요할 때(취소 등)만 펼쳐본다 */}
       <div className="mt-8">
-        <h2 className="text-base font-extrabold text-gray-900 mb-3">발송된 초대</h2>
-        {invitations.length === 0 ? (
+        <button
+          type="button"
+          onClick={() => setShowInvitations((v) => !v)}
+          className="flex items-center gap-2 text-base font-extrabold text-gray-900 mb-3"
+        >
+          <span>발송된 초대 ({invitations.length})</span>
+          <span className="text-xs font-normal text-gray-400">{showInvitations ? '접기 ▲' : '펼치기 ▼'}</span>
+        </button>
+        {!showInvitations ? null : invitations.length === 0 ? (
           <p className="text-xs text-gray-400">아직 발송된 초대가 없습니다.</p>
         ) : (
           <div className="space-y-3">
