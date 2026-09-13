@@ -61,6 +61,9 @@ export type SelectedProgramUnit = {
   mentorMaterialCostDefault: number | null
   dreampiaMaterialCostDefault: number | null
   prepBy: string | null
+  // 프로그램(유닛) 기본 준비주체. 입력창의 현재 값과 같으면 자동 연동(저장 시 null)으로,
+  // 다르면 이 행만의 수동 오버라이드로 저장하기 위한 비교 기준값 (재료비와 동일한 패턴).
+  prepByDefault: string | null
   suppliesPrepared: boolean
   startTime: string
   endTime: string
@@ -108,6 +111,8 @@ const selCls =
 const fieldInputCls =
   'w-full border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-primary-400'
 
+const PREP_BY_OPTIONS = ['강사', '드림피아', '모두가능'] as const
+
 // 엑셀 열 고정처럼 앞 5개 컬럼(일자~강사 배정)을 가로 스크롤해도 화면에 고정한다.
 // 각 값은 그 앞 컬럼들의 너비(px, 헤더의 w-* 클래스와 동일한 값)를 누적한 sticky left 오프셋이다.
 const FROZEN_LEFT = {
@@ -142,6 +147,33 @@ function getWeekdayLabel(date: string): { label: string; colorCls: string } | nu
 function joinDateTime(date: string, time: string): string {
   if (!date) return ''
   return `${date}T${time || '00:00'}`
+}
+
+// "YYYY-MM-DDTHH:mm" 문자열은 그대로 비교해도 시간 순 정렬이 되지만, 값이 비어있는 행이
+// (사전순으로는 빈 문자열이 가장 앞이라) 맨 위로 튀어 오르지 않도록 맨 뒤로 보낸다.
+function dateTimeSortKey(value: string): string {
+  return value || '9999-99-99T99:99'
+}
+
+// "1학년", "1-2학년", "5-6학년"처럼 앞자리 숫자로 학년을 나타내는 문자열에서 정렬 기준 숫자를
+// 뽑아낸다. 숫자가 없는 값(예: "전체", "-")은 맨 뒤로 보낸다.
+function targetSortKey(target: string): number {
+  const match = target.match(/\d+/)
+  return match ? Number(match[0]) : Number.POSITIVE_INFINITY
+}
+
+// 일자 → 시작 시간 → 종료 시간 → 대상(학년) 순으로 오름차순 정렬한다.
+// startTime 문자열 자체가 "일자+시작시간"을 이미 포함하므로 한 번의 비교로 우선순위 1·2를 함께 만족한다.
+function compareProgramUnits(a: SelectedProgramUnit, b: SelectedProgramUnit): number {
+  const startA = dateTimeSortKey(a.startTime)
+  const startB = dateTimeSortKey(b.startTime)
+  if (startA !== startB) return startA < startB ? -1 : 1
+
+  const endA = dateTimeSortKey(a.endTime)
+  const endB = dateTimeSortKey(b.endTime)
+  if (endA !== endB) return endA < endB ? -1 : 1
+
+  return targetSortKey(a.target) - targetSortKey(b.target)
 }
 
 // 검색 또는 분야 > 직종 > 프로그램 > 프로그램 유닛 드릴다운으로 occupation_program_unit을 찾아 추가하는 섹션.
@@ -194,6 +226,10 @@ export function EventProgramUnitSection({
 
   // 회보서 업로드 중 여부 (행 key 기준)
   const [uploadingCbc, setUploadingCbc] = useState<Record<string, boolean>>({})
+
+  // 화면 표시용으로만 정렬한다 — value(저장 상태) 자체의 순서는 건드리지 않아, 정렬 중에도
+  // updateUnit 등은 항상 key로 원본 배열을 찾아 갱신한다.
+  const sortedValue = useMemo(() => [...value].sort(compareProgramUnits), [value])
 
   const occupationMap = useMemo(() => new Map(occupations.map((o) => [o.id, o])), [occupations])
   const programMap = useMemo(() => new Map(programs.map((p) => [p.id, p])), [programs])
@@ -279,6 +315,7 @@ export function EventProgramUnitSection({
         mentorMaterialCostDefault: unit.mentor_material_cost,
         dreampiaMaterialCostDefault: unit.dreampia_material_cost,
         prepBy: unit.prep_by,
+        prepByDefault: unit.prep_by,
         suppliesPrepared: false,
         startTime: defaultStartTime ?? '',
         endTime: defaultDate ? joinDateTime(defaultDate, defaultEndTimeOfDay) : defaultEndTime ?? '',
@@ -802,7 +839,7 @@ export function EventProgramUnitSection({
                 </td>
               </tr>
             ) : (
-              value.map((v) => {
+              sortedValue.map((v) => {
                 const candidateMentors = mentorsByUnit[v.unitId] ?? []
                 const assignedMentor = v.mentorId
                   ? candidateMentors.find((m) => m.id === v.mentorId)
@@ -875,7 +912,18 @@ export function EventProgramUnitSection({
                         className={`${fieldInputCls} resize-none`}
                       />
                     </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">{v.prepBy ?? '-'}</td>
+                    <td className="px-2 py-1.5">
+                      <select
+                        value={v.prepBy ?? ''}
+                        onChange={(e) => updateUnit(v.key, { prepBy: e.target.value || null })}
+                        className={`${selCls} w-full`}
+                      >
+                        <option value="">-</option>
+                        {PREP_BY_OPTIONS.map((p) => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                    </td>
                     <td className="px-2 py-1.5 text-center">
                       <input
                         type="checkbox"

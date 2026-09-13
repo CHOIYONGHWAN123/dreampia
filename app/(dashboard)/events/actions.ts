@@ -188,6 +188,7 @@ type EventRowInput = {
   supplies_prepared?: boolean | null
   mentor_material_cost?: number | null
   dreampia_material_cost?: number | null
+  prep_by?: string | null
 }
 
 export type MentorOptionForUnit = {
@@ -289,6 +290,7 @@ export type EventRowDetailData = {
   supplies_prepared: boolean
   mentor_material_cost: number | null
   dreampia_material_cost: number | null
+  prep_by: string | null
 }
 
 export type EventRowPhoto = { id: string; url: string }
@@ -312,7 +314,7 @@ export async function getEventDetail(id: string): Promise<{
       supabase
         .from('event_rows')
         .select(
-          'id, occupation_program_unit_id, start_time, end_time, classroom, instructor_waiting_room, target, lecture_fee, headcount, session_headcount, mentor_id, school_request_response, remarks, attendance, criminal_background_check, supplies_prepared, mentor_material_cost, dreampia_material_cost'
+          'id, occupation_program_unit_id, start_time, end_time, classroom, instructor_waiting_room, target, lecture_fee, headcount, session_headcount, mentor_id, school_request_response, remarks, attendance, criminal_background_check, supplies_prepared, mentor_material_cost, dreampia_material_cost, prep_by'
         )
         .eq('event_id', id)
         .order('start_time', { ascending: true, nullsFirst: false }),
@@ -576,6 +578,7 @@ export async function createEvent(data: {
           supplies_prepared: r.supplies_prepared ?? false,
           mentor_material_cost: r.mentor_material_cost ?? null,
           dreampia_material_cost: r.dreampia_material_cost ?? null,
+          prep_by: r.prep_by ?? null,
         }))
       )
       .select('id')
@@ -805,6 +808,7 @@ export async function updateEvent(
       supplies_prepared: r.supplies_prepared ?? false,
       mentor_material_cost: r.mentor_material_cost ?? null,
       dreampia_material_cost: r.dreampia_material_cost ?? null,
+      prep_by: r.prep_by ?? null,
     }
     const existing = r.id ? existingById.get(r.id) : undefined
     if (existing) {

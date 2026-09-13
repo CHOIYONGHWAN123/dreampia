@@ -128,7 +128,8 @@ function buildInitialProgramUnits(
       dreampiaMaterialCost: r.dreampia_material_cost ?? unit?.dreampia_material_cost ?? null,
       mentorMaterialCostDefault: unit?.mentor_material_cost ?? null,
       dreampiaMaterialCostDefault: unit?.dreampia_material_cost ?? null,
-      prepBy: unit?.prep_by ?? null,
+      prepBy: r.prep_by ?? unit?.prep_by ?? null,
+      prepByDefault: unit?.prep_by ?? null,
       suppliesPrepared: r.supplies_prepared,
       startTime: toDatetimeLocal(r.start_time),
       endTime: toDatetimeLocal(r.end_time),
@@ -515,6 +516,7 @@ export function EventForm({
           mentor_material_cost: u.mentorMaterialCost === u.mentorMaterialCostDefault ? null : u.mentorMaterialCost,
           dreampia_material_cost:
             u.dreampiaMaterialCost === u.dreampiaMaterialCostDefault ? null : u.dreampiaMaterialCost,
+          prep_by: u.prepBy === u.prepByDefault ? null : u.prepBy,
         })),
         dateGroups: dateGroups.map((g) => ({ id: g.id, name: g.name, dates: g.dates })),
       }

@@ -470,6 +470,20 @@ export type Database = {
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "event_notices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_event_row_detail"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_notices_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "mentor_invitation_requests"
+            referencedColumns: ["event_id"]
+          },
         ]
       }
       event_photos: {
@@ -534,6 +548,7 @@ export type Database = {
           mentor_id: string | null
           mentor_material_cost: number | null
           occupation_program_unit_id: string | null
+          prep_by: Database["public"]["Enums"]["prep_by"] | null
           preparing: boolean
           preparing_reminder_sent_at: string | null
           remarks: string | null
@@ -561,6 +576,7 @@ export type Database = {
           mentor_id?: string | null
           mentor_material_cost?: number | null
           occupation_program_unit_id?: string | null
+          prep_by?: Database["public"]["Enums"]["prep_by"] | null
           preparing?: boolean
           preparing_reminder_sent_at?: string | null
           remarks?: string | null
@@ -588,6 +604,7 @@ export type Database = {
           mentor_id?: string | null
           mentor_material_cost?: number | null
           occupation_program_unit_id?: string | null
+          prep_by?: Database["public"]["Enums"]["prep_by"] | null
           preparing?: boolean
           preparing_reminder_sent_at?: string | null
           remarks?: string | null
@@ -2120,6 +2137,7 @@ export type Database = {
           prep_by: Database["public"]["Enums"]["prep_by"] | null
           preparing: boolean | null
           program_name: string | null
+          remarks: string | null
           school_request_note: string | null
           session_headcount: string | null
           start_time: string | null
@@ -2346,6 +2364,7 @@ export type Database = {
           prep_by: Database["public"]["Enums"]["prep_by"]
           preparing: boolean
           program_name: string
+          remarks: string
           school_request_note: string
           session_headcount: string
           start_time: string
