@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { HeaderFilter } from '@/components/ui/HeaderFilter'
 import { updateEventDateField } from '@/app/(dashboard)/event-operations/actions'
+import { toast } from '@/lib/store/toast-store'
 
 export type SuppliesTaskRow = {
   no: number
@@ -108,7 +109,7 @@ export function SuppliesTaskClient({ rows }: { rows: SuppliesTaskRow[] }) {
     try {
       await updateEventDateField(eventId, dateKey, { supplies_status: value })
     } catch (e) {
-      alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
       return
     }
     if (value === '준비 완료') {
@@ -122,6 +123,7 @@ export function SuppliesTaskClient({ rows }: { rows: SuppliesTaskRow[] }) {
       }
     }
     router.refresh()
+    toast.success('저장되었습니다')
   }
 
   return (

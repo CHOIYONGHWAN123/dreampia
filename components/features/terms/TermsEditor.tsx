@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { saveTermsField } from '@/app/(dashboard)/terms/actions'
+import { toast } from '@/lib/store/toast-store'
 
 interface Props {
   initialServiceTerms: string
@@ -46,13 +47,15 @@ function TermsSection({
 }) {
   const [content, setContent] = useState(initialContent)
   const [isPending, startTransition] = useTransition()
-  const [saved, setSaved] = useState(false)
 
   const handleSave = () => {
     startTransition(async () => {
-      await saveTermsField(field, content)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      try {
+        await saveTermsField(field, content)
+        toast.success('저장되었습니다')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
+      }
     })
   }
 
@@ -71,7 +74,7 @@ function TermsSection({
           disabled={isPending}
           className="px-4 py-1.5 bg-white border border-primary-300 rounded-full text-sm text-primary-600 hover:bg-primary-100 disabled:opacity-50 transition-colors"
         >
-          {isPending ? '저장 중...' : saved ? '저장됨 ✓' : '저장'}
+          {isPending ? '저장 중...' : '저장'}
         </button>
       </div>
 

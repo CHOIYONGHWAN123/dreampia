@@ -8,6 +8,7 @@ import {
   updatePptTemplate,
   type PptTemplateData,
 } from '@/app/(dashboard)/ppt-templates/actions'
+import { toast } from '@/lib/store/toast-store'
 
 interface Form {
   name: string
@@ -46,7 +47,7 @@ export function PptTemplateManagement({ initialTemplates }: { initialTemplates: 
 
   const handleAddConfirm = async () => {
     if (!addForm.name.trim() || !addForm.file) {
-      alert('양식 이름과 파일을 모두 입력해주세요.')
+      toast.error('양식 이름과 파일을 모두 입력해주세요.')
       return
     }
     setSaving(true)
@@ -59,8 +60,9 @@ export function PptTemplateManagement({ initialTemplates }: { initialTemplates: 
       ])
       setAddPopup(false)
       setAddForm(EMPTY_FORM)
+      toast.success('등록되었습니다')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '등록에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '등록에 실패했습니다.')
     } finally {
       setSaving(false)
     }
@@ -74,7 +76,7 @@ export function PptTemplateManagement({ initialTemplates }: { initialTemplates: 
 
   const handleEditConfirm = async () => {
     if (!editingTemplate || !editForm.name.trim()) {
-      alert('양식 이름을 입력해주세요.')
+      toast.error('양식 이름을 입력해주세요.')
       return
     }
     setSaving(true)
@@ -89,8 +91,9 @@ export function PptTemplateManagement({ initialTemplates }: { initialTemplates: 
       )
       setEditPopup(false)
       setEditingTemplate(null)
+      toast.success('저장되었습니다')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '수정에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '수정에 실패했습니다.')
     } finally {
       setSaving(false)
     }
@@ -98,8 +101,13 @@ export function PptTemplateManagement({ initialTemplates }: { initialTemplates: 
 
   const handleDelete = async (id: string) => {
     if (!confirm('정말로 삭제하시겠습니까? 이 양식을 쓰는 프로그램 유닛에서는 양식이 사라집니다.')) return
-    await deletePptTemplateById(id)
-    setTemplates(prev => prev.filter(t => t.id !== id))
+    try {
+      await deletePptTemplateById(id)
+      setTemplates(prev => prev.filter(t => t.id !== id))
+      toast.success('삭제되었습니다')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+    }
   }
 
   return (

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 import { announcementSchema, type AnnouncementFormData } from '@/lib/validations/announcement'
 import { createAnnouncement, updateAnnouncement, deleteAnnouncement } from '@/app/(dashboard)/announcements/actions'
+import { toast } from '@/lib/store/toast-store'
 
 interface Props {
   id?: string
@@ -29,20 +30,30 @@ export function AnnouncementForm({ id, defaultValues }: Props) {
 
   const onSubmit = (data: AnnouncementFormData) => {
     startTransition(async () => {
-      if (isEdit) {
-        await updateAnnouncement(id, data.title, data.content)
-      } else {
-        await createAnnouncement(data.title, data.content)
+      try {
+        if (isEdit) {
+          await updateAnnouncement(id, data.title, data.content)
+        } else {
+          await createAnnouncement(data.title, data.content)
+        }
+        toast.success('저장되었습니다')
+        router.push('/announcements')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
       }
-      router.push('/announcements')
     })
   }
 
   const handleDelete = () => {
     if (!confirm('공지사항을 삭제하시겠습니까?')) return
     startDeleting(async () => {
-      await deleteAnnouncement(id!)
-      router.push('/announcements')
+      try {
+        await deleteAnnouncement(id!)
+        toast.success('삭제되었습니다')
+        router.push('/announcements')
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+      }
     })
   }
 

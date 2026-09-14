@@ -9,6 +9,7 @@ import { FieldSectionForm } from './FieldSectionForm'
 import { createFieldSection, type FieldSectionState } from './new-mentor-types'
 import { BANK_OPTIONS } from '@/constants/banks'
 import { generateId } from '@/lib/generate-id'
+import { toast } from '@/lib/store/toast-store'
 
 const inputCls =
   'w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-300'
@@ -52,19 +53,19 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      alert('이름을 입력해주세요.')
+      toast.error('이름을 입력해주세요.')
       return
     }
     if (email.trim() && !password) {
-      alert('이메일을 입력한 경우 비밀번호도 입력해주세요.')
+      toast.error('이메일을 입력한 경우 비밀번호도 입력해주세요.')
       return
     }
     if (password && password.length < 6) {
-      alert('비밀번호는 6자 이상이어야 합니다.')
+      toast.error('비밀번호는 6자 이상이어야 합니다.')
       return
     }
     if (password && password !== passwordConfirm) {
-      alert('비밀번호가 일치하지 않습니다.')
+      toast.error('비밀번호가 일치하지 않습니다.')
       return
     }
 
@@ -122,9 +123,10 @@ export function MentorNewClient({ selectData }: { selectData: AddProgramSelectDa
         programs,
       })
 
+      toast.success('저장되었습니다')
       router.push('/mentors')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
     } finally {
       setSubmitting(false)
     }

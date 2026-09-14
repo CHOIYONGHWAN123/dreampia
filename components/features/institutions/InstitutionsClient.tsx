@@ -3,6 +3,7 @@
 import { useState, useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { restoreInstitution } from '@/app/(dashboard)/institutions/actions'
+import { toast } from '@/lib/store/toast-store'
 
 const INSTITUTION_TYPES = ['유치원', '초등', '중등', '고등', '기관', '특수학교', '문화센터']
 
@@ -33,8 +34,9 @@ export function InstitutionsClient({ institutions }: { institutions: Institution
       try {
         await restoreInstitution(id)
         router.refresh()
+        toast.success('기관을 복구했습니다')
       } catch (e) {
-        alert(e instanceof Error ? e.message : '복구에 실패했습니다.')
+        toast.error(e instanceof Error ? e.message : '복구에 실패했습니다.')
       } finally {
         setRestoringTargetId(null)
       }

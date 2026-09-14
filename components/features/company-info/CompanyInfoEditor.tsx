@@ -8,6 +8,7 @@ import Underline from '@tiptap/extension-underline'
 import { useState, useTransition, useRef } from 'react'
 import { saveCompanyInfo } from '@/app/(dashboard)/company-info/actions'
 import { createClient } from '@/lib/supabase'
+import { toast } from '@/lib/store/toast-store'
 
 type Mode = 'editor' | 'html' | 'preview'
 
@@ -57,8 +58,13 @@ export function CompanyInfoEditor({ initialContent, onSaved, onCancel }: Props) 
   const handleSave = () => {
     const content = mode === 'editor' ? (editor?.getHTML() ?? '') : htmlValue
     startTransition(async () => {
-      await saveCompanyInfo(content)
-      onSaved(content)
+      try {
+        await saveCompanyInfo(content)
+        toast.success('저장되었습니다')
+        onSaved(content)
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
+      }
     })
   }
 
@@ -93,7 +99,7 @@ export function CompanyInfoEditor({ initialContent, onSaved, onCancel }: Props) 
         setHtmlValue(prev => prev + `<img src="${publicUrl}" />`)
       }
     } catch (err) {
-      alert('이미지 업로드에 실패했습니다.')
+      toast.error('이미지 업로드에 실패했습니다.')
       console.error(err)
     } finally {
       setIsUploading(false)

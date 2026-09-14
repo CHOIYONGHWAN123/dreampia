@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { HeaderFilter } from '@/components/ui/HeaderFilter'
+import { toast } from '@/lib/store/toast-store'
 
 export type AdminDocsDeliveryRow = {
   no: number
@@ -76,8 +77,9 @@ export function AdminDocsDeliveryClient({ rows }: { rows: AdminDocsDeliveryRow[]
       }
 
       router.refresh()
+      toast.success("처리되었습니다")
     } catch (e) {
-      alert(e instanceof Error ? e.message : '처리에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '처리에 실패했습니다.')
     } finally {
       setUpdatingId(null)
     }

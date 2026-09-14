@@ -12,6 +12,7 @@ import {
   type InstitutionOption,
 } from '@/app/(dashboard)/teachers/actions'
 import { InstitutionSearchSelect } from './shared'
+import { toast } from '@/lib/store/toast-store'
 
 const inputCls =
   'w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-300'
@@ -48,15 +49,15 @@ export function TeacherForm({
 
   const validateAccountFields = (emailValue: string, passwordValue: string, confirmValue: string) => {
     if (emailValue.trim() && !passwordValue) {
-      alert('이메일을 입력한 경우 비밀번호도 입력해주세요.')
+      toast.error('이메일을 입력한 경우 비밀번호도 입력해주세요.')
       return false
     }
     if (passwordValue && passwordValue.length < 6) {
-      alert('비밀번호는 6자 이상이어야 합니다.')
+      toast.error('비밀번호는 6자 이상이어야 합니다.')
       return false
     }
     if (passwordValue && passwordValue !== confirmValue) {
-      alert('비밀번호가 일치하지 않습니다.')
+      toast.error('비밀번호가 일치하지 않습니다.')
       return false
     }
     return true
@@ -64,11 +65,11 @@ export function TeacherForm({
 
   const handleSubmit = async () => {
     if (!institutionId) {
-      alert('학교를 선택해주세요.')
+      toast.error('학교를 선택해주세요.')
       return
     }
     if (!name.trim()) {
-      alert('선생님 성함을 입력해주세요.')
+      toast.error('선생님 성함을 입력해주세요.')
       return
     }
 
@@ -86,9 +87,10 @@ export function TeacherForm({
           password: password || null,
         })
       }
+      toast.success('저장되었습니다')
       router.push('/teachers')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
     } finally {
       setSubmitting(false)
     }
@@ -98,15 +100,16 @@ export function TeacherForm({
     if (!teacher) return
     if (!validateAccountFields(newAccountEmail, newAccountPassword, newAccountPassword)) return
     if (!newAccountEmail.trim() || !newAccountPassword) {
-      alert('이메일과 비밀번호를 입력해주세요.')
+      toast.error('이메일과 비밀번호를 입력해주세요.')
       return
     }
     setCreatingAccount(true)
     try {
       await createTeacherAccount(teacher.id, newAccountEmail.trim(), newAccountPassword)
       router.refresh()
+      toast.success('계정이 생성되었습니다')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '계정 생성에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '계정 생성에 실패했습니다.')
     } finally {
       setCreatingAccount(false)
     }
@@ -115,16 +118,16 @@ export function TeacherForm({
   const handleResetPassword = async () => {
     if (!teacher?.userId) return
     if (resetPassword.length < 6) {
-      alert('비밀번호는 6자 이상이어야 합니다.')
+      toast.error('비밀번호는 6자 이상이어야 합니다.')
       return
     }
     setResettingPassword(true)
     try {
       await resetTeacherPassword(teacher.userId, resetPassword)
       setResetPassword('')
-      alert('비밀번호가 재설정되었습니다.')
+      toast.success('비밀번호가 재설정되었습니다.')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '비밀번호 재설정에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '비밀번호 재설정에 실패했습니다.')
     } finally {
       setResettingPassword(false)
     }
@@ -135,9 +138,10 @@ export function TeacherForm({
     if (!confirm('이 선생님 계정을 삭제할까요?')) return
     try {
       await deleteTeacher(teacher.id)
+      toast.success('삭제되었습니다')
       router.push('/teachers')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '삭제에 실패했습니다.')
     }
   }
 

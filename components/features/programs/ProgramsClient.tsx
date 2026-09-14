@@ -46,6 +46,7 @@ import { FieldColumn } from './FieldColumn'
 import { EventCategoryColumn } from './EventCategoryColumn'
 import { ProgramColumn } from './ProgramColumn'
 import { UnitFormPopup } from './UnitFormPopup'
+import { toast } from '@/lib/store/toast-store'
 
 interface Props {
   initialEventCategories: EventCategoryData[]
@@ -147,7 +148,7 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
     try {
       const eventCount = await getEventCategoryEventCount(id)
       if (eventCount > 0) {
-        alert(`"${categoryName}" 행사구분을 사용 중인 행사가 ${eventCount}건 있어 삭제할 수 없습니다. 먼저 해당 행사들의 행사구분을 변경해주세요.`)
+        toast.warning(`"${categoryName}" 행사구분을 사용 중인 행사가 ${eventCount}건 있어 삭제할 수 없습니다. 먼저 해당 행사들의 행사구분을 변경해주세요.`)
         return
       }
       const childCount = await getEventCategoryChildCount(id)
@@ -164,8 +165,9 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
         setSelectedEventCategoryId(null)
         clearFieldLevel()
       }
+      toast.success('삭제되었습니다')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '삭제에 실패했습니다.')
     }
   }
 
@@ -193,8 +195,9 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
       if (selectedFieldId === id) {
         clearFieldLevel()
       }
+      toast.success('삭제되었습니다')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '삭제에 실패했습니다.')
     }
   }
 
@@ -221,8 +224,9 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
       }
       if (selectedFieldId) setOccupations(await getOccupationsByFieldId(selectedFieldId))
       if (selectedOccupationId === id) clearOccupationLevel()
+      toast.success('삭제되었습니다')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '삭제에 실패했습니다.')
     }
   }
 
@@ -249,8 +253,9 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
       }
       if (selectedOccupationId) setPrograms(await getOccupationProgramsByOccupationId(selectedOccupationId))
       if (selectedProgramId === id) clearProgramLevel()
+      toast.success('삭제되었습니다')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '삭제에 실패했습니다.')
     }
   }
 
@@ -270,8 +275,9 @@ export function ProgramsClient({ initialEventCategories, initialFields, pptTempl
     try {
       await deleteUnit(id)
       if (selectedProgramId) setUnits(await getUnitsByOccupationProgramId(selectedProgramId))
+      toast.success('삭제되었습니다')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '삭제에 실패했습니다.')
     }
   }
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { toast } from '@/lib/store/toast-store'
 
 // 셀 안 텍스트를 클릭하면 엑셀 메모(코멘트)처럼 그 셀 위치에서 떠 있는(float) 확대 박스가
 // 열리고, 박스 안의 +/- 버튼으로 박스 크기만 조절한다. 컬럼 자체의 폭은 바뀌지 않으며,
@@ -75,8 +76,9 @@ export function ExpandableMemoCell({
     try {
       await onSave(text.trim() || null)
       setExpanded(false)
+      toast.success('저장되었습니다')
     } catch {
-      alert('저장에 실패했습니다.')
+      toast.error('저장에 실패했습니다.')
     } finally {
       setSaving(false)
     }

@@ -7,6 +7,7 @@ import type {
   UnitFormPayload,
 } from '@/app/(dashboard)/programs/actions'
 import { FileDropZone, uploadFile } from '@/components/features/mentors/shared'
+import { toast } from '@/lib/store/toast-store'
 
 interface Props {
   initial: OccupationProgramUnitData | null
@@ -47,7 +48,7 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
 
   const handleSubmit = async () => {
     if (!form.title.trim()) {
-      alert('유닛 이름을 입력해주세요.')
+      toast.error('유닛 이름을 입력해주세요.')
       return
     }
     try {
@@ -57,9 +58,10 @@ export function UnitFormPopup({ initial, occupationProgramId, onClose, onSubmit 
         syllabus = await uploadFile('lesson-plans', occupationProgramId, syllabusFile)
       }
       await onSubmit({ ...form, title: form.title.trim(), syllabus })
+      toast.success('저장되었습니다')
       onClose()
     } catch (e) {
-      alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
     } finally {
       setIsUploading(false)
     }

@@ -13,6 +13,7 @@ import {
 } from '@/app/(dashboard)/event-operations/actions'
 import { createClient } from '@/lib/supabase'
 import { HeaderFilter } from '@/components/ui/HeaderFilter'
+import { toast } from '@/lib/store/toast-store'
 import { ExpandableMemoCell } from '@/components/ui/ExpandableMemoCell'
 import { getReportConfig } from '@/lib/report-templates/config'
 
@@ -257,9 +258,10 @@ function InlineSelect({
     setSaving(true)
     try {
       await onSave(newVal || null)
+      toast.success('저장되었습니다')
     } catch {
       setVal(prev)
-      alert('저장에 실패했습니다.')
+      toast.error('저장에 실패했습니다.')
     } finally {
       setSaving(false)
     }
@@ -303,9 +305,10 @@ function BoolSelect({
     try {
       const boolVal = newVal === '' ? null : newVal === 'true'
       await onSave(boolVal)
+      toast.success('저장되었습니다')
     } catch {
       setVal(prev)
-      alert('저장에 실패했습니다.')
+      toast.error('저장에 실패했습니다.')
     } finally {
       setSaving(false)
     }
@@ -372,9 +375,10 @@ function SingleAdminPicker({
     setSaving(true)
     try {
       await onSave(id)
+      toast.success('저장되었습니다')
     } catch {
       setSelectedId(prev)
-      alert('저장에 실패했습니다.')
+      toast.error('저장에 실패했습니다.')
     } finally {
       setSaving(false)
     }
@@ -468,8 +472,9 @@ function FieldAdminPicker({
     try {
       await onSave(selected)
       setOpen(false)
+      toast.success('저장되었습니다')
     } catch {
-      alert('저장에 실패했습니다.')
+      toast.error('저장에 실패했습니다.')
     } finally {
       setSaving(false)
     }
@@ -556,8 +561,9 @@ function InlineTextCell({
     try {
       await onSave(text.trim() || null)
       setEditing(false)
+      toast.success('저장되었습니다')
     } catch {
-      alert('저장에 실패했습니다.')
+      toast.error('저장에 실패했습니다.')
     } finally {
       setSaving(false)
     }
@@ -636,8 +642,9 @@ function InlineLinkCell({
     try {
       await onSave(normalizeUrl(text))
       setEditing(false)
+      toast.success('저장되었습니다')
     } catch {
-      alert('저장에 실패했습니다.')
+      toast.error('저장에 실패했습니다.')
     } finally {
       setSaving(false)
     }
@@ -720,15 +727,16 @@ function InlineBudgetCell({
     const raw = text.trim().replace(/,/g, '')
     const num = raw === '' ? null : parseInt(raw, 10)
     if (raw !== '' && isNaN(num!)) {
-      alert('숫자를 입력해주세요.')
+      toast.error('숫자를 입력해주세요.')
       return
     }
     setSaving(true)
     try {
       await onSave(num)
       setEditing(false)
+      toast.success('저장되었습니다')
     } catch {
-      alert('저장에 실패했습니다.')
+      toast.error('저장에 실패했습니다.')
     } finally {
       setSaving(false)
     }
@@ -763,7 +771,7 @@ function InlineBudgetCell({
     if (fileUrl) {
       window.open(fileUrl, '_blank', 'noopener,noreferrer')
     } else {
-      alert(`${fileLabel}가 등록되어있지 않습니다`)
+      toast.error(`${fileLabel}가 등록되어있지 않습니다`)
     }
   }
 
@@ -819,8 +827,9 @@ function EstimateFileCell({
         .getPublicUrl(data.path)
 
       await updateEventField(eventId, { estimate_file_url: urlData.publicUrl })
+      toast.success('업로드되었습니다')
     } catch (err) {
-      alert(err instanceof Error ? err.message : '업로드에 실패했습니다.')
+      toast.error(err instanceof Error ? err.message : '업로드에 실패했습니다.')
     } finally {
       setUploading(false)
       if (inputRef.current) inputRef.current.value = ''
@@ -909,8 +918,9 @@ export function EventOperationsClient({
     startTransition(async () => {
       try {
         await updateEventDateCrimeCheckNotified(eventId, dateKey)
+        toast.success('알림을 발송했습니다')
       } catch (e) {
-        alert(e instanceof Error ? e.message : '오류가 발생했습니다.')
+        toast.error(e instanceof Error ? e.message : '오류가 발생했습니다.')
       }
     })
   }

@@ -12,6 +12,7 @@ import {
   sendEventNotice,
 } from "@/app/(dashboard)/institutions/actions";
 import { getReportConfig } from "@/lib/report-templates/config";
+import { toast } from "@/lib/store/toast-store";
 
 type Institution = {
   id: string;
@@ -101,25 +102,25 @@ function EventNoticeModal({
     try {
       const result = await sendEventNotice(event.id, title, content);
       if (result.warning) {
-        alert(result.warning);
+        toast.warning(result.warning);
       } else if (result.targetMentorCount === 0) {
-        alert(
+        toast.warning(
           "공지가 등록됐지만 현재 배정된 강사가 없어 알림은 발송되지 않았습니다.",
         );
       } else if (result.notifiedCount === 0) {
-        alert(
+        toast.warning(
           "공지가 등록됐지만 배정된 강사 중 알림을 받을 수 있는 기기가 없어 발송되지 않았습니다.",
         );
       } else if (result.notifiedCount < result.targetMentorCount) {
-        alert(
+        toast.warning(
           `강사 ${result.notifiedCount}명에게 발송했습니다. (배정 강사 ${result.targetMentorCount}명 중 일부는 기기 미등록으로 제외)`,
         );
       } else {
-        alert(`강사 ${result.notifiedCount}명에게 공지 알림을 발송했습니다.`);
+        toast.success(`강사 ${result.notifiedCount}명에게 공지 알림을 발송했습니다.`);
       }
       onClose();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "공지 발송에 실패했습니다.");
+      toast.error(e instanceof Error ? e.message : "공지 발송에 실패했습니다.");
     } finally {
       setSending(false);
     }
@@ -229,7 +230,12 @@ export function InstitutionDetailClient({
       .from("events")
       .update({ [field]: value })
       .eq("id", eventId);
-    if (!error) patchEvent(eventId, { [field]: value } as Partial<Event>);
+    if (!error) {
+      patchEvent(eventId, { [field]: value } as Partial<Event>);
+      toast.success("저장되었습니다");
+    } else {
+      toast.error(error.message);
+    }
   };
 
   // 준비물(supplies_status)은 이제 날짜별 값이라 events가 아니라 event_dates에 쓴다.
@@ -242,10 +248,11 @@ export function InstitutionDetailClient({
     try {
       await updateEventDateField(eventId, dateKey, { supplies_status: value });
     } catch (e) {
-      alert(e instanceof Error ? e.message : "저장에 실패했습니다.");
+      toast.error(e instanceof Error ? e.message : "저장에 실패했습니다.");
       return;
     }
     patchEvent(eventId, { supplies_status: value });
+    toast.success("저장되었습니다");
     if (value === "준비 완료") {
       const {
         data: { user },
@@ -265,8 +272,9 @@ export function InstitutionDetailClient({
     try {
       await deleteEvent(eventId);
       setLocalEvents((prev) => prev.filter((e) => e.id !== eventId));
+      toast.success("행사를 삭제했습니다");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "삭제에 실패했습니다.");
+      toast.error(e instanceof Error ? e.message : "삭제에 실패했습니다.");
     }
   };
 
@@ -281,8 +289,9 @@ export function InstitutionDetailClient({
     try {
       await sendCrimeCheckNotification(event.id);
       patchEvent(event.id, { crime_check_notified: true });
+      toast.success("알림을 발송했습니다");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "알림 발송에 실패했습니다.");
+      toast.error(e instanceof Error ? e.message : "알림 발송에 실패했습니다.");
     } finally {
       setSendingCrimeCheckId(null);
     }
@@ -325,12 +334,12 @@ export function InstitutionDetailClient({
         const list = missingSummary
           ? decodeURIComponent(missingSummary).split("|")
           : [];
-        alert(
-          `일부 서류가 없어 압축파일에서 제외되었습니다 (${missingCount}건)\n\n${list.join("\n")}`,
+        toast.warning(
+          `일부 서류가 없어 압축파일에서 제외되었습니다 (${missingCount}건: ${list.join(", ")})`,
         );
       }
     } catch (e) {
-      alert(e instanceof Error ? e.message : "다운로드에 실패했습니다.");
+      toast.error(e instanceof Error ? e.message : "다운로드에 실패했습니다.");
     } finally {
       setDownloadingDocsId(null);
     }
@@ -370,12 +379,12 @@ export function InstitutionDetailClient({
       URL.revokeObjectURL(url);
 
       if (missingCount > 0) {
-        alert(
+        toast.warning(
           `일부 회보서를 불러오지 못해 압축파일에서 제외되었습니다 (${missingCount}건)`,
         );
       }
     } catch (e) {
-      alert(e instanceof Error ? e.message : "다운로드에 실패했습니다.");
+      toast.error(e instanceof Error ? e.message : "다운로드에 실패했습니다.");
     } finally {
       setDownloadingCbcId(null);
     }
@@ -394,6 +403,8 @@ export function InstitutionDetailClient({
         .from("files")
         .getPublicUrl(path);
       await handleUpdateField(eventId, "estimate_file_url", urlData.publicUrl);
+    } else {
+      toast.error(uploadError.message);
     }
     setUploadingId(null);
   };

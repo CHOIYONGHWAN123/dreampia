@@ -27,6 +27,7 @@ import { AreaSelector, MentorSearchSelect, FileCell, SignedFileCell, SignedFileC
 import { BANK_OPTIONS } from '@/constants/banks'
 import { ProgramUnitPicker, type ProgramSelectionValue } from './ProgramUnitPicker'
 import { LevelFileInputs } from './LevelFileInputs'
+import { toast } from '@/lib/store/toast-store'
 import { HeaderFilter } from '@/components/ui/HeaderFilter'
 
 // ── 유틸 ─────────────────────────────────────────────────────────────
@@ -107,8 +108,9 @@ function ProgramScoreCell({
     setSaving(true)
     try {
       await onSave(n)
+      toast.success('저장되었습니다')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
       setText(String(value))
     } finally {
       setSaving(false)
@@ -144,8 +146,9 @@ function SchoolRequestNoteCell({
     setSaving(true)
     try {
       await onSave(next)
+      toast.success('저장되었습니다')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
       setText(value ?? '')
     } finally {
       setSaving(false)
@@ -959,8 +962,9 @@ export function MentorsClient({
       if (!confirm(message)) return
       await deleteMentor(id)
       setMentors((prev) => prev.filter((m) => m.id !== id))
+      toast.success('삭제되었습니다')
     } catch (e) {
-      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '삭제에 실패했습니다.')
     }
   }
 

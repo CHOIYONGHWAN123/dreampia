@@ -10,6 +10,7 @@ import {
   saveBannerSlots,
   type BannerData,
 } from '@/app/(dashboard)/banners/actions'
+import { toast } from '@/lib/store/toast-store'
 
 const ITEMS_PER_PAGE = 6
 const TOTAL_SLOTS = 10
@@ -74,8 +75,13 @@ export function BannerManagement() {
       slotNumber: i + 1,
       bannerId: banner?.id || null,
     }))
-    await saveBannerSlots(assignments)
-    await loadBanners()
+    try {
+      await saveBannerSlots(assignments)
+      await loadBanners()
+      toast.success('저장되었습니다')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
+    }
   }
 
   const openSelectPopup = (slotIndex: number) => {
@@ -99,8 +105,13 @@ export function BannerManagement() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('정말로 삭제하시겠습니까?')) return
-    await deleteBannerById(id)
-    await loadBanners()
+    try {
+      await deleteBannerById(id)
+      await loadBanners()
+      toast.success('삭제되었습니다')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+    }
   }
 
   const uploadImage = async (file: File): Promise<string | null> => {
@@ -110,7 +121,7 @@ export function BannerManagement() {
     const filename = `${Date.now()}${ext ? `.${ext}` : ''}`
     const { error } = await supabase.storage.from('banners').upload(filename, file)
     if (error) {
-      alert('이미지 업로드에 실패했습니다.')
+      toast.error('이미지 업로드에 실패했습니다.')
       return null
     }
     const { data } = supabase.storage.from('banners').getPublicUrl(filename)
@@ -119,15 +130,20 @@ export function BannerManagement() {
 
   const handleAddConfirm = async () => {
     if (!addForm.imageFile || !addForm.name.trim()) {
-      alert('이미지 또는 배너명이 입력되지 않았습니다.')
+      toast.error('이미지 또는 배너명이 입력되지 않았습니다.')
       return
     }
     const imageUrl = await uploadImage(addForm.imageFile)
     if (!imageUrl) return
-    await createBanner(addForm.name.trim(), imageUrl, addForm.linkUrl.trim() || null)
-    setAddPopup(false)
-    setAddForm({ name: '', linkUrl: '', imageFile: null })
-    await loadBanners()
+    try {
+      await createBanner(addForm.name.trim(), imageUrl, addForm.linkUrl.trim() || null)
+      setAddPopup(false)
+      setAddForm({ name: '', linkUrl: '', imageFile: null })
+      await loadBanners()
+      toast.success('저장되었습니다')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
+    }
   }
 
   const openEditPopup = (banner: BannerData) => {
@@ -139,7 +155,7 @@ export function BannerManagement() {
   const handleEditConfirm = async () => {
     if (!editingBanner) return
     if (!editForm.name.trim() || (!editingBanner.image_url && !editForm.imageFile)) {
-      alert('이미지 또는 배너명이 입력되지 않았습니다.')
+      toast.error('이미지 또는 배너명이 입력되지 않았습니다.')
       return
     }
     let imageUrl = editingBanner.image_url || ''
@@ -148,10 +164,15 @@ export function BannerManagement() {
       if (!uploaded) return
       imageUrl = uploaded
     }
-    await updateBannerData(editingBanner.id, editForm.name.trim(), imageUrl, editForm.linkUrl.trim() || null)
-    setEditPopup(false)
-    setEditingBanner(null)
-    await loadBanners()
+    try {
+      await updateBannerData(editingBanner.id, editForm.name.trim(), imageUrl, editForm.linkUrl.trim() || null)
+      setEditPopup(false)
+      setEditingBanner(null)
+      await loadBanners()
+      toast.success('저장되었습니다')
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
+    }
   }
 
   const getFilenameFromUrl = (url: string) => url.split('/').pop() || url

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { createSupply, updateSupply } from '@/app/(dashboard)/supplies/actions'
+import { toast } from '@/lib/store/toast-store'
 
 type SupplyData = {
   id: string
@@ -63,10 +64,11 @@ export function SupplyFormPopup({ programId, programLabel, initial, onClose, onS
             initial_kit_stock: kitStock,
           })
         }
+        toast.success('저장되었습니다')
         onSaved()
         onClose()
       } catch (e) {
-        alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
+        toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
       }
     })
   }

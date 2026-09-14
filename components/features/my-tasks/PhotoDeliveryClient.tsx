@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { HeaderFilter } from '@/components/ui/HeaderFilter'
+import { toast } from '@/lib/store/toast-store'
 import { updateEventDateField, updateEventGroupField } from '@/app/(dashboard)/event-operations/actions'
 
 export type PhotoDeliveryRow = {
@@ -111,8 +112,9 @@ export function PhotoDeliveryClient({ rows }: { rows: PhotoDeliveryRow[] }) {
       }
 
       router.refresh()
+      toast.success("처리되었습니다")
     } catch (e) {
-      alert(e instanceof Error ? e.message : '처리에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '처리에 실패했습니다.')
     } finally {
       setUpdatingId(null)
     }

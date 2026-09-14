@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { HeaderFilter } from '@/components/ui/HeaderFilter'
+import { toast } from '@/lib/store/toast-store'
 
 export type EstimateTaskRow = {
   no: number
@@ -87,8 +88,9 @@ export function EstimateTaskClient({ rows }: { rows: EstimateTaskRow[] }) {
       }
 
       router.refresh()
+      toast.success("업로드되었습니다")
     } catch (e) {
-      alert(e instanceof Error ? e.message : '업로드에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '업로드에 실패했습니다.')
     } finally {
       setUploadingId(null)
       const input = inputRefs.current[eventId]

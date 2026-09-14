@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatScoreWithGrade } from '@/lib/mentor-grade'
+import { toast } from '@/lib/store/toast-store'
 import {
   createInvitation,
   createAutoInvitation,
@@ -175,11 +176,11 @@ export function EventRecruitingClient({
     const groupedIds = new Set(manualGroups.flatMap((g) => g.rowIds))
     const candidateRows = selectedRows.filter((r) => !groupedIds.has(r.id))
     if (candidateRows.length < 2) {
-      alert('이미 묶음에 포함된 일정을 제외하면 2건 미만이라 묶을 수 없습니다. 같은 강사가 진행할 일정만 2개 이상 체크한 뒤 눌러주세요.')
+      toast.error('이미 묶음에 포함된 일정을 제외하면 2건 미만이라 묶을 수 없습니다. 같은 강사가 진행할 일정만 2개 이상 체크한 뒤 눌러주세요.')
       return
     }
     if (hasTimeConflict(candidateRows)) {
-      alert('선택한 일정끼리 시간이 겹쳐 같은 강사가 모두 수락할 수 없습니다.')
+      toast.error('선택한 일정끼리 시간이 겹쳐 같은 강사가 모두 수락할 수 없습니다.')
       return
     }
     setManualGroups((prev) => [...prev, { key: crypto.randomUUID(), rowIds: candidateRows.map((r) => r.id) }])
@@ -288,6 +289,7 @@ export function EventRecruitingClient({
         setSelectedRowIds(new Set())
         closePicker()
         router.refresh()
+        toast.success('초대를 발송했습니다')
       } catch (e) {
         setError(e instanceof Error ? e.message : '초대 발송에 실패했습니다.')
       }
@@ -355,6 +357,7 @@ export function EventRecruitingClient({
         setManualGroups([])
         setAutoPreview(null)
         router.refresh()
+        toast.success('자동 섭외를 시작했습니다')
       } catch (e) {
         setAutoError(e instanceof Error ? e.message : '자동 섭외 시작에 실패했습니다.')
       }
@@ -381,8 +384,9 @@ export function EventRecruitingClient({
           return next
         })
         router.refresh()
+        toast.success('배정되었습니다')
       } catch (e) {
-        alert(e instanceof Error ? e.message : '직접 배정에 실패했습니다.')
+        toast.error(e instanceof Error ? e.message : '직접 배정에 실패했습니다.')
       } finally {
         setAssigningRowId(null)
       }
@@ -396,8 +400,9 @@ export function EventRecruitingClient({
       try {
         await cancelAssignment(eventId, rowId)
         router.refresh()
+        toast.success('배정을 취소했습니다')
       } catch (e) {
-        alert(e instanceof Error ? e.message : '배정 취소에 실패했습니다.')
+        toast.error(e instanceof Error ? e.message : '배정 취소에 실패했습니다.')
       } finally {
         setCancelingRowId(null)
       }
@@ -416,8 +421,9 @@ export function EventRecruitingClient({
       try {
         await cancelInvitation(eventId, inv.id)
         router.refresh()
+        toast.success('초대를 취소했습니다')
       } catch (e) {
-        alert(e instanceof Error ? e.message : '초대 취소에 실패했습니다.')
+        toast.error(e instanceof Error ? e.message : '초대 취소에 실패했습니다.')
       } finally {
         setCancelingInvitationId(null)
       }

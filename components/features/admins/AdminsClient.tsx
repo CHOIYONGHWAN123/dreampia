@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { approveAdmin, updateAdminFields, deleteAdmin, restoreAdmin, type AdminRow } from '@/app/(dashboard)/admins/actions'
 import { HeaderFilter } from '@/components/ui/HeaderFilter'
+import { toast } from '@/lib/store/toast-store'
 
 const YES_NO_OPTIONS = ['예', '아니오']
 
@@ -40,14 +41,15 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
     })
   }, [admins, showDeleted, superFilter, salesFilter, commFilter, suppliesFilter, contractFilter, recruitFilter, authFilter])
 
-  const runAction = (id: string, action: () => Promise<void>) => {
+  const runAction = (id: string, action: () => Promise<void>, successMessage: string) => {
     setBusyId(id)
     startTransition(async () => {
       try {
         await action()
         router.refresh()
+        toast.success(successMessage)
       } catch (e) {
-        alert(e instanceof Error ? e.message : '처리에 실패했습니다.')
+        toast.error(e instanceof Error ? e.message : '처리에 실패했습니다.')
       } finally {
         setBusyId(null)
       }
@@ -56,7 +58,7 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
 
   const handleApprove = (id: string) => {
     if (!confirm('이 관리자를 승인하시겠습니까?')) return
-    runAction(id, () => approveAdmin(id))
+    runAction(id, () => approveAdmin(id), '승인되었습니다')
   }
 
   const handleToggle = (
@@ -64,16 +66,16 @@ export function AdminsClient({ admins, currentAdminId }: { admins: AdminRow[]; c
     field: 'is_super' | 'is_authenticated' | 'is_sales' | 'is_comm' | 'is_supplies' | 'is_contract' | 'is_recruit',
     value: boolean
   ) => {
-    runAction(id, () => updateAdminFields(id, { [field]: value }))
+    runAction(id, () => updateAdminFields(id, { [field]: value }), '저장되었습니다')
   }
 
   const handleDelete = (id: string, name: string) => {
     if (!confirm(`"${name}" 관리자를 삭제하시겠습니까?\n로그인 및 시스템 접근이 즉시 차단되고 목록에서 제외됩니다. ("삭제된 관리자 보기"에서 복구할 수 있습니다)`)) return
-    runAction(id, () => deleteAdmin(id))
+    runAction(id, () => deleteAdmin(id), '삭제되었습니다')
   }
 
   const handleRestore = (id: string) => {
-    runAction(id, () => restoreAdmin(id))
+    runAction(id, () => restoreAdmin(id), '복구되었습니다')
   }
 
   const td = 'px-4 py-2.5 text-center text-gray-800 border-b border-gray-100'

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from '@/lib/store/toast-store'
 
 interface FieldItem {
   id: string
@@ -70,13 +71,13 @@ export function FieldColumn({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      alert('이름을 입력해주세요.')
+      toast.error('이름을 입력해주세요.')
       return
     }
     const trimmed = name.trim()
     const isDuplicate = items.some((item) => item.name === trimmed && item.id !== popup.id)
     if (isDuplicate) {
-      alert(`"${trimmed}"은(는) 이미 존재합니다.`)
+      toast.error(`"${trimmed}"은(는) 이미 존재합니다.`)
       return
     }
     if (pending) return
@@ -87,9 +88,10 @@ export function FieldColumn({
       } else {
         await onAdd(trimmed, eventCategoryIds, isCommon)
       }
+      toast.success('저장되었습니다')
       closePopup()
     } catch (e) {
-      alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
       setPending(false)
     }
   }
@@ -98,7 +100,7 @@ export function FieldColumn({
     try {
       await onDelete(id)
     } catch (e) {
-      alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+      toast.error(e instanceof Error ? e.message : '삭제에 실패했습니다.')
     }
   }
 

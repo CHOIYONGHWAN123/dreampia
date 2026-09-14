@@ -12,6 +12,7 @@ import {
   restoreInstitution,
 } from '@/app/(dashboard)/institutions/actions'
 import { createClient } from '@/lib/supabase'
+import { toast } from '@/lib/store/toast-store'
 
 const INSTITUTION_TYPES = ['유치원', '초등', '중등', '고등', '기관', '특수학교', '문화센터'] as const
 const CRIME_CHECK_METHODS = ['회보서', '동의서'] as const
@@ -102,9 +103,10 @@ export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
     startDeleting(async () => {
       try {
         await softDeleteInstitution(id!)
+        toast.success('기관을 삭제했습니다')
         router.push('/institutions')
       } catch (e) {
-        alert(e instanceof Error ? e.message : '삭제에 실패했습니다.')
+        toast.error(e instanceof Error ? e.message : '삭제에 실패했습니다.')
       }
     })
   }
@@ -114,8 +116,9 @@ export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
       try {
         await restoreInstitution(id!)
         router.refresh()
+        toast.success('기관을 복구했습니다')
       } catch (e) {
-        alert(e instanceof Error ? e.message : '복구에 실패했습니다.')
+        toast.error(e instanceof Error ? e.message : '복구에 실패했습니다.')
       }
     })
   }
@@ -139,7 +142,7 @@ export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
         try {
           floorMapUrl = await uploadFloorMap(floorMapFile)
         } catch {
-          alert('배치도 파일 업로드에 실패했습니다.')
+          toast.error('배치도 파일 업로드에 실패했습니다.')
           setIsUploading(false)
           return
         }
@@ -153,9 +156,10 @@ export function InstitutionForm({ id, defaultValues, isDeleted }: Props) {
         } else {
           await createInstitution(payload)
         }
+        toast.success('저장되었습니다')
         router.push('/institutions')
       } catch {
-        alert('저장에 실패했습니다.')
+        toast.error('저장에 실패했습니다.')
       }
     })
   }

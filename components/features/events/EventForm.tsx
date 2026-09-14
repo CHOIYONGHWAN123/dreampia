@@ -15,6 +15,7 @@ import {
   ELEVATOR_STATUSES,
 } from '@/lib/validations/event'
 import { createEvent, updateEvent } from '@/app/(dashboard)/events/actions'
+import { toast } from '@/lib/store/toast-store'
 import { institutionTypeToSchoolLevel } from '@/lib/school-level'
 import { generateId } from '@/lib/generate-id'
 import { formatThousands, parseThousands } from '@/lib/format-number'
@@ -396,7 +397,7 @@ export function EventForm({
         try {
           estimateFileUrl = await uploadEstimateFile(estimateFile)
         } catch (e) {
-          alert('파일 업로드에 실패했습니다.')
+          toast.error('파일 업로드에 실패했습니다.')
           setIsUploading(false)
           return
         }
@@ -412,7 +413,7 @@ export function EventForm({
         try {
           transactionStatementFileUrl = await uploadTransactionStatementFile(transactionStatementFile)
         } catch (e) {
-          alert('거래명세서 파일 업로드에 실패했습니다.')
+          toast.error('거래명세서 파일 업로드에 실패했습니다.')
           setIsUploading(false)
           return
         }
@@ -425,7 +426,7 @@ export function EventForm({
         try {
           floorMapUrl = await uploadFloorMap(floorMapFile)
         } catch (e) {
-          alert('배치도 파일 업로드에 실패했습니다.')
+          toast.error('배치도 파일 업로드에 실패했습니다.')
           setIsUploading(false)
           return
         }
@@ -439,7 +440,7 @@ export function EventForm({
           const uploaded = await Promise.all(newNoticeFiles.map((file, i) => uploadNoticeFile(file, i)))
           noticeFileUrls = [...noticeFileUrls, ...uploaded]
         } catch (e) {
-          alert('공지사항 첨부파일 업로드에 실패했습니다.')
+          toast.error('공지사항 첨부파일 업로드에 실패했습니다.')
           setIsUploading(false)
           return
         }
@@ -523,14 +524,21 @@ export function EventForm({
 
       try {
         if (eventId) {
+          // 저장 후 기관별 행사 관리 페이지로 이동하면 계속 이어서 수정하기 번거로우므로,
+          // 이동하지 않고 같은 화면에 남아 서버 데이터만 최신 상태로 반영한다.
           await updateEvent(eventId, payload)
-          router.push(data.institution_id ? `/institutions/${data.institution_id}` : '/institutions')
+          router.refresh()
+          toast.success('저장되었습니다')
         } else {
-          await createEvent(payload)
-          router.push('/institutions')
+          // 신규 등록은 저장 전까지 이 화면에 머물 "기존 행사"가 없으므로, 방금 만든
+          // 행사의 수정 화면으로 옮겨가 계속 그 행사를 작업할 수 있게 한다(뒤로가기 시
+          // 이미 제출된 등록 화면으로 돌아가지 않도록 push 대신 replace 사용).
+          const newEventId = await createEvent(payload)
+          router.replace(`/events/${newEventId}`)
+          toast.success('저장되었습니다')
         }
       } catch (e) {
-        alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
+        toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
       }
     })
   }
@@ -542,7 +550,7 @@ export function EventForm({
       {/* 헤더 - 스크롤해도 항상 보이도록 상단에 고정 */}
       <div className="sticky top-0 z-10 bg-white flex items-center justify-between py-4 mb-8 shadow-[0_4px_12px_rgba(20,20,40,0.05)]">
         <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">{eventId ? '행사 수정' : '행사 등록'}</h1>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           {eventId && (
             <button
               type="button"

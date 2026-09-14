@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase'
+import { toast } from '@/lib/store/toast-store'
 
 // ── 파일 드롭존 ──────────────────────────────────────────────────────
 
@@ -252,7 +253,7 @@ export function SignedFileCell({ bucket, path }: { bucket: string; path: string 
       const supabase = createClient()
       const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 5)
       if (error || !data) {
-        alert('파일을 불러오지 못했습니다.')
+        toast.error('파일을 불러오지 못했습니다.')
         return
       }
       window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
@@ -288,7 +289,7 @@ export function SignedFileListCell({ bucket, paths }: { bucket: string; paths: s
       const supabase = createClient()
       const { data, error } = await supabase.storage.from(bucket).createSignedUrl(paths[index], 60 * 5)
       if (error || !data) {
-        alert('파일을 불러오지 못했습니다.')
+        toast.error('파일을 불러오지 못했습니다.')
         return
       }
       window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
@@ -379,7 +380,7 @@ export function SignedFileCellWithUpload({
       const supabase = createClient()
       const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 5)
       if (error || !data) {
-        alert('파일을 불러오지 못했습니다.')
+        toast.error('파일을 불러오지 못했습니다.')
         return
       }
       window.open(data.signedUrl, '_blank', 'noopener,noreferrer')

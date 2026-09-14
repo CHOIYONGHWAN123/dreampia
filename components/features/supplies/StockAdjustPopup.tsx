@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useMemo } from 'react'
 import { adjustStock } from '@/app/(dashboard)/supplies/actions'
+import { toast } from '@/lib/store/toast-store'
 
 interface Props {
   supplyId: string
@@ -64,10 +65,11 @@ export function StockAdjustPopup({
         const stockType = target === 'free' ? 'total' : 'kit'
         const delta = direction === 'add' ? amt : -amt
         await adjustStock({ supplyId, stockType, delta, reason: reason || null })
+        toast.success('저장되었습니다')
         onSaved()
         onClose()
       } catch (e) {
-        alert(e instanceof Error ? e.message : '저장에 실패했습니다.')
+        toast.error(e instanceof Error ? e.message : '저장에 실패했습니다.')
       }
     })
   }
