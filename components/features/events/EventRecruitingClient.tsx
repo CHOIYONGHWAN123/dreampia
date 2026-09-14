@@ -155,7 +155,9 @@ export function EventRecruitingClient({
     })
   }
 
-  const selectedRows = rows.filter((r) => selectedRowIds.has(r.id))
+  // rows.filter(...)를 렌더마다 새로 만들면 이를 의존성으로 쓰는 eligibleMentors/effect가
+  // 매 렌더마다 다시 실행되어 무한 리렌더 루프에 빠지므로 반드시 메모이제이션한다.
+  const selectedRows = useMemo(() => rows.filter((r) => selectedRowIds.has(r.id)), [rows, selectedRowIds])
 
   // 모든수락은 한 명의 강사가 선택된 일정을 전부 수락해야 하므로, 선택한 일정끼리
   // 시간이 겹치면 애초에 어떤 강사도 전부 수락할 수 없다.
@@ -215,13 +217,17 @@ export function EventRecruitingClient({
   // 이 일정 거절함)을 다시 조회한다. 목록에서 완전히 숨기지 않고 회색+사유 표시만 하므로,
   // 조회에 실패해도 조용히 넘어가고(전부 선택 가능한 상태로 둔다) 발송 자체를 막지 않는다.
   useEffect(() => {
+    // 초대 피커가 열려있지 않으면(직접 배정 등) 조회 자체가 불필요하므로 조기 종료한다.
+    // 매번 setExclusions({})를 호출하면 새 객체 참조 때문에 불필요한 리렌더가 반복될 수 있다.
+    if (!pendingType) {
+      setExclusions((prev) => (Object.keys(prev).length === 0 ? prev : {}))
+      return
+    }
     let cancelled = false
     const mentorIds = eligibleMentors.map((m) => m.id)
     const rowIds = [...selectedRowIds]
     const task: Promise<MentorExclusion[]> =
-      pendingType && mentorIds.length > 0 && rowIds.length > 0
-        ? getMentorExclusions(rowIds, mentorIds)
-        : Promise.resolve([])
+      mentorIds.length > 0 && rowIds.length > 0 ? getMentorExclusions(rowIds, mentorIds) : Promise.resolve([])
     task
       .then((result) => {
         if (cancelled) return
