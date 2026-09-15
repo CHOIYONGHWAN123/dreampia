@@ -47,6 +47,40 @@ async function overlayInstitutionName(pdfBytes: ArrayBuffer, institutionName: st
   return pdfDoc.save()
 }
 
+// 성범죄경력조회동의서 1페이지 "본인은 ㅇㅇ학교의 취업자등으로서 ..." 문장의 빈칸 좌표 —
+// generate-agreement-pdf Edge Function의 CRIMINAL_RECORD_INSTITUTION_BLANK와 같이 맞출 것.
+// 이 문장은 중간에 기관명이 끼어있어 여유 공간이 좁으므로("「아동・청소년의"가 바로 뒤에
+// 이어짐), 기관명만 끼워넣지 않고 "{기관명}의 취업자등으로서" 전체를 다시 그리되, 옆
+// 문구와 겹치지 않도록 글자 크기를 자동으로 줄인다.
+const CRIMINAL_RECORD_INSTITUTION_BLANK = {
+  box: { x: 120, y: 467, width: 130, height: 17 },
+  text: { x: 122, y: 472, maxWidth: 123, startSize: 10, minSize: 7 },
+} as const
+
+// 주어진 텍스트가 maxWidth를 넘지 않는 가장 큰 폰트 크기를 찾는다(0.5pt 단위로 줄여가며 탐색).
+// minSize까지 줄여도 안 들어가면(기관명이 극단적으로 긴 경우) minSize로 그대로 그린다 —
+// 옆 문구를 침범할 수 있지만, 자를 경우 기관명이 잘려 보이는 것보다는 낫다고 판단했다.
+function fitFontSize(font: import('pdf-lib').PDFFont, text: string, maxWidth: number, startSize: number, minSize: number): number {
+  let size = startSize
+  while (size > minSize && font.widthOfTextAtSize(text, size) > maxWidth) {
+    size -= 0.5
+  }
+  return size
+}
+
+async function overlayCriminalRecordInstitution(pdfBytes: ArrayBuffer, institutionName: string): Promise<Uint8Array> {
+  const pdfDoc = await PDFDocument.load(pdfBytes)
+  pdfDoc.registerFontkit(fontkit)
+  const font = await pdfDoc.embedFont(decodeBase64(PRETENDARD_REGULAR_BASE64), { subset: false })
+  const [page] = pdfDoc.getPages()
+  const { box, text } = CRIMINAL_RECORD_INSTITUTION_BLANK
+  page.drawRectangle({ x: box.x, y: box.y, width: box.width, height: box.height, color: rgb(1, 1, 1) })
+  const phrase = `${institutionName}의 취업자등으로서`
+  const size = fitFontSize(font, phrase, text.maxWidth, text.startSize, text.minSize)
+  page.drawText(phrase, { x: text.x, y: text.y, size, font, color: rgb(0, 0, 0) })
+  return pdfDoc.save()
+}
+
 function extFromPath(path: string | null) {
   if (!path) return ''
   const clean = path.split('?')[0]
@@ -202,7 +236,17 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         mentorId: mentor.id,
         fileName: `성범죄경력조회동의서${extFromPath(mentor.criminal_record_consent_file_url)}`,
         missingLabel: `${mentor.name} - 성범죄경력조회동의서`,
-        fetcher: () => fetchPrivateFile(supabase, 'consent-file', mentor.criminal_record_consent_file_url),
+        fetcher: async () => {
+          const buffer = await fetchPrivateFile(supabase, 'consent-file', mentor.criminal_record_consent_file_url)
+          if (!buffer) return null
+          try {
+            const overlaid = await overlayCriminalRecordInstitution(buffer, institutionName)
+            return overlaid.buffer.slice(overlaid.byteOffset, overlaid.byteOffset + overlaid.byteLength) as ArrayBuffer
+          } catch (e) {
+            console.error('criminal record consent institution overlay failed', mentor.id, e)
+            return buffer
+          }
+        },
       })
     } else if (crimeCheckMethod === '회보서') {
       const path = crimeCheckPathByMentor.get(mentor.id) ?? null

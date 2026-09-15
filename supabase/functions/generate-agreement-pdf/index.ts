@@ -57,7 +57,20 @@ const CRIMINAL_RECORD_POSITIONS = {
   idNumber: { x: 390, y: 604, size: 11 },
   phone: { x: 245, y: 557, size: 11 },
   signerName: { x: 362, y: 329, size: 9 },
-  signature: { x: 408, y: 320, width: 60, height: 24 },
+  // 기존 좌표(x=408, width=60)는 "테스터01"과 "(서명 또는 인)"(x=483~553) 사이 빈 공간이라
+  // 서명이 라벨보다 왼쪽에 떠 있는 것처럼 보였다 — "(서명 또는 인)" 위에 찍히도록 옮기고
+  // 좀 더 크게 키웠다(실측 후 조정).
+  signature: { x: 478, y: 314, width: 82, height: 30 },
+} as const;
+
+// 템플릿 1페이지 "본인은 ㅇㅇ학교의 취업자등으로서 ..." 문장에 박혀있는 예시 문구를 덮는
+// 빈칸. ADMIN_INFO_INSTITUTION_BLANK와 같은 이유(기관마다 서류를 재사용)로 서명 시점엔
+// 비워두고 관리자 앱 다운로드 시점에 채운다. 다만 이 문장은 중간에 기관명이 끼어있어
+// 여유 공간이 좁으므로(다음 문구 "「아동・청소년의"가 x=250.7부터 시작), 다운로드 시점에
+// "{기관명}의 취업자등으로서" 전체를 이 자리에 글자 크기를 자동으로 줄여가며 다시 그린다
+// — 좌표를 바꾸면 route.ts의 CRIMINAL_RECORD_INSTITUTION_BLANK도 같이 맞출 것.
+const CRIMINAL_RECORD_INSTITUTION_BLANK = {
+  box: { x: 120, y: 467, width: 130, height: 17 },
 } as const;
 
 const ADMIN_INFO_POSITIONS = {
@@ -194,6 +207,16 @@ Deno.serve(async (req) => {
       const p = CRIMINAL_RECORD_POSITIONS;
       const draw = (text: string, pos: { x: number; y: number; size: number }) =>
         page.drawText(text, { x: pos.x, y: pos.y, size: pos.size, font, color: rgb(0, 0, 0) });
+
+      const institutionBox = CRIMINAL_RECORD_INSTITUTION_BLANK.box;
+      page.drawRectangle({
+        x: institutionBox.x,
+        y: institutionBox.y,
+        width: institutionBox.width,
+        height: institutionBox.height,
+        color: rgb(1, 1, 1),
+      });
+
       draw(name, p.name);
       draw(idNumber, p.idNumber);
       draw(phone, p.phone);
