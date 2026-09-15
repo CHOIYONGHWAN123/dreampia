@@ -1,88 +1,106 @@
-'use client'
+"use client";
 
-import { useMemo, useState } from 'react'
-import { generateId } from '@/lib/generate-id'
-import { formatThousands, parseThousands } from '@/lib/format-number'
-import { formatScoreWithGrade } from '@/lib/mentor-grade'
-import { formatUnitTitle } from '@/lib/format-unit-title'
-import { toCbcStoragePath } from '@/lib/criminal-background-check'
-import { SignedFileCellWithUpload, uploadPrivateFile } from '@/components/features/mentors/shared'
-import { updateEventRowCriminalBackgroundCheck } from '@/app/(dashboard)/events/actions'
+import { useMemo, useState } from "react";
+import { generateId } from "@/lib/generate-id";
+import { formatThousands, parseThousands } from "@/lib/format-number";
+import { formatScoreWithGrade } from "@/lib/mentor-grade";
+import { formatUnitTitle } from "@/lib/format-unit-title";
+import { toCbcStoragePath } from "@/lib/criminal-background-check";
+import {
+  SignedFileCellWithUpload,
+  uploadPrivateFile,
+} from "@/components/features/mentors/shared";
+import { updateEventRowCriminalBackgroundCheck } from "@/app/(dashboard)/events/actions";
 
-export type EventCategoryOption = { id: string; name: string }
-export type FieldOption = { id: string; name: string; event_category_ids: string[]; is_common: boolean }
-export type OccupationOption = { id: string; name: string; field_id: string | null }
-export type ProgramOption = { id: string; name: string; occupation_id: string | null }
+export type EventCategoryOption = { id: string; name: string };
+export type FieldOption = {
+  id: string;
+  name: string;
+  event_category_ids: string[];
+  is_common: boolean;
+};
+export type OccupationOption = {
+  id: string;
+  name: string;
+  field_id: string | null;
+};
+export type ProgramOption = {
+  id: string;
+  name: string;
+  occupation_id: string | null;
+};
 export type UnitOption = {
-  id: string
-  title: string
-  occupation_programs_id: string | null
-  school_level: string | null
-  school_request_note: string | null
-  final_product_available: boolean | null
-  is_delivery_available: boolean | null
-  mentor_material_cost: number | null
-  dreampia_material_cost: number | null
-  prep_by: string | null
-}
+  id: string;
+  title: string;
+  occupation_programs_id: string | null;
+  school_level: string | null;
+  school_request_note: string | null;
+  final_product_available: boolean | null;
+  is_delivery_available: boolean | null;
+  mentor_material_cost: number | null;
+  dreampia_material_cost: number | null;
+  prep_by: string | null;
+};
 export type MentorOption = {
-  id: string
-  name: string
-  phone: string | null
-  score: number | null
-  belongsToName: string | null
-  schoolRequestNote: string | null
-  lectureFeePayerName: string | null
-  materialFeePayerName: string | null
-}
-export type ProgramUnitPhoto = { id: string; url: string }
+  id: string;
+  name: string;
+  phone: string | null;
+  score: number | null;
+  belongsToName: string | null;
+  schoolRequestNote: string | null;
+  lectureFeePayerName: string | null;
+  materialFeePayerName: string | null;
+};
+export type ProgramUnitPhoto = { id: string; url: string };
 
 // 날짜 그룹 — B(그룹 단위) 항목을 공유할 날짜들의 묶음. id가 null이면 아직 저장 전(이번 제출에서
 // 새로 생성될 그룹)이고, 값이 있으면 기존 event_groups 행을 가리킨다.
-export type DateGroup = { id: string | null; name: string; dates: string[] }
+export type DateGroup = { id: string | null; name: string; dates: string[] };
 
 export type SelectedProgramUnit = {
-  key: string
-  rowId: string | null
-  unitId: string
-  title: string
-  schoolLevel: string | null
-  fieldName: string
-  occupationName: string
-  programName: string
-  schoolRequestNote: string | null
-  schoolRequestResponse: string
-  finalProductAvailable: boolean | null
-  isDeliveryAvailable: boolean | null
-  mentorMaterialCost: number | null
-  dreampiaMaterialCost: number | null
+  key: string;
+  rowId: string | null;
+  unitId: string;
+  title: string;
+  schoolLevel: string | null;
+  fieldName: string;
+  occupationName: string;
+  programName: string;
+  schoolRequestNote: string | null;
+  schoolRequestResponse: string;
+  finalProductAvailable: boolean | null;
+  isDeliveryAvailable: boolean | null;
+  mentorMaterialCost: number | null;
+  dreampiaMaterialCost: number | null;
   // 프로그램 기본 재료비. 입력창의 현재 값과 같으면 자동 연동(저장 시 null)으로,
   // 다르면 이 행만의 수동 오버라이드로 저장하기 위한 비교 기준값.
-  mentorMaterialCostDefault: number | null
-  dreampiaMaterialCostDefault: number | null
-  prepBy: string | null
+  mentorMaterialCostDefault: number | null;
+  dreampiaMaterialCostDefault: number | null;
+  prepBy: string | null;
   // 프로그램(유닛) 기본 준비주체. 입력창의 현재 값과 같으면 자동 연동(저장 시 null)으로,
   // 다르면 이 행만의 수동 오버라이드로 저장하기 위한 비교 기준값 (재료비와 동일한 패턴).
-  prepByDefault: string | null
-  suppliesPrepared: boolean
-  startTime: string
-  endTime: string
-  classroom: string
-  instructorWaitingRoom: string
-  target: string
-  lectureFee: number | null
-  headcount: number | null
-  sessionHeadcount: string | null
-  mentorId: string | null
-  remarks: string
-  attendance: boolean | null
-  criminalBackgroundCheck: string | null
-}
+  prepByDefault: string | null;
+  suppliesPrepared: boolean;
+  startTime: string;
+  endTime: string;
+  classroom: string;
+  instructorWaitingRoom: string;
+  target: string;
+  lectureFee: number | null;
+  headcount: number | null;
+  sessionHeadcount: string | null;
+  mentorId: string | null;
+  remarks: string;
+  attendance: boolean | null;
+  criminalBackgroundCheck: string | null;
+};
 
 // 강사료 3.3% 원천징수 후 세후 강의료
-export function calcLectureFeeAfterTax(lectureFee: number | null): number | null {
-  if (lectureFee === null || Number.isNaN(lectureFee)) return null
-  return Math.round(lectureFee * (1 - 0.033))
+export function calcLectureFeeAfterTax(
+  lectureFee: number | null,
+): number | null {
+  if (lectureFee === null || Number.isNaN(lectureFee)) return null;
+  return Math.round(lectureFee * (1 - 0.033));
 }
 
 // 유닛 -> 프로그램 -> 직종 -> 분야 경로를 조회 (기존에 저장된 행사 프로그램을 폼에 복원할 때 사용)
@@ -90,28 +108,30 @@ export function buildUnitPath(
   unit: UnitOption,
   programs: ProgramOption[],
   occupations: OccupationOption[],
-  fields: FieldOption[]
+  fields: FieldOption[],
 ) {
   const program = unit.occupation_programs_id
     ? programs.find((p) => p.id === unit.occupation_programs_id)
-    : undefined
+    : undefined;
   const occupation = program?.occupation_id
     ? occupations.find((o) => o.id === program.occupation_id)
-    : undefined
-  const field = occupation?.field_id ? fields.find((f) => f.id === occupation.field_id) : undefined
+    : undefined;
+  const field = occupation?.field_id
+    ? fields.find((f) => f.id === occupation.field_id)
+    : undefined;
   return {
-    fieldName: field?.name ?? '-',
-    occupationName: occupation?.name ?? '-',
-    programName: program?.name ?? '-',
-  }
+    fieldName: field?.name ?? "-",
+    occupationName: occupation?.name ?? "-",
+    programName: program?.name ?? "-",
+  };
 }
 
 const selCls =
-  'border border-gray-300 rounded-xl px-2 py-1.5 text-sm bg-white outline-none focus:border-primary-400 disabled:bg-gray-50 disabled:text-gray-400'
+  "border border-gray-300 rounded-xl px-2 py-1.5 text-sm bg-white outline-none focus:border-primary-400 disabled:bg-gray-50 disabled:text-gray-400";
 const fieldInputCls =
-  'w-full border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-primary-400'
+  "w-full border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-primary-400";
 
-const PREP_BY_OPTIONS = ['강사', '드림피아', '모두가능'] as const
+const PREP_BY_OPTIONS = ["강사", "드림피아", "모두가능"] as const;
 
 // 엑셀 열 고정처럼 앞 5개 컬럼(일자~강사 배정)을 가로 스크롤해도 화면에 고정한다.
 // 각 값은 그 앞 컬럼들의 너비(px, 헤더의 w-* 클래스와 동일한 값)를 누적한 sticky left 오프셋이다.
@@ -121,59 +141,65 @@ const FROZEN_LEFT = {
   endTime: 272, // + 시작 시간(w-24 = 96px)
   target: 368, // + 종료 시간(w-24 = 96px)
   mentor: 512, // + 대상(w-36 = 144px)
-} as const
+} as const;
 // 고정 영역의 마지막 컬럼(강사 배정)에만 스크롤 경계를 표시하는 그림자를 준다.
-const FROZEN_EDGE_SHADOW = 'shadow-[4px_0_6px_-4px_rgba(0,0,0,0.15)]'
+const FROZEN_EDGE_SHADOW = "shadow-[4px_0_6px_-4px_rgba(0,0,0,0.15)]";
 
 // startTime/endTime은 "YYYY-MM-DDTHH:mm" 형태로 그대로 저장하되, 입력은
 // 일자 하나 + 시작/종료 시간 두 개로 나눠 받기 위한 변환 헬퍼.
 function splitDateTime(value: string): { date: string; time: string } {
-  const [date, time] = value.split('T')
-  return { date: date ?? '', time: time ?? '' }
+  const [date, time] = value.split("T");
+  return { date: date ?? "", time: time ?? "" };
 }
 
 // criminal-background-check 버킷이 한때 public이었을 때 저장된 값은 전체 공개 URL일 수
 // 있다. private 버킷의 signed URL 발급에는 버킷 내부 경로만 필요하므로, 공개 URL 형태면
 // 경로 부분만 추출한다(경로만 저장된 값은 그대로 반환).
 // 일자(YYYY-MM-DD)로부터 요일 라벨을 계산. 일요일은 빨강, 토요일은 파랑으로 표시.
-function getWeekdayLabel(date: string): { label: string; colorCls: string } | null {
-  if (!date) return null
-  const d = new Date(`${date}T00:00:00`)
-  if (Number.isNaN(d.getTime())) return null
-  const day = d.getDay()
-  const colorCls = day === 0 ? 'text-red-500' : day === 6 ? 'text-blue-500' : 'text-gray-500'
-  return { label: '일월화수목금토'[day], colorCls }
+function getWeekdayLabel(
+  date: string,
+): { label: string; colorCls: string } | null {
+  if (!date) return null;
+  const d = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  const day = d.getDay();
+  const colorCls =
+    day === 0 ? "text-red-500" : day === 6 ? "text-blue-500" : "text-gray-500";
+  return { label: "일월화수목금토"[day], colorCls };
 }
 function joinDateTime(date: string, time: string): string {
-  if (!date) return ''
-  return `${date}T${time || '00:00'}`
+  if (!date) return "";
+  return `${date}T${time || "00:00"}`;
 }
 
 // "YYYY-MM-DDTHH:mm" 문자열은 그대로 비교해도 시간 순 정렬이 되지만, 값이 비어있는 행이
 // (사전순으로는 빈 문자열이 가장 앞이라) 맨 위로 튀어 오르지 않도록 맨 뒤로 보낸다.
 function dateTimeSortKey(value: string): string {
-  return value || '9999-99-99T99:99'
+  return value || "9999-99-99T99:99";
 }
 
 // "1학년", "1-2학년", "5-6학년"처럼 앞자리 숫자로 학년을 나타내는 문자열에서 정렬 기준 숫자를
 // 뽑아낸다. 숫자가 없는 값(예: "전체", "-")은 맨 뒤로 보낸다.
 function targetSortKey(target: string): number {
-  const match = target.match(/\d+/)
-  return match ? Number(match[0]) : Number.POSITIVE_INFINITY
+  const match = target.match(/\d+/);
+  return match ? Number(match[0]) : Number.POSITIVE_INFINITY;
 }
 
 // 일자 → 시작 시간 → 종료 시간 → 대상(학년) 순으로 오름차순 정렬한다.
 // startTime 문자열 자체가 "일자+시작시간"을 이미 포함하므로 한 번의 비교로 우선순위 1·2를 함께 만족한다.
-function compareProgramUnits(a: SelectedProgramUnit, b: SelectedProgramUnit): number {
-  const startA = dateTimeSortKey(a.startTime)
-  const startB = dateTimeSortKey(b.startTime)
-  if (startA !== startB) return startA < startB ? -1 : 1
+function compareProgramUnits(
+  a: SelectedProgramUnit,
+  b: SelectedProgramUnit,
+): number {
+  const startA = dateTimeSortKey(a.startTime);
+  const startB = dateTimeSortKey(b.startTime);
+  if (startA !== startB) return startA < startB ? -1 : 1;
 
-  const endA = dateTimeSortKey(a.endTime)
-  const endB = dateTimeSortKey(b.endTime)
-  if (endA !== endB) return endA < endB ? -1 : 1
+  const endA = dateTimeSortKey(a.endTime);
+  const endB = dateTimeSortKey(b.endTime);
+  if (endA !== endB) return endA < endB ? -1 : 1;
 
-  return targetSortKey(a.target) - targetSortKey(b.target)
+  return targetSortKey(a.target) - targetSortKey(b.target);
 }
 
 // 검색 또는 분야 > 직종 > 프로그램 > 프로그램 유닛 드릴다운으로 occupation_program_unit을 찾아 추가하는 섹션.
@@ -195,125 +221,179 @@ export function EventProgramUnitSection({
   defaultEndTime,
   photosByRow = {},
 }: {
-  eventCategoryId: string | null
+  eventCategoryId: string | null;
   // 기관 유형(institution_type)에서 매핑된 교급 — 지정되면 이 교급의 유닛만 검색/드릴다운에 노출한다.
-  schoolLevel?: string | null
-  fields: FieldOption[]
-  occupations: OccupationOption[]
-  programs: ProgramOption[]
-  units: UnitOption[]
-  mentorsByUnit: Record<string, MentorOption[]>
-  value: SelectedProgramUnit[]
-  onChange: (next: SelectedProgramUnit[]) => void
-  dateGroups: DateGroup[]
-  onDateGroupsChange: (next: DateGroup[]) => void
-  defaultStartTime?: string
-  defaultEndTime?: string
-  photosByRow?: Record<string, ProgramUnitPhoto[]>
+  schoolLevel?: string | null;
+  fields: FieldOption[];
+  occupations: OccupationOption[];
+  programs: ProgramOption[];
+  units: UnitOption[];
+  mentorsByUnit: Record<string, MentorOption[]>;
+  value: SelectedProgramUnit[];
+  onChange: (next: SelectedProgramUnit[]) => void;
+  dateGroups: DateGroup[];
+  onDateGroupsChange: (next: DateGroup[]) => void;
+  defaultStartTime?: string;
+  defaultEndTime?: string;
+  photosByRow?: Record<string, ProgramUnitPhoto[]>;
 }) {
-  const [search, setSearch] = useState('')
-  const [fieldId, setFieldId] = useState('')
-  const [occupationId, setOccupationId] = useState('')
-  const [programId, setProgramId] = useState('')
-  const [unitId, setUnitId] = useState('')
+  const [search, setSearch] = useState("");
+  const [fieldId, setFieldId] = useState("");
+  const [occupationId, setOccupationId] = useState("");
+  const [programId, setProgramId] = useState("");
+  const [unitId, setUnitId] = useState("");
 
   // 기관 유형(institution_type)에서 학년이 자동으로 정해지지 않는 경우(예: "기관" 유형의
   // 진로박람회 등)에는 schoolLevel prop이 null이라 유닛이 전혀 걸러지지 않는다. 이럴 때
   // 관리자가 직접 학년을 골라 필터링할 수 있도록 별도 드롭다운을 둔다. institution_type이
   // 바뀌어 prop이 달라지면 그 값을 기본값으로 다시 따라간다 — effect 대신 렌더 중에 이전
   // prop 값과 비교해 갱신하는 방식(React 권장 패턴)으로 처리해 불필요한 리렌더를 피한다.
-  const [prevSchoolLevel, setPrevSchoolLevel] = useState(schoolLevel ?? null)
-  const [schoolLevelOverride, setSchoolLevelOverride] = useState(schoolLevel ?? '')
+  const [prevSchoolLevel, setPrevSchoolLevel] = useState(schoolLevel ?? null);
+  const [schoolLevelOverride, setSchoolLevelOverride] = useState(
+    schoolLevel ?? "",
+  );
   if ((schoolLevel ?? null) !== prevSchoolLevel) {
-    setPrevSchoolLevel(schoolLevel ?? null)
-    setSchoolLevelOverride(schoolLevel ?? '')
+    setPrevSchoolLevel(schoolLevel ?? null);
+    setSchoolLevelOverride(schoolLevel ?? "");
   }
-  const effectiveSchoolLevel = schoolLevelOverride || null
+  const effectiveSchoolLevel = schoolLevelOverride || null;
 
   // 일괄 적용 (대상 / 강의료 / 일자·시작·종료 시간을 추가된 모든 행에 한 번에 반영)
-  const [bulkTarget, setBulkTarget] = useState('')
-  const [bulkLectureFee, setBulkLectureFee] = useState<number | null>(null)
-  const [bulkDate, setBulkDate] = useState('')
-  const [bulkStartTime, setBulkStartTime] = useState('')
-  const [bulkEndTime, setBulkEndTime] = useState('')
+  const [bulkTarget, setBulkTarget] = useState("");
+  const [bulkLectureFee, setBulkLectureFee] = useState<number | null>(null);
+  const [bulkDate, setBulkDate] = useState("");
+  const [bulkStartTime, setBulkStartTime] = useState("");
+  const [bulkEndTime, setBulkEndTime] = useState("");
 
   // 회보서 업로드 중 여부 (행 key 기준)
-  const [uploadingCbc, setUploadingCbc] = useState<Record<string, boolean>>({})
+  const [uploadingCbc, setUploadingCbc] = useState<Record<string, boolean>>({});
 
   // 화면 표시용으로만 정렬한다 — value(저장 상태) 자체의 순서는 건드리지 않아, 정렬 중에도
   // updateUnit 등은 항상 key로 원본 배열을 찾아 갱신한다.
-  const sortedValue = useMemo(() => [...value].sort(compareProgramUnits), [value])
+  const sortedValue = useMemo(
+    () => [...value].sort(compareProgramUnits),
+    [value],
+  );
 
-  const occupationMap = useMemo(() => new Map(occupations.map((o) => [o.id, o])), [occupations])
-  const programMap = useMemo(() => new Map(programs.map((p) => [p.id, p])), [programs])
-  const fieldMap = useMemo(() => new Map(fields.map((f) => [f.id, f])), [fields])
+  const occupationMap = useMemo(
+    () => new Map(occupations.map((o) => [o.id, o])),
+    [occupations],
+  );
+  const programMap = useMemo(
+    () => new Map(programs.map((p) => [p.id, p])),
+    [programs],
+  );
+  const fieldMap = useMemo(
+    () => new Map(fields.map((f) => [f.id, f])),
+    [fields],
+  );
 
   const buildPath = (unit: UnitOption) => {
-    const program = unit.occupation_programs_id ? programMap.get(unit.occupation_programs_id) : undefined
-    const occupation = program?.occupation_id ? occupationMap.get(program.occupation_id) : undefined
-    const field = occupation?.field_id ? fieldMap.get(occupation.field_id) : undefined
+    const program = unit.occupation_programs_id
+      ? programMap.get(unit.occupation_programs_id)
+      : undefined;
+    const occupation = program?.occupation_id
+      ? occupationMap.get(program.occupation_id)
+      : undefined;
+    const field = occupation?.field_id
+      ? fieldMap.get(occupation.field_id)
+      : undefined;
     return {
-      fieldName: field?.name ?? '-',
-      occupationName: occupation?.name ?? '-',
-      programName: program?.name ?? '-',
-    }
-  }
+      fieldName: field?.name ?? "-",
+      occupationName: occupation?.name ?? "-",
+      programName: program?.name ?? "-",
+    };
+  };
 
   // school_level이 null인 유닛은 특정 교급으로 한정되지 않는 프로그램(예: 공연류, 현장운영자)이라
   // 교급 필터와 무관하게 항상 노출한다.
   const schoolLevelFilteredUnits = useMemo(
     () =>
       effectiveSchoolLevel
-        ? units.filter((u) => u.school_level === effectiveSchoolLevel || u.school_level === null)
+        ? units.filter(
+            (u) =>
+              u.school_level === effectiveSchoolLevel ||
+              u.school_level === null,
+          )
         : units,
-    [units, effectiveSchoolLevel]
-  )
+    [units, effectiveSchoolLevel],
+  );
 
   // 검색은 제목만으로 찾다 보니 행사구분이 다른 동명/유사한 프로그램까지 섞여 나와 잘못
   // 선택되기 쉬웠다. 드릴다운(분야>직종>프로그램)과 동일하게 eventCategoryId로도 제한한다.
   const searchResults = useMemo(() => {
-    const q = search.trim()
-    if (!q) return []
+    const q = search.trim();
+    if (!q) return [];
     return schoolLevelFilteredUnits
       .filter((u) => {
-        const program = u.occupation_programs_id ? programMap.get(u.occupation_programs_id) : undefined
-        const occupation = program?.occupation_id ? occupationMap.get(program.occupation_id) : undefined
-        const field = occupation?.field_id ? fieldMap.get(occupation.field_id) : undefined
-        if (field?.is_common) return true
-        return eventCategoryId != null && (field?.event_category_ids.includes(eventCategoryId) ?? false)
+        const program = u.occupation_programs_id
+          ? programMap.get(u.occupation_programs_id)
+          : undefined;
+        const occupation = program?.occupation_id
+          ? occupationMap.get(program.occupation_id)
+          : undefined;
+        const field = occupation?.field_id
+          ? fieldMap.get(occupation.field_id)
+          : undefined;
+        if (field?.is_common) return true;
+        return (
+          eventCategoryId != null &&
+          (field?.event_category_ids.includes(eventCategoryId) ?? false)
+        );
       })
       .filter((u) => u.title.includes(q))
-      .slice(0, 8)
-  }, [schoolLevelFilteredUnits, search, eventCategoryId, programMap, occupationMap, fieldMap])
+      .slice(0, 8);
+  }, [
+    schoolLevelFilteredUnits,
+    search,
+    eventCategoryId,
+    programMap,
+    occupationMap,
+    fieldMap,
+  ]);
 
   // 공통 분야(예: 현장운영자) 소속 유닛은 분야>직종>프로그램 드릴다운 없이 바로 추가할 수 있게 버튼으로 노출한다.
   const commonUnits = useMemo(() => {
     return schoolLevelFilteredUnits.filter((u) => {
-      const program = u.occupation_programs_id ? programMap.get(u.occupation_programs_id) : undefined
-      const occupation = program?.occupation_id ? occupationMap.get(program.occupation_id) : undefined
-      const field = occupation?.field_id ? fieldMap.get(occupation.field_id) : undefined
-      return field?.is_common ?? false
-    })
-  }, [schoolLevelFilteredUnits, programMap, occupationMap, fieldMap])
+      const program = u.occupation_programs_id
+        ? programMap.get(u.occupation_programs_id)
+        : undefined;
+      const occupation = program?.occupation_id
+        ? occupationMap.get(program.occupation_id)
+        : undefined;
+      const field = occupation?.field_id
+        ? fieldMap.get(occupation.field_id)
+        : undefined;
+      return field?.is_common ?? false;
+    });
+  }, [schoolLevelFilteredUnits, programMap, occupationMap, fieldMap]);
 
   // is_common(공통 분야, 예: 현장운영자)은 행사구분 선택 여부와 무관하게 항상 노출한다.
   const filteredFields = useMemo(
     () =>
-      fields.filter((f) => f.is_common || (eventCategoryId != null && f.event_category_ids.includes(eventCategoryId))),
-    [fields, eventCategoryId]
-  )
+      fields.filter(
+        (f) =>
+          f.is_common ||
+          (eventCategoryId != null &&
+            f.event_category_ids.includes(eventCategoryId)),
+      ),
+    [fields, eventCategoryId],
+  );
   const filteredOccupations = useMemo(
     () => occupations.filter((o) => o.field_id === fieldId),
-    [occupations, fieldId]
-  )
+    [occupations, fieldId],
+  );
   const filteredPrograms = useMemo(
     () => programs.filter((p) => p.occupation_id === occupationId),
-    [programs, occupationId]
-  )
+    [programs, occupationId],
+  );
   const filteredUnits = useMemo(
-    () => schoolLevelFilteredUnits.filter((u) => u.occupation_programs_id === programId),
-    [schoolLevelFilteredUnits, programId]
-  )
+    () =>
+      schoolLevelFilteredUnits.filter(
+        (u) => u.occupation_programs_id === programId,
+      ),
+    [schoolLevelFilteredUnits, programId],
+  );
 
   // 동일한 프로그램 유닛을 여러 일정(예: 같은 프로그램을 여러 날짜에 진행)으로 중복 추가할 수 있어야 하므로
   // unitId가 아닌 별도의 key로 각 행을 구분한다.
@@ -322,8 +402,8 @@ export function EventProgramUnitSection({
     // 종료 시각의 날짜는 (행사 종료일이 아니라) 시작 시각과 같은 날로 맞춘다. 이 행 입력표에는
     // "일자" 칸이 하나뿐이라 시작/종료 날짜가 어긋나도 화면에 드러나지 않는다 — 어긋난 채로
     // 저장되면 관리자가 알아챌 방법이 없다.
-    const defaultDate = splitDateTime(defaultStartTime ?? '').date
-    const defaultEndTimeOfDay = splitDateTime(defaultEndTime ?? '').time
+    const defaultDate = splitDateTime(defaultStartTime ?? "").date;
+    const defaultEndTimeOfDay = splitDateTime(defaultEndTime ?? "").time;
     onChange([
       ...value,
       {
@@ -334,7 +414,7 @@ export function EventProgramUnitSection({
         schoolLevel: unit.school_level,
         ...buildPath(unit),
         schoolRequestNote: unit.school_request_note,
-        schoolRequestResponse: '',
+        schoolRequestResponse: "",
         finalProductAvailable: unit.final_product_available,
         isDeliveryAvailable: unit.is_delivery_available,
         mentorMaterialCost: unit.mentor_material_cost,
@@ -344,162 +424,187 @@ export function EventProgramUnitSection({
         prepBy: unit.prep_by,
         prepByDefault: unit.prep_by,
         suppliesPrepared: false,
-        startTime: defaultStartTime ?? '',
-        endTime: defaultDate ? joinDateTime(defaultDate, defaultEndTimeOfDay) : defaultEndTime ?? '',
-        classroom: '',
-        instructorWaitingRoom: '',
-        target: '',
+        startTime: defaultStartTime ?? "",
+        endTime: defaultDate
+          ? joinDateTime(defaultDate, defaultEndTimeOfDay)
+          : (defaultEndTime ?? ""),
+        classroom: "",
+        instructorWaitingRoom: "",
+        target: "",
         lectureFee: null,
         headcount: null,
         sessionHeadcount: null,
         mentorId: null,
-        remarks: '',
+        remarks: "",
         attendance: null,
         criminalBackgroundCheck: null,
       },
-    ])
-  }
+    ]);
+  };
 
   const handleAddFromDropdown = () => {
-    const unit = units.find((u) => u.id === unitId)
-    if (!unit) return
-    addUnit(unit)
-    setUnitId('')
-  }
+    const unit = units.find((u) => u.id === unitId);
+    if (!unit) return;
+    addUnit(unit);
+    setUnitId("");
+  };
 
   const removeUnit = (key: string) => {
-    onChange(value.filter((v) => v.key !== key))
-  }
+    onChange(value.filter((v) => v.key !== key));
+  };
 
   const updateUnit = (key: string, patch: Partial<SelectedProgramUnit>) => {
-    onChange(value.map((v) => (v.key === key ? { ...v, ...patch } : v)))
-  }
+    onChange(value.map((v) => (v.key === key ? { ...v, ...patch } : v)));
+  };
 
   // 회보서는 기본적으로 멘토가 앱에서 직접 올리지만, 멘토가 못 올리는 경우 관리자가 대신
   // 올릴 수도 있게 한다. 이미 저장된 행(rowId 있음)은 폼 저장(일괄 갱신)을 거치지 않고
   // 업로드 즉시 DB에 반영해, 관리자가 폼을 여는 사이 멘토가 올린 최신 파일을 오래된 로컬
   // 상태로 덮어쓰는 일이 없게 한다. 아직 저장 전인 신규 행은 폼 제출 시 함께 저장된다.
-  const handleCriminalBackgroundCheckUpload = async (v: SelectedProgramUnit, file: File) => {
-    setUploadingCbc((prev) => ({ ...prev, [v.key]: true }))
+  const handleCriminalBackgroundCheckUpload = async (
+    v: SelectedProgramUnit,
+    file: File,
+  ) => {
+    setUploadingCbc((prev) => ({ ...prev, [v.key]: true }));
     try {
-      const path = await uploadPrivateFile('criminal-background-check', v.rowId ?? v.key, file)
-      if (v.rowId) await updateEventRowCriminalBackgroundCheck(v.rowId, path)
-      updateUnit(v.key, { criminalBackgroundCheck: path })
+      const path = await uploadPrivateFile(
+        "criminal-background-check",
+        v.rowId ?? v.key,
+        file,
+      );
+      if (v.rowId) await updateEventRowCriminalBackgroundCheck(v.rowId, path);
+      updateUnit(v.key, { criminalBackgroundCheck: path });
     } finally {
-      setUploadingCbc((prev) => ({ ...prev, [v.key]: false }))
+      setUploadingCbc((prev) => ({ ...prev, [v.key]: false }));
     }
-  }
+  };
 
   const applyBulkTarget = () => {
-    if (!bulkTarget) return
-    onChange(value.map((v) => ({ ...v, target: bulkTarget })))
-  }
+    if (!bulkTarget) return;
+    onChange(value.map((v) => ({ ...v, target: bulkTarget })));
+  };
 
   const applyBulkLectureFee = () => {
-    if (bulkLectureFee === null) return
-    onChange(value.map((v) => ({ ...v, lectureFee: bulkLectureFee })))
-  }
+    if (bulkLectureFee === null) return;
+    onChange(value.map((v) => ({ ...v, lectureFee: bulkLectureFee })));
+  };
 
   const applyBulkTime = () => {
-    if (!bulkDate && !bulkStartTime && !bulkEndTime) return
+    if (!bulkDate && !bulkStartTime && !bulkEndTime) return;
     onChange(
       value.map((v) => {
-        const st = splitDateTime(v.startTime)
-        const et = splitDateTime(v.endTime)
-        const date = bulkDate || st.date || et.date
+        const st = splitDateTime(v.startTime);
+        const et = splitDateTime(v.endTime);
+        const date = bulkDate || st.date || et.date;
         return {
           ...v,
           startTime: joinDateTime(date, bulkStartTime || st.time),
           endTime: joinDateTime(date, bulkEndTime || et.time),
-        }
-      })
-    )
-  }
+        };
+      }),
+    );
+  };
 
   const updateRowDate = (v: SelectedProgramUnit, date: string) => {
-    const st = splitDateTime(v.startTime)
-    const et = splitDateTime(v.endTime)
-    updateUnit(v.key, { startTime: joinDateTime(date, st.time), endTime: joinDateTime(date, et.time) })
-  }
+    const st = splitDateTime(v.startTime);
+    const et = splitDateTime(v.endTime);
+    updateUnit(v.key, {
+      startTime: joinDateTime(date, st.time),
+      endTime: joinDateTime(date, et.time),
+    });
+  };
   const updateRowStartTime = (v: SelectedProgramUnit, time: string) => {
-    const st = splitDateTime(v.startTime)
-    const date = st.date || splitDateTime(v.endTime).date
-    updateUnit(v.key, { startTime: joinDateTime(date, time) })
-  }
+    const st = splitDateTime(v.startTime);
+    const date = st.date || splitDateTime(v.endTime).date;
+    updateUnit(v.key, { startTime: joinDateTime(date, time) });
+  };
   const updateRowEndTime = (v: SelectedProgramUnit, time: string) => {
-    const et = splitDateTime(v.endTime)
-    const date = et.date || splitDateTime(v.startTime).date
-    updateUnit(v.key, { endTime: joinDateTime(date, time) })
-  }
+    const et = splitDateTime(v.endTime);
+    const date = et.date || splitDateTime(v.startTime).date;
+    updateUnit(v.key, { endTime: joinDateTime(date, time) });
+  };
 
   // ── 날짜 그룹 지정 ──────────────────────────────────────────────────
   // 그룹은 "날짜" 단위로만 묶는다(프로그램 단위 부분 선택 없음) — 하루에 프로그램이 여러 개
   // 있어도 체크하면 그날 프로그램이 전부 같이 딸려 들어간다. 그래서 여기서는 프로그램 행이
   // 아니라 value에서 뽑아낸 distinct 날짜만 다룬다.
-  const [selectedDatesForGroup, setSelectedDatesForGroup] = useState<string[]>([])
-  const [newGroupName, setNewGroupName] = useState('')
+  const [selectedDatesForGroup, setSelectedDatesForGroup] = useState<string[]>(
+    [],
+  );
+  const [newGroupName, setNewGroupName] = useState("");
 
   const distinctDates = useMemo(() => {
-    const set = new Set<string>()
+    const set = new Set<string>();
     for (const v of value) {
-      const d = splitDateTime(v.startTime).date || splitDateTime(v.endTime).date
-      if (d) set.add(d)
+      const d =
+        splitDateTime(v.startTime).date || splitDateTime(v.endTime).date;
+      if (d) set.add(d);
     }
-    return [...set].sort()
-  }, [value])
+    return [...set].sort();
+  }, [value]);
 
   const dateToGroupIndex = useMemo(() => {
-    const map = new Map<string, number>()
-    dateGroups.forEach((g, i) => g.dates.forEach((d) => map.set(d, i)))
-    return map
-  }, [dateGroups])
+    const map = new Map<string, number>();
+    dateGroups.forEach((g, i) => g.dates.forEach((d) => map.set(d, i)));
+    return map;
+  }, [dateGroups]);
 
   const toggleDateForGroup = (date: string) => {
     setSelectedDatesForGroup((prev) =>
-      prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date]
-    )
-  }
+      prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date],
+    );
+  };
 
   const createGroup = () => {
-    const name = newGroupName.trim()
-    if (selectedDatesForGroup.length < 2 || !name) return
+    const name = newGroupName.trim();
+    if (selectedDatesForGroup.length < 2 || !name) return;
     // 선택한 날짜가 이미 다른 그룹에 속해있으면 거기서 빼고 새 그룹으로 옮긴다(날짜는 그룹 1개에만 속함).
     const cleaned = dateGroups
-      .map((g) => ({ ...g, dates: g.dates.filter((d) => !selectedDatesForGroup.includes(d)) }))
-      .filter((g) => g.dates.length > 0)
+      .map((g) => ({
+        ...g,
+        dates: g.dates.filter((d) => !selectedDatesForGroup.includes(d)),
+      }))
+      .filter((g) => g.dates.length > 0);
     onDateGroupsChange([
       ...cleaned,
       { id: null, name, dates: [...selectedDatesForGroup].sort() },
-    ])
-    setSelectedDatesForGroup([])
-    setNewGroupName('')
-  }
+    ]);
+    setSelectedDatesForGroup([]);
+    setNewGroupName("");
+  };
 
   const removeDateFromGroup = (groupIndex: number, date: string) => {
     onDateGroupsChange(
       dateGroups
-        .map((g, i) => (i === groupIndex ? { ...g, dates: g.dates.filter((d) => d !== date) } : g))
-        .filter((g) => g.dates.length > 0)
-    )
-  }
+        .map((g, i) =>
+          i === groupIndex
+            ? { ...g, dates: g.dates.filter((d) => d !== date) }
+            : g,
+        )
+        .filter((g) => g.dates.length > 0),
+    );
+  };
 
   const deleteGroup = (groupIndex: number) => {
-    onDateGroupsChange(dateGroups.filter((_, i) => i !== groupIndex))
-  }
+    onDateGroupsChange(dateGroups.filter((_, i) => i !== groupIndex));
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] p-4 space-y-4">
       <div>
         <h3 className="text-sm font-semibold text-gray-700">프로그램 추가</h3>
         <p className="mt-0.5 text-xs text-gray-400">
-          여기서는 프로그램 유닛 추가까지만 진행합니다. 강사 배정은 저장 후 강사 섭외 페이지에서 진행됩니다.
+          여기서는 프로그램 유닛 추가까지만 진행합니다. 강사 배정은 저장 후 강사
+          섭외 페이지에서 진행됩니다.
         </p>
       </div>
 
       {/* 학년 필터 — 기관 유형(institution_type)에서 학년이 자동으로 안 정해지는 경우
           (예: "기관" 유형의 진로박람회)를 위해 직접 고를 수 있게 둔다. */}
       <div className="flex items-center gap-2">
-        <label className="text-xs font-medium text-gray-500 whitespace-nowrap">학년</label>
+        <label className="text-xs font-medium text-gray-500 whitespace-nowrap">
+          학년
+        </label>
         <select
           className={selCls}
           value={schoolLevelOverride}
@@ -512,7 +617,8 @@ export function EventProgramUnitSection({
         </select>
         {!schoolLevel && (
           <span className="text-xs text-gray-400">
-            기관 유형만으로는 학년이 자동으로 정해지지 않아 프로그램 유닛이 전부 표시됩니다 — 맞는 학년을 직접 선택해주세요.
+            기관 유형만으로는 학년이 자동으로 정해지지 않아 프로그램 유닛이 전부
+            표시됩니다 — 맞는 학년을 직접 선택해주세요.
           </span>
         )}
       </div>
@@ -529,23 +635,26 @@ export function EventProgramUnitSection({
         {searchResults.length > 0 && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-[0_20px_50px_rgba(20,20,40,0.15)] z-20 max-h-52 overflow-y-auto overflow-x-hidden">
             {searchResults.map((u) => {
-              const path = buildPath(u)
+              const path = buildPath(u);
               return (
                 <button
                   key={u.id}
                   type="button"
                   onClick={() => {
-                    addUnit(u)
-                    setSearch('')
+                    addUnit(u);
+                    setSearch("");
                   }}
                   className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
                 >
-                  <div className="font-medium text-gray-800">{formatUnitTitle(u.title, u.school_level)}</div>
+                  <div className="font-medium text-gray-800">
+                    {formatUnitTitle(u.title, u.school_level)}
+                  </div>
                   <div className="text-xs text-gray-400 mt-0.5">
-                    {path.fieldName} &gt; {path.occupationName} &gt; {path.programName}
+                    {path.fieldName} &gt; {path.occupationName} &gt;{" "}
+                    {path.programName}
                   </div>
                 </button>
-              )
+              );
             })}
           </div>
         )}
@@ -571,10 +680,16 @@ export function EventProgramUnitSection({
       <div className="text-xs text-gray-400">
         또는 분야 &gt; 직종 &gt; 프로그램 &gt; 프로그램 유닛 순으로 선택
         {!eventCategoryId && (
-          <span className="text-red-400"> (상단에서 행사구분을 먼저 선택해주세요)</span>
+          <span className="text-red-400">
+            {" "}
+            (상단에서 행사구분을 먼저 선택해주세요)
+          </span>
         )}
         {effectiveSchoolLevel && (
-          <span className="text-primary-500"> ({effectiveSchoolLevel} 프로그램만 표시 중)</span>
+          <span className="text-primary-500">
+            {" "}
+            ({effectiveSchoolLevel} 프로그램만 표시 중)
+          </span>
         )}
       </div>
 
@@ -585,15 +700,17 @@ export function EventProgramUnitSection({
           value={fieldId}
           disabled={!eventCategoryId}
           onChange={(e) => {
-            setFieldId(e.target.value)
-            setOccupationId('')
-            setProgramId('')
-            setUnitId('')
+            setFieldId(e.target.value);
+            setOccupationId("");
+            setProgramId("");
+            setUnitId("");
           }}
         >
           <option value="">분야</option>
           {filteredFields.map((f) => (
-            <option key={f.id} value={f.id}>{f.name}</option>
+            <option key={f.id} value={f.id}>
+              {f.name}
+            </option>
           ))}
         </select>
         <select
@@ -601,14 +718,16 @@ export function EventProgramUnitSection({
           value={occupationId}
           disabled={!fieldId}
           onChange={(e) => {
-            setOccupationId(e.target.value)
-            setProgramId('')
-            setUnitId('')
+            setOccupationId(e.target.value);
+            setProgramId("");
+            setUnitId("");
           }}
         >
           <option value="">직종</option>
           {filteredOccupations.map((o) => (
-            <option key={o.id} value={o.id}>{o.name}</option>
+            <option key={o.id} value={o.id}>
+              {o.name}
+            </option>
           ))}
         </select>
         <select
@@ -616,13 +735,15 @@ export function EventProgramUnitSection({
           value={programId}
           disabled={!occupationId}
           onChange={(e) => {
-            setProgramId(e.target.value)
-            setUnitId('')
+            setProgramId(e.target.value);
+            setUnitId("");
           }}
         >
           <option value="">프로그램</option>
           {filteredPrograms.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
           ))}
         </select>
         <select
@@ -633,7 +754,9 @@ export function EventProgramUnitSection({
         >
           <option value="">프로그램 유닛</option>
           {filteredUnits.map((u) => (
-            <option key={u.id} value={u.id}>{formatUnitTitle(u.title, u.school_level)}</option>
+            <option key={u.id} value={u.id}>
+              {formatUnitTitle(u.title, u.school_level)}
+            </option>
           ))}
         </select>
         <button
@@ -650,7 +773,10 @@ export function EventProgramUnitSection({
       {value.length > 0 && (
         <div className="border border-primary-100 rounded-2xl p-3 space-y-2 bg-primary-50/40">
           <p className="text-xs font-medium text-gray-600">
-            일괄 적용 <span className="text-gray-400 font-normal">(추가된 모든 프로그램에 값을 한 번에 적용합니다)</span>
+            일괄 적용{" "}
+            <span className="text-gray-400 font-normal">
+              (추가된 모든 프로그램에 값을 한 번에 적용합니다)
+            </span>
           </p>
           <div className="flex items-center gap-2">
             <input
@@ -703,7 +829,9 @@ export function EventProgramUnitSection({
               type="text"
               inputMode="numeric"
               value={formatThousands(bulkLectureFee)}
-              onChange={(e) => setBulkLectureFee(parseThousands(e.target.value))}
+              onChange={(e) =>
+                setBulkLectureFee(parseThousands(e.target.value))
+              }
               placeholder="강의료"
               className={`${fieldInputCls} max-w-50`}
             />
@@ -724,17 +852,23 @@ export function EventProgramUnitSection({
       {distinctDates.length >= 2 && (
         <div className="border border-primary-100 rounded-2xl p-3 space-y-3 bg-primary-50/40">
           <p className="text-xs font-medium text-gray-600">
-            날짜 그룹 지정{' '}
+            날짜 그룹 지정{" "}
             <span className="text-gray-400 font-normal">
-              (묶은 날짜들은 행사안내·회보서·행사사진·계약현황 등의 값을 공유합니다)
+              (묶은 날짜들은 행사안내·회보서·행사사진·계약현황 등의 값을
+              공유합니다)
             </span>
           </p>
 
           {dateGroups.length > 0 && (
             <div className="space-y-1.5">
               {dateGroups.map((g, i) => (
-                <div key={g.id ?? `new-${i}`} className="flex items-center flex-wrap gap-1.5 bg-white rounded-xl px-2.5 py-1.5">
-                  <span className="text-xs font-bold text-primary-700 whitespace-nowrap">{g.name}</span>
+                <div
+                  key={g.id ?? `new-${i}`}
+                  className="flex items-center flex-wrap gap-1.5 bg-white rounded-xl px-2.5 py-1.5"
+                >
+                  <span className="text-xs font-bold text-primary-700 whitespace-nowrap">
+                    {g.name}
+                  </span>
                   {g.dates.map((d) => (
                     <span
                       key={d}
@@ -765,15 +899,15 @@ export function EventProgramUnitSection({
 
           <div className="flex items-center flex-wrap gap-2">
             {distinctDates.map((d) => {
-              const groupIndex = dateToGroupIndex.get(d)
-              const inOtherGroup = groupIndex !== undefined
+              const groupIndex = dateToGroupIndex.get(d);
+              const inOtherGroup = groupIndex !== undefined;
               return (
                 <label
                   key={d}
                   className={`inline-flex items-center gap-1 text-xs rounded-full px-2.5 py-1 border cursor-pointer ${
                     selectedDatesForGroup.includes(d)
-                      ? 'border-primary-400 bg-primary-100 text-primary-700'
-                      : 'border-gray-300 bg-white text-gray-600'
+                      ? "border-primary-400 bg-primary-100 text-primary-700"
+                      : "border-gray-300 bg-white text-gray-600"
                   }`}
                 >
                   <input
@@ -784,10 +918,12 @@ export function EventProgramUnitSection({
                   />
                   {d}
                   {inOtherGroup && (
-                    <span className="text-gray-400">({dateGroups[groupIndex].name})</span>
+                    <span className="text-gray-400">
+                      ({dateGroups[groupIndex].name})
+                    </span>
                   )}
                 </label>
-              )
+              );
             })}
           </div>
 
@@ -802,13 +938,17 @@ export function EventProgramUnitSection({
             <button
               type="button"
               onClick={createGroup}
-              disabled={selectedDatesForGroup.length < 2 || !newGroupName.trim()}
+              disabled={
+                selectedDatesForGroup.length < 2 || !newGroupName.trim()
+              }
               className="px-3 py-1.5 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 disabled:opacity-40 disabled:border-gray-300 disabled:text-gray-400 transition-colors whitespace-nowrap"
             >
               선택한 날짜 그룹으로 묶기
             </button>
             {selectedDatesForGroup.length === 1 && (
-              <span className="text-xs text-gray-400">날짜를 2개 이상 선택해주세요</span>
+              <span className="text-xs text-gray-400">
+                날짜를 2개 이상 선택해주세요
+              </span>
             )}
           </div>
         </div>
@@ -819,7 +959,10 @@ export function EventProgramUnitSection({
         {/* table-layout: fixed로 각 컬럼 너비를 w-*(th)에 지정한 값 그대로 고정한다 — 아니면
             내용에 따라 실제 렌더링 너비가 달라져서 아래 고정 컬럼(sticky left)의 px 오프셋이
             어긋난다. minWidth는 전체 30개 컬럼 w-* 값의 합(px)과 정확히 일치해야 한다. */}
-        <table className="text-sm border-collapse" style={{ minWidth: '3872px', tableLayout: 'fixed' }}>
+        <table
+          className="text-sm border-collapse"
+          style={{ minWidth: "3872px", tableLayout: "fixed" }}
+        >
           <thead>
             <tr>
               <th
@@ -850,54 +993,113 @@ export function EventProgramUnitSection({
                 className={`sticky top-0 z-20 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40 ${FROZEN_EDGE_SHADOW}`}
                 style={{ left: FROZEN_LEFT.mentor }}
               >
-                강사 배정
+                강사명
               </th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">요청직업군</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">프로그램</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">특이사항</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">준비주체</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">준비물 준비</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">인원수</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">차시별 인원수</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의실</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">대기실</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-20 min-w-20">출석</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-48 min-w-48">학교요청사항</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">답변</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">회보서</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강의료</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">강의료 입금자명</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36 whitespace-nowrap">1인당 강사 재료비</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40 whitespace-nowrap">1인당 드림피아 재료비</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">재료비 입금자명</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">강사 연락처</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">사진</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">강사등급</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">소속구분</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">완성품 제공</th>
-              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">택배 가능</th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">
+                요청직업군
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">
+                프로그램
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">
+                특이사항
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">
+                준비주체
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">
+                준비물 준비
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">
+                인원수
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">
+                차시별 인원수
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">
+                강의실
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">
+                대기실
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-20 min-w-20">
+                출석
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-48 min-w-48">
+                학교요청사항
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-56 min-w-56">
+                답변
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">
+                회보서
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">
+                강의료
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">
+                강의료 입금자명
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-36 min-w-36 whitespace-nowrap">
+                1인당 강사 재료비
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-40 min-w-40 whitespace-nowrap">
+                1인당 드림피아 재료비
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">
+                재료비 입금자명
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">
+                강사 연락처
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-left font-bold text-primary-700 w-40 min-w-40">
+                사진
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">
+                강사등급
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-32 min-w-32">
+                소속구분
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-28 min-w-28">
+                완성품 제공
+              </th>
+              <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 text-center font-bold text-primary-700 w-24 min-w-24">
+                택배 가능
+              </th>
               <th className="sticky top-0 z-10 bg-primary-50 border-b border-primary-100 px-2 py-2 w-16 min-w-16" />
             </tr>
           </thead>
           <tbody>
             {value.length === 0 ? (
               <tr>
-                <td colSpan={30} className="py-6 text-center text-xs text-gray-400">
+                <td
+                  colSpan={30}
+                  className="py-6 text-center text-xs text-gray-400"
+                >
                   추가된 프로그램이 없습니다.
                 </td>
               </tr>
             ) : (
               sortedValue.map((v) => {
-                const candidateMentors = mentorsByUnit[v.unitId] ?? []
+                const candidateMentors = mentorsByUnit[v.unitId] ?? [];
                 const assignedMentor = v.mentorId
                   ? candidateMentors.find((m) => m.id === v.mentorId)
-                  : undefined
+                  : undefined;
                 return (
-                  <tr key={v.key} className="border-b border-gray-100 last:border-b-0">
-                    <td className="sticky z-10 bg-white px-2 py-1.5" style={{ left: FROZEN_LEFT.date }}>
+                  <tr
+                    key={v.key}
+                    className="border-b border-gray-100 last:border-b-0"
+                  >
+                    <td
+                      className="sticky z-10 bg-white px-2 py-1.5"
+                      style={{ left: FROZEN_LEFT.date }}
+                    >
                       {(() => {
-                        const rowDate = splitDateTime(v.startTime).date || splitDateTime(v.endTime).date
-                        const weekday = getWeekdayLabel(rowDate)
+                        const rowDate =
+                          splitDateTime(v.startTime).date ||
+                          splitDateTime(v.endTime).date;
+                        const weekday = getWeekdayLabel(rowDate);
                         return (
                           <div className="flex items-center gap-1">
                             <input
@@ -907,13 +1109,20 @@ export function EventProgramUnitSection({
                               className={fieldInputCls}
                             />
                             {weekday && (
-                              <span className={`text-xs font-medium ${weekday.colorCls}`}>({weekday.label})</span>
+                              <span
+                                className={`text-xs font-medium ${weekday.colorCls}`}
+                              >
+                                ({weekday.label})
+                              </span>
                             )}
                           </div>
-                        )
+                        );
                       })()}
                     </td>
-                    <td className="sticky z-10 bg-white px-2 py-1.5" style={{ left: FROZEN_LEFT.startTime }}>
+                    <td
+                      className="sticky z-10 bg-white px-2 py-1.5"
+                      style={{ left: FROZEN_LEFT.startTime }}
+                    >
                       <input
                         type="time"
                         value={splitDateTime(v.startTime).time}
@@ -921,7 +1130,10 @@ export function EventProgramUnitSection({
                         className={fieldInputCls}
                       />
                     </td>
-                    <td className="sticky z-10 bg-white px-2 py-1.5" style={{ left: FROZEN_LEFT.endTime }}>
+                    <td
+                      className="sticky z-10 bg-white px-2 py-1.5"
+                      style={{ left: FROZEN_LEFT.endTime }}
+                    >
                       <input
                         type="time"
                         value={splitDateTime(v.endTime).time}
@@ -929,11 +1141,16 @@ export function EventProgramUnitSection({
                         className={fieldInputCls}
                       />
                     </td>
-                    <td className="sticky z-10 bg-white px-2 py-1.5" style={{ left: FROZEN_LEFT.target }}>
+                    <td
+                      className="sticky z-10 bg-white px-2 py-1.5"
+                      style={{ left: FROZEN_LEFT.target }}
+                    >
                       <input
                         type="text"
                         value={v.target}
-                        onChange={(e) => updateUnit(v.key, { target: e.target.value })}
+                        onChange={(e) =>
+                          updateUnit(v.key, { target: e.target.value })
+                        }
                         placeholder="1학년"
                         className={fieldInputCls}
                       />
@@ -942,11 +1159,15 @@ export function EventProgramUnitSection({
                       className={`sticky z-10 bg-white px-2 py-1.5 text-center text-xs text-gray-600 ${FROZEN_EDGE_SHADOW}`}
                       style={{ left: FROZEN_LEFT.mentor }}
                     >
-                      {assignedMentor ? assignedMentor.name : '미배정'}
+                      {assignedMentor ? assignedMentor.name : "미배정"}
                     </td>
-                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">{v.occupationName}</td>
+                    <td className="px-2 py-1.5 text-center text-xs text-gray-600">
+                      {v.occupationName}
+                    </td>
                     <td className="px-2 py-1.5 align-top">
-                      <div className="font-medium text-gray-800">{formatUnitTitle(v.title, v.schoolLevel)}</div>
+                      <div className="font-medium text-gray-800">
+                        {formatUnitTitle(v.title, v.schoolLevel)}
+                      </div>
                       <div className="text-xs text-gray-400">
                         {v.fieldName} &gt; {v.programName}
                       </div>
@@ -954,7 +1175,9 @@ export function EventProgramUnitSection({
                     <td className="px-2 py-1.5 align-top">
                       <textarea
                         value={v.remarks}
-                        onChange={(e) => updateUnit(v.key, { remarks: e.target.value })}
+                        onChange={(e) =>
+                          updateUnit(v.key, { remarks: e.target.value })
+                        }
                         placeholder="특이사항"
                         rows={2}
                         className={`${fieldInputCls} resize-none`}
@@ -962,13 +1185,17 @@ export function EventProgramUnitSection({
                     </td>
                     <td className="px-2 py-1.5">
                       <select
-                        value={v.prepBy ?? ''}
-                        onChange={(e) => updateUnit(v.key, { prepBy: e.target.value || null })}
+                        value={v.prepBy ?? ""}
+                        onChange={(e) =>
+                          updateUnit(v.key, { prepBy: e.target.value || null })
+                        }
                         className={`${selCls} w-full`}
                       >
                         <option value="">-</option>
                         {PREP_BY_OPTIONS.map((p) => (
-                          <option key={p} value={p}>{p}</option>
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
                         ))}
                       </select>
                     </td>
@@ -976,16 +1203,25 @@ export function EventProgramUnitSection({
                       <input
                         type="checkbox"
                         checked={v.suppliesPrepared}
-                        onChange={(e) => updateUnit(v.key, { suppliesPrepared: e.target.checked })}
+                        onChange={(e) =>
+                          updateUnit(v.key, {
+                            suppliesPrepared: e.target.checked,
+                          })
+                        }
                         className="w-4 h-4 accent-primary-500"
                       />
                     </td>
                     <td className="px-2 py-1.5">
                       <input
                         type="number"
-                        value={v.headcount ?? ''}
+                        value={v.headcount ?? ""}
                         onChange={(e) =>
-                          updateUnit(v.key, { headcount: e.target.value === '' ? null : Number(e.target.value) })
+                          updateUnit(v.key, {
+                            headcount:
+                              e.target.value === ""
+                                ? null
+                                : Number(e.target.value),
+                          })
                         }
                         min={0}
                         className={fieldInputCls}
@@ -994,10 +1230,11 @@ export function EventProgramUnitSection({
                     <td className="px-2 py-1.5">
                       <input
                         type="text"
-                        value={v.sessionHeadcount ?? ''}
+                        value={v.sessionHeadcount ?? ""}
                         onChange={(e) =>
                           updateUnit(v.key, {
-                            sessionHeadcount: e.target.value === '' ? null : e.target.value,
+                            sessionHeadcount:
+                              e.target.value === "" ? null : e.target.value,
                           })
                         }
                         className={fieldInputCls}
@@ -1007,7 +1244,9 @@ export function EventProgramUnitSection({
                       <input
                         type="text"
                         value={v.classroom}
-                        onChange={(e) => updateUnit(v.key, { classroom: e.target.value })}
+                        onChange={(e) =>
+                          updateUnit(v.key, { classroom: e.target.value })
+                        }
                         placeholder="예: 1-1반"
                         className={fieldInputCls}
                       />
@@ -1016,27 +1255,42 @@ export function EventProgramUnitSection({
                       <input
                         type="text"
                         value={v.instructorWaitingRoom}
-                        onChange={(e) => updateUnit(v.key, { instructorWaitingRoom: e.target.value })}
+                        onChange={(e) =>
+                          updateUnit(v.key, {
+                            instructorWaitingRoom: e.target.value,
+                          })
+                        }
                         placeholder="예: 2층 2학년 학년연구실"
                         className={fieldInputCls}
                       />
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {v.attendance === true ? '출석' : v.attendance === false ? '미출석' : '-'}
+                      {v.attendance === true
+                        ? "출석"
+                        : v.attendance === false
+                          ? "미출석"
+                          : "-"}
                     </td>
                     <td className="px-2 py-1.5 align-top text-xs text-gray-600 whitespace-pre-wrap">
                       {v.schoolRequestNote && <div>{v.schoolRequestNote}</div>}
                       {assignedMentor?.schoolRequestNote && (
-                        <div className="text-gray-400">(강사) {assignedMentor.schoolRequestNote}</div>
+                        <div className="text-gray-400">
+                          (강사) {assignedMentor.schoolRequestNote}
+                        </div>
                       )}
-                      {!v.schoolRequestNote && !assignedMentor?.schoolRequestNote && (
-                        <span className="text-gray-300">-</span>
-                      )}
+                      {!v.schoolRequestNote &&
+                        !assignedMentor?.schoolRequestNote && (
+                          <span className="text-gray-300">-</span>
+                        )}
                     </td>
                     <td className="px-2 py-1.5 align-top">
                       <textarea
                         value={v.schoolRequestResponse}
-                        onChange={(e) => updateUnit(v.key, { schoolRequestResponse: e.target.value })}
+                        onChange={(e) =>
+                          updateUnit(v.key, {
+                            schoolRequestResponse: e.target.value,
+                          })
+                        }
                         placeholder="학교(기관) 답변 기록"
                         rows={2}
                         className={`${fieldInputCls} resize-none`}
@@ -1045,9 +1299,15 @@ export function EventProgramUnitSection({
                     <td className="px-2 py-1.5">
                       <SignedFileCellWithUpload
                         bucket="criminal-background-check"
-                        path={v.criminalBackgroundCheck ? toCbcStoragePath(v.criminalBackgroundCheck) : null}
+                        path={
+                          v.criminalBackgroundCheck
+                            ? toCbcStoragePath(v.criminalBackgroundCheck)
+                            : null
+                        }
                         uploading={uploadingCbc[v.key] ?? false}
-                        onUpload={(file) => handleCriminalBackgroundCheckUpload(v, file)}
+                        onUpload={(file) =>
+                          handleCriminalBackgroundCheckUpload(v, file)
+                        }
                       />
                     </td>
                     <td className="px-2 py-1.5">
@@ -1055,19 +1315,29 @@ export function EventProgramUnitSection({
                         type="text"
                         inputMode="numeric"
                         value={formatThousands(v.lectureFee)}
-                        onChange={(e) => updateUnit(v.key, { lectureFee: parseThousands(e.target.value) })}
+                        onChange={(e) =>
+                          updateUnit(v.key, {
+                            lectureFee: parseThousands(e.target.value),
+                          })
+                        }
                         className={fieldInputCls}
                       />
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {assignedMentor ? (assignedMentor.lectureFeePayerName ?? '-') : '-'}
+                      {assignedMentor
+                        ? (assignedMentor.lectureFeePayerName ?? "-")
+                        : "-"}
                     </td>
                     <td className="px-2 py-1.5">
                       <input
                         type="text"
                         inputMode="numeric"
                         value={formatThousands(v.mentorMaterialCost)}
-                        onChange={(e) => updateUnit(v.key, { mentorMaterialCost: parseThousands(e.target.value) })}
+                        onChange={(e) =>
+                          updateUnit(v.key, {
+                            mentorMaterialCost: parseThousands(e.target.value),
+                          })
+                        }
                         className={fieldInputCls}
                       />
                     </td>
@@ -1076,15 +1346,23 @@ export function EventProgramUnitSection({
                         type="text"
                         inputMode="numeric"
                         value={formatThousands(v.dreampiaMaterialCost)}
-                        onChange={(e) => updateUnit(v.key, { dreampiaMaterialCost: parseThousands(e.target.value) })}
+                        onChange={(e) =>
+                          updateUnit(v.key, {
+                            dreampiaMaterialCost: parseThousands(
+                              e.target.value,
+                            ),
+                          })
+                        }
                         className={fieldInputCls}
                       />
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {assignedMentor ? (assignedMentor.materialFeePayerName ?? '-') : '-'}
+                      {assignedMentor
+                        ? (assignedMentor.materialFeePayerName ?? "-")
+                        : "-"}
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {assignedMentor ? (assignedMentor.phone ?? '-') : '-'}
+                      {assignedMentor ? (assignedMentor.phone ?? "-") : "-"}
                     </td>
                     <td className="px-2 py-1.5 align-top text-xs">
                       {!v.rowId ? (
@@ -1108,16 +1386,20 @@ export function EventProgramUnitSection({
                       )}
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {assignedMentor ? formatScoreWithGrade(assignedMentor.score) : '-'}
+                      {assignedMentor
+                        ? formatScoreWithGrade(assignedMentor.score)
+                        : "-"}
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {assignedMentor ? (assignedMentor.belongsToName ?? '개인') : '-'}
+                      {assignedMentor
+                        ? (assignedMentor.belongsToName ?? "개인")
+                        : "-"}
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {v.finalProductAvailable ? '가능' : '불가'}
+                      {v.finalProductAvailable ? "가능" : "불가"}
                     </td>
                     <td className="px-2 py-1.5 text-center text-xs text-gray-600">
-                      {v.isDeliveryAvailable ? '가능' : '불가'}
+                      {v.isDeliveryAvailable ? "가능" : "불가"}
                     </td>
                     <td className="px-2 py-1.5 text-center">
                       <button
@@ -1129,12 +1411,12 @@ export function EventProgramUnitSection({
                       </button>
                     </td>
                   </tr>
-                )
+                );
               })
             )}
           </tbody>
         </table>
       </div>
     </div>
-  )
+  );
 }
