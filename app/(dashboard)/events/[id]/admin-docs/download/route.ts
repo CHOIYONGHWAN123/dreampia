@@ -272,24 +272,27 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       })
     }
 
-    if (crimeCheckMethod === '동의서') {
-      tasks.push({
-        mentorId: mentor.id,
-        fileName: `${mentorNamePart}_성범죄경력조회동의서${extFromPath(mentor.criminal_record_consent_file_url)}`,
-        missingLabel: `${mentor.name} - 성범죄경력조회동의서`,
-        fetcher: async () => {
-          const buffer = await fetchPrivateFile(supabase, 'consent-file', mentor.criminal_record_consent_file_url)
-          if (!buffer) return null
-          try {
-            const overlaid = await overlayCriminalRecordInstitution(buffer, institutionName)
-            return overlaid.buffer.slice(overlaid.byteOffset, overlaid.byteOffset + overlaid.byteLength) as ArrayBuffer
-          } catch (e) {
-            console.error('criminal record consent institution overlay failed', mentor.id, e)
-            return buffer
-          }
-        },
-      })
-    } else if (crimeCheckMethod === '회보서') {
+    // 성범죄경력조회동의서는 멘토가 가입 시 일반적으로 서명해두는 동의서라, 이 행사의
+    // 범죄경력 진행방식이 "회보서"이거나 미설정이어도 회사 자체 자료로 항상 내려받을 수
+    // 있어야 한다(진행방식과 무관하게 포함).
+    tasks.push({
+      mentorId: mentor.id,
+      fileName: `${mentorNamePart}_성범죄경력조회동의서${extFromPath(mentor.criminal_record_consent_file_url)}`,
+      missingLabel: `${mentor.name} - 성범죄경력조회동의서`,
+      fetcher: async () => {
+        const buffer = await fetchPrivateFile(supabase, 'consent-file', mentor.criminal_record_consent_file_url)
+        if (!buffer) return null
+        try {
+          const overlaid = await overlayCriminalRecordInstitution(buffer, institutionName)
+          return overlaid.buffer.slice(overlaid.byteOffset, overlaid.byteOffset + overlaid.byteLength) as ArrayBuffer
+        } catch (e) {
+          console.error('criminal record consent institution overlay failed', mentor.id, e)
+          return buffer
+        }
+      },
+    })
+
+    if (crimeCheckMethod === '회보서') {
       const path = crimeCheckPathByMentor.get(mentor.id) ?? null
       tasks.push({
         mentorId: mentor.id,
