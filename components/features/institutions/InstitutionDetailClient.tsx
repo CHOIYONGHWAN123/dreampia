@@ -214,6 +214,13 @@ export function InstitutionDetailClient({
   const inProgressEvents = localEvents.filter(
     (e) => e.recruit_status === "섭외진행중" || e.recruit_status === "섭외완료",
   );
+  // 현재일 기준으로 종료된 행사는 [진행]이 아니라 아래 [완료]로 옮겨서 보여준다.
+  const ongoingEvents = inProgressEvents.filter(
+    (e) => getEventStatus(e) !== "종료",
+  );
+  const completedEvents = inProgressEvents.filter(
+    (e) => getEventStatus(e) === "종료",
+  );
 
   const patchEvent = (eventId: string, patch: Partial<Event>) => {
     setLocalEvents((prev) =>
@@ -409,6 +416,392 @@ export function InstitutionDetailClient({
     setUploadingId(null);
   };
 
+  // [진행]/[완료] 두 표가 컬럼 구성이 완전히 같아 행 렌더링을 공유한다.
+  const renderEventRow = (event: Event, index: number) => (
+    <tr
+      key={event.id}
+      className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50"
+    >
+      <td className="px-3 py-2.5 text-center text-gray-600">{index + 1}</td>
+      <td className="px-3 py-2.5 text-center text-gray-800">
+        {formatDateTime(event.event_start_at)}
+      </td>
+      <td className="px-3 py-2.5 text-center text-gray-800">
+        {formatDateTime(event.event_end_at)}
+      </td>
+      <td className="px-3 py-2.5 text-gray-800">
+        <Link
+          href={`/events/${event.id}`}
+          className="underline underline-offset-2 hover:text-primary-600 transition-colors"
+        >
+          {event.name}
+        </Link>
+      </td>
+      <td className="px-3 py-2.5 text-center text-gray-800">
+        {event.teacher_name ?? "-"}
+      </td>
+      <td className="px-3 py-2.5 text-center text-gray-800">
+        {event.recruit_status ? (
+          <Link
+            href={`/events/${event.id}/recruiting`}
+            className="underline underline-offset-2 hover:text-gray-600 transition-colors"
+          >
+            {event.recruit_status}
+          </Link>
+        ) : (
+          "-"
+        )}
+      </td>
+
+      {/* 섭외 현황 페이지 */}
+      <td className="px-3 py-2.5 text-center">
+        <Link
+          href={`/events/${event.id}/recruiting`}
+          className="inline-block px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap"
+        >
+          보기
+        </Link>
+      </td>
+
+      {/* 준비물 준비 — 날짜가 여러 개인 행사는 한 셀로 대표할 수 없어 행사운영확인표로 안내 */}
+      <td className="px-3 py-2.5 text-center">
+        {event.hasMultipleDates || !event.dateKey ? (
+          <Link
+            href="/event-operations"
+            className="text-xs text-primary-600 underline whitespace-nowrap"
+          >
+            행사운영확인표에서 확인
+          </Link>
+        ) : (
+          <select
+            value={event.supplies_status ?? "체크 전"}
+            onChange={(e) =>
+              handleSuppliesStatusChange(
+                event.id,
+                event.dateKey as string,
+                e.target.value,
+              )
+            }
+            className={SELECT_CLS}
+          >
+            {SUPPLIES_STATUS_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        )}
+      </td>
+
+      {/* 강사섭외일자 */}
+      <td className="px-3 py-2.5 text-center text-gray-800">
+        {formatDateTime(event.start_recruit_at)}
+      </td>
+
+      {/* 강사 섭외 전달 여부 */}
+      <td className="px-3 py-2.5 text-center">
+        <select
+          value={event.recruit_delivered ? "true" : "false"}
+          onChange={(e) =>
+            handleUpdateField(
+              event.id,
+              "recruit_delivered",
+              e.target.value === "true",
+            )
+          }
+          className={SELECT_CLS}
+        >
+          <option value="false">예정</option>
+          <option value="true">완료</option>
+        </select>
+      </td>
+
+      {/* 학교요청사항 다운 */}
+      <td className="px-3 py-2.5 text-center">
+        <a
+          href={`/my-tasks/institution-request/${event.id}/download`}
+          className="inline-block px-3 py-1 text-xs bg-white border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap"
+        >
+          다운
+        </a>
+      </td>
+
+      {/* 학교요청사항 */}
+      <td className="px-3 py-2.5 text-center">
+        <select
+          value={event.institution_request_status ?? "예정"}
+          onChange={(e) =>
+            handleUpdateField(
+              event.id,
+              "institution_request_status",
+              e.target.value,
+            )
+          }
+          className={SELECT_CLS}
+        >
+          <option value="예정">예정</option>
+          <option value="전달">전달</option>
+          <option value="회신">회신</option>
+        </select>
+      </td>
+
+      {/* 범죄경력회보서 조회 요청 알림 — 진행방식이 회보서이고 기관아이디/검증번호가
+          입력된 행사만 발송 가능. 회보서 등록 재촉이 여러 번 필요할 수 있어
+          보낸 뒤에도 계속 재발송할 수 있게 두고, 발송 이력만 배지로 표시한다. */}
+      <td className="px-3 py-2.5 text-center">
+        <div className="flex flex-col items-center gap-1">
+          {event.crime_check_notified && (
+            <span className="text-[10px] font-semibold text-green-600 whitespace-nowrap">
+              발송 이력 있음
+            </span>
+          )}
+          <button
+            type="button"
+            disabled={
+              !usesCrimeReportFlow(event) || sendingCrimeCheckId === event.id
+            }
+            className={
+              usesCrimeReportFlow(event)
+                ? "px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap disabled:opacity-50"
+                : DISABLED_BTN
+            }
+            title={
+              usesCrimeReportFlow(event)
+                ? undefined
+                : "범죄경력 진행방식이 회보서이고 기관아이디/검증번호가 입력된 경우에만 발송할 수 있습니다."
+            }
+            onClick={() => handleSendCrimeCheckNotification(event)}
+          >
+            {sendingCrimeCheckId === event.id
+              ? "발송중..."
+              : event.crime_check_notified
+                ? "재발송"
+                : "알림보내기"}
+          </button>
+        </div>
+      </td>
+
+      {/* 회보서 다운로드 — 등록된 event_rows.criminal_background_check 전부를
+          강사별로 묶어 zip으로 내려받는다(조회 요청과 같은 조건으로 활성화). */}
+      <td className="px-3 py-2.5 text-center">
+        <button
+          type="button"
+          disabled={
+            !usesCrimeReportFlow(event) || downloadingCbcId === event.id
+          }
+          className={
+            usesCrimeReportFlow(event)
+              ? "px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap disabled:opacity-50"
+              : DISABLED_BTN
+          }
+          title={
+            usesCrimeReportFlow(event)
+              ? undefined
+              : "범죄경력 진행방식이 회보서이고 기관아이디/검증번호가 입력된 경우에만 다운로드할 수 있습니다."
+          }
+          onClick={() => handleDownloadCriminalBackgroundChecks(event)}
+        >
+          {downloadingCbcId === event.id ? "생성중..." : "다운로드"}
+        </button>
+      </td>
+
+      {/* 견적서 파일 업로드 */}
+      <td className="px-3 py-2.5 text-center">
+        <input
+          type="file"
+          className="hidden"
+          ref={(el) => {
+            fileInputRefs.current[event.id] = el;
+          }}
+          accept=".pdf,.hwp,.xlsx,.xls,.doc,.docx"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleEstimateUpload(event.id, file);
+            e.target.value = "";
+          }}
+        />
+        <button
+          type="button"
+          disabled={uploadingId === event.id}
+          className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap disabled:opacity-50"
+          onClick={() => fileInputRefs.current[event.id]?.click()}
+        >
+          {uploadingId === event.id
+            ? "업로드중..."
+            : event.estimate_file_url
+              ? "재업로드"
+              : "업로드"}
+        </button>
+      </td>
+
+      {/* 행정서류 다운받기 — 강사별 프로필/강의계획안/범죄경력서류/행정정보동의서를
+          모아 zip으로 내려받는다. 배정된 강사가 없으면 만들 파일이 없어 비활성화. */}
+      <td className="px-3 py-2.5 text-center">
+        <button
+          type="button"
+          disabled={downloadingDocsId === event.id}
+          className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap disabled:opacity-50"
+          onClick={() => handleDownloadAdminDocs(event)}
+        >
+          {downloadingDocsId === event.id ? "생성중..." : "다운받기"}
+        </button>
+      </td>
+
+      {/* 행정서류 전달 */}
+      <td className="px-3 py-2.5 text-center">
+        <select
+          value={event.admin_docs_delivered ? "true" : "false"}
+          onChange={(e) =>
+            handleUpdateField(
+              event.id,
+              "admin_docs_delivered",
+              e.target.value === "true",
+            )
+          }
+          className={SELECT_CLS}
+        >
+          <option value="false">예정</option>
+          <option value="true">완료</option>
+        </select>
+      </td>
+
+      {/* 계약 현황 */}
+      <td className="px-3 py-2.5 text-center text-gray-800">
+        {event.contract_status ?? "-"}
+      </td>
+
+      {/* 공지사항 알림보내기 — 제목/내용을 입력받아 event_notices에 새 글을
+          남기고 배정 강사에게 푸시로 알린다. 여러 번 보낼 수 있다. */}
+      <td className="px-3 py-2.5 text-center">
+        <button
+          type="button"
+          className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap"
+          onClick={() => setNoticeModalEvent(event)}
+        >
+          알림보내기
+        </button>
+      </td>
+
+      {/* 보고서 다운받기 - 자동 생성 미지원 행사구분(진로박람회 등)은 비활성 유지 */}
+      <td className="px-3 py-2.5 text-center">
+        {getReportConfig(event.eventCategoryName) ? (
+          <a
+            href={`/events/${event.id}/report/download`}
+            className="inline-block px-3 py-1 text-xs bg-white border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap"
+          >
+            다운받기
+          </a>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className={DISABLED_BTN}
+            title="지원 예정"
+          >
+            다운받기
+          </button>
+        )}
+      </td>
+
+      {/* 삭제 */}
+      <td className="px-3 py-2.5 text-center">
+        <button
+          type="button"
+          className="px-3 py-1 text-xs border border-red-200 text-red-500 rounded-full hover:bg-red-50 transition-colors"
+          onClick={() => handleDeleteEvent(event.id)}
+        >
+          삭제
+        </button>
+      </td>
+    </tr>
+  );
+
+  const eventTableHeader = (
+    <thead>
+      <tr className="bg-primary-50 border-b border-primary-100">
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-12 min-w-12">
+          no
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 min-w-24">
+          시작일시
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 min-w-24">
+          종료일시
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-36 min-w-36">
+          행사명
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
+          담당선생님
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
+          강사 섭외 현황
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 min-w-24">
+          섭외 현황
+          <br />
+          페이지
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
+          준비물 준비
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
+          강사섭외일자
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
+          강사 섭외
+          <br />
+          전달 여부
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
+          학교요청사항
+          <br />
+          다운
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
+          학교요청사항
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-36 min-w-36">
+          범죄경력회보서 <br />
+          조회 요청
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
+          회보서 <br />
+          다운로드
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
+          견적서
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
+          행정서류
+          <br />
+          다운받기
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
+          행정서류
+          <br />
+          전달
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
+          계약 현황
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
+          공지사항
+          <br />
+          알림보내기
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
+          보고서
+          <br />
+          다운받기
+        </th>
+        <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-16 min-w-16">
+          삭제
+        </th>
+      </tr>
+    </thead>
+  );
+
   return (
     <div className="p-8 bg-gray-50 min-h-full">
       {/* 헤더 */}
@@ -565,411 +958,56 @@ export function InstitutionDetailClient({
         </div>
       </div>
 
-      {/* 진행 */}
+      {/* 진행 — 아직 종료되지 않은(현재일 기준) 행사 */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-sm font-bold text-gray-800">진행</span>
-          {inProgressEvents.length > 0 && (
+          {ongoingEvents.length > 0 && (
             <span className="text-xs font-bold text-primary-600">
-              {inProgressEvents.length}
+              {ongoingEvents.length}
             </span>
           )}
         </div>
 
         <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
           <table className="text-sm" style={{ minWidth: "2408px" }}>
-            <thead>
-              <tr className="bg-primary-50 border-b border-primary-100">
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-12 min-w-12">
-                  no
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 min-w-24">
-                  시작일시
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 min-w-24">
-                  종료일시
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-36 min-w-36">
-                  행사명
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
-                  담당선생님
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
-                  강사 섭외 현황
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-24 min-w-24">
-                  섭외 현황
-                  <br />
-                  페이지
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
-                  준비물 준비
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
-                  강사섭외일자
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
-                  강사 섭외
-                  <br />
-                  전달 여부
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
-                  학교요청사항
-                  <br />
-                  다운
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
-                  학교요청사항
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-36 min-w-36">
-                  범죄경력회보서 <br />
-                  조회 요청
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
-                  회보서 <br />
-                  다운로드
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
-                  견적서
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
-                  행정서류
-                  <br />
-                  다운받기
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
-                  행정서류
-                  <br />
-                  전달
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
-                  계약 현황
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-32 min-w-32">
-                  공지사항
-                  <br />
-                  알림보내기
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-28 min-w-28">
-                  보고서
-                  <br />
-                  다운받기
-                </th>
-                <th className="px-3 py-2.5 text-center font-bold text-primary-700 w-16 min-w-16">
-                  삭제
-                </th>
-              </tr>
-            </thead>
+            {eventTableHeader}
             <tbody>
-              {inProgressEvents.length > 0 ? (
-                inProgressEvents.map((event, index) => (
-                  <tr
-                    key={event.id}
-                    className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50"
-                  >
-                    <td className="px-3 py-2.5 text-center text-gray-600">
-                      {index + 1}
-                    </td>
-                    <td className="px-3 py-2.5 text-center text-gray-800">
-                      {formatDateTime(event.event_start_at)}
-                    </td>
-                    <td className="px-3 py-2.5 text-center text-gray-800">
-                      {formatDateTime(event.event_end_at)}
-                    </td>
-                    <td className="px-3 py-2.5 text-gray-800">{event.name}</td>
-                    <td className="px-3 py-2.5 text-center text-gray-800">
-                      {event.teacher_name ?? "-"}
-                    </td>
-                    <td className="px-3 py-2.5 text-center text-gray-800">
-                      {event.recruit_status ? (
-                        <Link
-                          href={`/events/${event.id}/recruiting`}
-                          className="underline underline-offset-2 hover:text-gray-600 transition-colors"
-                        >
-                          {event.recruit_status}
-                        </Link>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-
-                    {/* 섭외 현황 페이지 */}
-                    <td className="px-3 py-2.5 text-center">
-                      <Link
-                        href={`/events/${event.id}/recruiting`}
-                        className="inline-block px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap"
-                      >
-                        보기
-                      </Link>
-                    </td>
-
-                    {/* 준비물 준비 — 날짜가 여러 개인 행사는 한 셀로 대표할 수 없어 행사운영확인표로 안내 */}
-                    <td className="px-3 py-2.5 text-center">
-                      {event.hasMultipleDates || !event.dateKey ? (
-                        <Link
-                          href="/event-operations"
-                          className="text-xs text-primary-600 underline whitespace-nowrap"
-                        >
-                          행사운영확인표에서 확인
-                        </Link>
-                      ) : (
-                        <select
-                          value={event.supplies_status ?? "체크 전"}
-                          onChange={(e) =>
-                            handleSuppliesStatusChange(
-                              event.id,
-                              event.dateKey as string,
-                              e.target.value,
-                            )
-                          }
-                          className={SELECT_CLS}
-                        >
-                          {SUPPLIES_STATUS_OPTIONS.map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </td>
-
-                    {/* 강사섭외일자 */}
-                    <td className="px-3 py-2.5 text-center text-gray-800">
-                      {formatDateTime(event.start_recruit_at)}
-                    </td>
-
-                    {/* 강사 섭외 전달 여부 */}
-                    <td className="px-3 py-2.5 text-center">
-                      <select
-                        value={event.recruit_delivered ? "true" : "false"}
-                        onChange={(e) =>
-                          handleUpdateField(
-                            event.id,
-                            "recruit_delivered",
-                            e.target.value === "true",
-                          )
-                        }
-                        className={SELECT_CLS}
-                      >
-                        <option value="false">예정</option>
-                        <option value="true">완료</option>
-                      </select>
-                    </td>
-
-                    {/* 학교요청사항 다운 */}
-                    <td className="px-3 py-2.5 text-center">
-                      <a
-                        href={`/my-tasks/institution-request/${event.id}/download`}
-                        className="inline-block px-3 py-1 text-xs bg-white border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap"
-                      >
-                        다운
-                      </a>
-                    </td>
-
-                    {/* 학교요청사항 */}
-                    <td className="px-3 py-2.5 text-center">
-                      <select
-                        value={event.institution_request_status ?? "예정"}
-                        onChange={(e) =>
-                          handleUpdateField(
-                            event.id,
-                            "institution_request_status",
-                            e.target.value,
-                          )
-                        }
-                        className={SELECT_CLS}
-                      >
-                        <option value="예정">예정</option>
-                        <option value="전달">전달</option>
-                        <option value="회신">회신</option>
-                      </select>
-                    </td>
-
-                    {/* 범죄경력회보서 조회 요청 알림 — 진행방식이 회보서이고 기관아이디/검증번호가
-                        입력된 행사만 발송 가능. 회보서 등록 재촉이 여러 번 필요할 수 있어
-                        보낸 뒤에도 계속 재발송할 수 있게 두고, 발송 이력만 배지로 표시한다. */}
-                    <td className="px-3 py-2.5 text-center">
-                      <div className="flex flex-col items-center gap-1">
-                        {event.crime_check_notified && (
-                          <span className="text-[10px] font-semibold text-green-600 whitespace-nowrap">
-                            발송 이력 있음
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          disabled={
-                            !usesCrimeReportFlow(event) ||
-                            sendingCrimeCheckId === event.id
-                          }
-                          className={
-                            usesCrimeReportFlow(event)
-                              ? "px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap disabled:opacity-50"
-                              : DISABLED_BTN
-                          }
-                          title={
-                            usesCrimeReportFlow(event)
-                              ? undefined
-                              : "범죄경력 진행방식이 회보서이고 기관아이디/검증번호가 입력된 경우에만 발송할 수 있습니다."
-                          }
-                          onClick={() =>
-                            handleSendCrimeCheckNotification(event)
-                          }
-                        >
-                          {sendingCrimeCheckId === event.id
-                            ? "발송중..."
-                            : event.crime_check_notified
-                              ? "재발송"
-                              : "알림보내기"}
-                        </button>
-                      </div>
-                    </td>
-
-                    {/* 회보서 다운로드 — 등록된 event_rows.criminal_background_check 전부를
-                        강사별로 묶어 zip으로 내려받는다(조회 요청과 같은 조건으로 활성화). */}
-                    <td className="px-3 py-2.5 text-center">
-                      <button
-                        type="button"
-                        disabled={
-                          !usesCrimeReportFlow(event) ||
-                          downloadingCbcId === event.id
-                        }
-                        className={
-                          usesCrimeReportFlow(event)
-                            ? "px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap disabled:opacity-50"
-                            : DISABLED_BTN
-                        }
-                        title={
-                          usesCrimeReportFlow(event)
-                            ? undefined
-                            : "범죄경력 진행방식이 회보서이고 기관아이디/검증번호가 입력된 경우에만 다운로드할 수 있습니다."
-                        }
-                        onClick={() =>
-                          handleDownloadCriminalBackgroundChecks(event)
-                        }
-                      >
-                        {downloadingCbcId === event.id
-                          ? "생성중..."
-                          : "다운로드"}
-                      </button>
-                    </td>
-
-                    {/* 견적서 파일 업로드 */}
-                    <td className="px-3 py-2.5 text-center">
-                      <input
-                        type="file"
-                        className="hidden"
-                        ref={(el) => {
-                          fileInputRefs.current[event.id] = el;
-                        }}
-                        accept=".pdf,.hwp,.xlsx,.xls,.doc,.docx"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleEstimateUpload(event.id, file);
-                          e.target.value = "";
-                        }}
-                      />
-                      <button
-                        type="button"
-                        disabled={uploadingId === event.id}
-                        className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap disabled:opacity-50"
-                        onClick={() => fileInputRefs.current[event.id]?.click()}
-                      >
-                        {uploadingId === event.id
-                          ? "업로드중..."
-                          : event.estimate_file_url
-                            ? "재업로드"
-                            : "업로드"}
-                      </button>
-                    </td>
-
-                    {/* 행정서류 다운받기 — 강사별 프로필/강의계획안/범죄경력서류/행정정보동의서를
-                        모아 zip으로 내려받는다. 배정된 강사가 없으면 만들 파일이 없어 비활성화. */}
-                    <td className="px-3 py-2.5 text-center">
-                      <button
-                        type="button"
-                        disabled={downloadingDocsId === event.id}
-                        className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap disabled:opacity-50"
-                        onClick={() => handleDownloadAdminDocs(event)}
-                      >
-                        {downloadingDocsId === event.id
-                          ? "생성중..."
-                          : "다운받기"}
-                      </button>
-                    </td>
-
-                    {/* 행정서류 전달 */}
-                    <td className="px-3 py-2.5 text-center">
-                      <select
-                        value={event.admin_docs_delivered ? "true" : "false"}
-                        onChange={(e) =>
-                          handleUpdateField(
-                            event.id,
-                            "admin_docs_delivered",
-                            e.target.value === "true",
-                          )
-                        }
-                        className={SELECT_CLS}
-                      >
-                        <option value="false">예정</option>
-                        <option value="true">완료</option>
-                      </select>
-                    </td>
-
-                    {/* 계약 현황 */}
-                    <td className="px-3 py-2.5 text-center text-gray-800">
-                      {event.contract_status ?? "-"}
-                    </td>
-
-                    {/* 공지사항 알림보내기 — 제목/내용을 입력받아 event_notices에 새 글을
-                        남기고 배정 강사에게 푸시로 알린다. 여러 번 보낼 수 있다. */}
-                    <td className="px-3 py-2.5 text-center">
-                      <button
-                        type="button"
-                        className="px-3 py-1 text-xs border border-primary-300 text-primary-600 rounded-full bg-white hover:bg-primary-50 transition-colors whitespace-nowrap"
-                        onClick={() => setNoticeModalEvent(event)}
-                      >
-                        알림보내기
-                      </button>
-                    </td>
-
-                    {/* 보고서 다운받기 - 자동 생성 미지원 행사구분(진로박람회 등)은 비활성 유지 */}
-                    <td className="px-3 py-2.5 text-center">
-                      {getReportConfig(event.eventCategoryName) ? (
-                        <a
-                          href={`/events/${event.id}/report/download`}
-                          className="inline-block px-3 py-1 text-xs bg-white border border-primary-300 text-primary-600 rounded-full hover:bg-primary-50 transition-colors whitespace-nowrap"
-                        >
-                          다운받기
-                        </a>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled
-                          className={DISABLED_BTN}
-                          title="지원 예정"
-                        >
-                          다운받기
-                        </button>
-                      )}
-                    </td>
-
-                    {/* 삭제 */}
-                    <td className="px-3 py-2.5 text-center">
-                      <button
-                        type="button"
-                        className="px-3 py-1 text-xs border border-red-200 text-red-500 rounded-full hover:bg-red-50 transition-colors"
-                        onClick={() => handleDeleteEvent(event.id)}
-                      >
-                        삭제
-                      </button>
-                    </td>
-                  </tr>
-                ))
+              {ongoingEvents.length > 0 ? (
+                ongoingEvents.map((event, index) => renderEventRow(event, index))
               ) : (
                 <tr>
                   <td colSpan={21} className="py-10 text-center text-gray-400">
                     진행 중인 행사가 없습니다.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 완료 — 진행 중이던 행사 중 현재일 기준으로 종료된 행사를 별도로 모아 보여준다 */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-sm font-bold text-gray-800">완료</span>
+          {completedEvents.length > 0 && (
+            <span className="text-xs font-bold text-primary-600">
+              {completedEvents.length}
+            </span>
+          )}
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-[0_10px_28px_rgba(20,20,40,0.06)] overflow-x-auto">
+          <table className="text-sm" style={{ minWidth: "2408px" }}>
+            {eventTableHeader}
+            <tbody>
+              {completedEvents.length > 0 ? (
+                completedEvents.map((event, index) => renderEventRow(event, index))
+              ) : (
+                <tr>
+                  <td colSpan={21} className="py-10 text-center text-gray-400">
+                    완료된 행사가 없습니다.
                   </td>
                 </tr>
               )}
