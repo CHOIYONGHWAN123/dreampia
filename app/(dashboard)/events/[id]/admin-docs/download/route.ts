@@ -1,9 +1,35 @@
 import JSZip from 'jszip'
 import { NextResponse } from 'next/server'
+import { PDFDocument, rgb } from 'pdf-lib'
+import fontkit from '@pdf-lib/fontkit'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { toCbcStoragePath } from '@/lib/criminal-background-check'
+import { PRETENDARD_REGULAR_BASE64 } from '@/supabase/functions/generate-agreement-pdf/assets-data'
 
 type ServerSupabase = Awaited<ReturnType<typeof createServerSupabaseClient>>
+
+function decodeBase64(base64: string): Uint8Array {
+  return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+}
+
+// 행정정보 공동이용 사전동의서 1페이지의 "이용기관 명칭" 빈칸 좌표 — 멘토가 서명할 때
+// generate-agreement-pdf Edge Function이 흰 사각형으로 비워둔 바로 그 자리다(좌표 정의는
+// supabase/functions/generate-agreement-pdf/index.ts의 ADMIN_INFO_INSTITUTION_BLANK와
+// 반드시 같이 맞출 것). 같은 서명 파일이 여러 행사(기관)에 재사용되므로, 기관명은 서명
+// 시점이 아니라 이렇게 행사별로 다운로드할 때마다 그 자리에 덧그린다.
+const ADMIN_INFO_INSTITUTION_TEXT = { x: 178, y: 709, size: 10 } as const
+
+// 이미 서명 완료된 admin_info_consent PDF 바이트에 기관명만 덧그린다. 원본 스토리지 파일은
+// 건드리지 않고, 이 요청의 zip에 담길 사본에만 반영한다.
+async function overlayInstitutionName(pdfBytes: ArrayBuffer, institutionName: string): Promise<Uint8Array> {
+  const pdfDoc = await PDFDocument.load(pdfBytes)
+  pdfDoc.registerFontkit(fontkit)
+  const font = await pdfDoc.embedFont(decodeBase64(PRETENDARD_REGULAR_BASE64), { subset: false })
+  const [page] = pdfDoc.getPages()
+  const p = ADMIN_INFO_INSTITUTION_TEXT
+  page.drawText(institutionName, { x: p.x, y: p.y, size: p.size, font, color: rgb(0, 0, 0) })
+  return pdfDoc.save()
+}
 
 function extFromPath(path: string | null) {
   if (!path) return ''
@@ -70,9 +96,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   }
 
   const { data: institution } = event.institution_id
-    ? await supabase.from('institutions').select('crime_check_method').eq('id', event.institution_id).maybeSingle()
+    ? await supabase.from('institutions').select('name, crime_check_method').eq('id', event.institution_id).maybeSingle()
     : { data: null }
   const crimeCheckMethod = event.crime_check_method ?? institution?.crime_check_method ?? null
+  const institutionName = institution?.name ?? event.name
 
   const { data: eventRows, error: rowsError } = await supabase
     .from('event_rows')
@@ -175,7 +202,19 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       mentorId: mentor.id,
       fileName: `행정정보조회동의서${extFromPath(mentor.admin_info_consent_file_url)}`,
       missingLabel: `${mentor.name} - 행정정보조회동의서`,
-      fetcher: () => fetchPrivateFile(supabase, 'consent-file', mentor.admin_info_consent_file_url),
+      fetcher: async () => {
+        const buffer = await fetchPrivateFile(supabase, 'consent-file', mentor.admin_info_consent_file_url)
+        if (!buffer) return null
+        // PDF 오버레이가 실패해도(예: 손상된 파일) 서명 원본은 내려받을 수 있어야 하므로
+        // 실패 시 기관명 없는 원본 버퍼로 조용히 대체한다.
+        try {
+          const overlaid = await overlayInstitutionName(buffer, institutionName)
+          return overlaid.buffer.slice(overlaid.byteOffset, overlaid.byteOffset + overlaid.byteLength) as ArrayBuffer
+        } catch (e) {
+          console.error('admin info consent institution overlay failed', mentor.id, e)
+          return buffer
+        }
+      },
     })
   }
 

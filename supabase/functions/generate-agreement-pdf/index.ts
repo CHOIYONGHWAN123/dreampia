@@ -63,10 +63,23 @@ const CRIMINAL_RECORD_POSITIONS = {
 const ADMIN_INFO_POSITIONS = {
   pageHeight: 842,
   idNumber: { x: 368, y: 375, size: 10 },
-  name: { x: 336, y: 147, size: 10 },
-  birthDate: { x: 336, y: 128, size: 10 },
-  phone: { x: 336, y: 109, size: 10 },
+  // x=336은 "생년월일 :"/"전화번호 :" 라벨의 콜론과 거의 겹쳐서 값 앞글자가 잘려 보이는
+  // 버그가 있었다(실제 템플릿을 렌더링해 실측 후 x=350으로 수정, 콜론과 간격 확보됨).
+  name: { x: 350, y: 147, size: 10 },
+  birthDate: { x: 350, y: 128, size: 10 },
+  phone: { x: 350, y: 109, size: 10 },
   signature: { x: 430, y: 142, width: 68, height: 22 },
+} as const;
+
+// 템플릿 1페이지 "1. 이용기관 명칭 : ㅇㅇ학교"에 예시 문구 "ㅇㅇ학교"가 고정 텍스트로 박혀있다.
+// 멘토는 이 동의서에 한 번만 서명하고 여러 행사(기관)에 재사용되므로, 서명 시점엔 특정
+// 기관명을 알 수 없다 — 흰 사각형으로 덮어 빈칸으로 만들고, 실제 기관명은 관리자 앱에서
+// 행사별로 행정서류를 내려받을 때 그 자리에 덧그린다. 좌표를 바꾸면 반드시
+// app/(dashboard)/events/[id]/admin-docs/download/route.ts의 동일한 좌표도 같이 맞출 것
+// (템플릿을 150dpi로 렌더링해 실측한 값 — 구분선을 살짝 덮어서 지워지므로 같이 다시 그린다).
+const ADMIN_INFO_INSTITUTION_BLANK = {
+  box: { x: 172, y: 700, width: 60, height: 26 },
+  divider: { x1: 57.6, x2: 537.6, y: 721.88, thickness: 0.75 },
 } as const;
 
 // 강사계약서는 4페이지 중 마지막 장(index 3)에 "을" 서명란이 있다.
@@ -196,6 +209,16 @@ Deno.serve(async (req) => {
       const p = ADMIN_INFO_POSITIONS;
       const draw = (text: string, pos: { x: number; y: number; size: number }) =>
         page.drawText(text, { x: pos.x, y: pos.y, size: pos.size, font, color: rgb(0, 0, 0) });
+
+      const { box, divider } = ADMIN_INFO_INSTITUTION_BLANK;
+      page.drawRectangle({ x: box.x, y: box.y, width: box.width, height: box.height, color: rgb(1, 1, 1) });
+      page.drawLine({
+        start: { x: divider.x1, y: divider.y },
+        end: { x: divider.x2, y: divider.y },
+        thickness: divider.thickness,
+        color: rgb(0, 0, 0),
+      });
+
       draw(idNumber, p.idNumber);
       draw(name, p.name);
       draw(birthDate, p.birthDate);
