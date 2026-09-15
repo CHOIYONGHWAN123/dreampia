@@ -217,6 +217,19 @@ export function EventProgramUnitSection({
   const [programId, setProgramId] = useState('')
   const [unitId, setUnitId] = useState('')
 
+  // 기관 유형(institution_type)에서 학년이 자동으로 정해지지 않는 경우(예: "기관" 유형의
+  // 진로박람회 등)에는 schoolLevel prop이 null이라 유닛이 전혀 걸러지지 않는다. 이럴 때
+  // 관리자가 직접 학년을 골라 필터링할 수 있도록 별도 드롭다운을 둔다. institution_type이
+  // 바뀌어 prop이 달라지면 그 값을 기본값으로 다시 따라간다 — effect 대신 렌더 중에 이전
+  // prop 값과 비교해 갱신하는 방식(React 권장 패턴)으로 처리해 불필요한 리렌더를 피한다.
+  const [prevSchoolLevel, setPrevSchoolLevel] = useState(schoolLevel ?? null)
+  const [schoolLevelOverride, setSchoolLevelOverride] = useState(schoolLevel ?? '')
+  if ((schoolLevel ?? null) !== prevSchoolLevel) {
+    setPrevSchoolLevel(schoolLevel ?? null)
+    setSchoolLevelOverride(schoolLevel ?? '')
+  }
+  const effectiveSchoolLevel = schoolLevelOverride || null
+
   // 일괄 적용 (대상 / 강의료 / 일자·시작·종료 시간을 추가된 모든 행에 한 번에 반영)
   const [bulkTarget, setBulkTarget] = useState('')
   const [bulkLectureFee, setBulkLectureFee] = useState<number | null>(null)
@@ -249,15 +262,29 @@ export function EventProgramUnitSection({
   // school_level이 null인 유닛은 특정 교급으로 한정되지 않는 프로그램(예: 공연류, 현장운영자)이라
   // 교급 필터와 무관하게 항상 노출한다.
   const schoolLevelFilteredUnits = useMemo(
-    () => (schoolLevel ? units.filter((u) => u.school_level === schoolLevel || u.school_level === null) : units),
-    [units, schoolLevel]
+    () =>
+      effectiveSchoolLevel
+        ? units.filter((u) => u.school_level === effectiveSchoolLevel || u.school_level === null)
+        : units,
+    [units, effectiveSchoolLevel]
   )
 
+  // 검색은 제목만으로 찾다 보니 행사구분이 다른 동명/유사한 프로그램까지 섞여 나와 잘못
+  // 선택되기 쉬웠다. 드릴다운(분야>직종>프로그램)과 동일하게 eventCategoryId로도 제한한다.
   const searchResults = useMemo(() => {
     const q = search.trim()
     if (!q) return []
-    return schoolLevelFilteredUnits.filter((u) => u.title.includes(q)).slice(0, 8)
-  }, [schoolLevelFilteredUnits, search])
+    return schoolLevelFilteredUnits
+      .filter((u) => {
+        const program = u.occupation_programs_id ? programMap.get(u.occupation_programs_id) : undefined
+        const occupation = program?.occupation_id ? occupationMap.get(program.occupation_id) : undefined
+        const field = occupation?.field_id ? fieldMap.get(occupation.field_id) : undefined
+        if (field?.is_common) return true
+        return eventCategoryId != null && (field?.event_category_ids.includes(eventCategoryId) ?? false)
+      })
+      .filter((u) => u.title.includes(q))
+      .slice(0, 8)
+  }, [schoolLevelFilteredUnits, search, eventCategoryId, programMap, occupationMap, fieldMap])
 
   // 공통 분야(예: 현장운영자) 소속 유닛은 분야>직종>프로그램 드릴다운 없이 바로 추가할 수 있게 버튼으로 노출한다.
   const commonUnits = useMemo(() => {
@@ -469,6 +496,27 @@ export function EventProgramUnitSection({
         </p>
       </div>
 
+      {/* 학년 필터 — 기관 유형(institution_type)에서 학년이 자동으로 안 정해지는 경우
+          (예: "기관" 유형의 진로박람회)를 위해 직접 고를 수 있게 둔다. */}
+      <div className="flex items-center gap-2">
+        <label className="text-xs font-medium text-gray-500 whitespace-nowrap">학년</label>
+        <select
+          className={selCls}
+          value={schoolLevelOverride}
+          onChange={(e) => setSchoolLevelOverride(e.target.value)}
+        >
+          <option value="">전체</option>
+          <option value="유치원">유치원</option>
+          <option value="초등">초등</option>
+          <option value="중고등">중고등</option>
+        </select>
+        {!schoolLevel && (
+          <span className="text-xs text-gray-400">
+            기관 유형만으로는 학년이 자동으로 정해지지 않아 프로그램 유닛이 전부 표시됩니다 — 맞는 학년을 직접 선택해주세요.
+          </span>
+        )}
+      </div>
+
       {/* 검색 */}
       <div className="relative">
         <input
@@ -525,8 +573,8 @@ export function EventProgramUnitSection({
         {!eventCategoryId && (
           <span className="text-red-400"> (상단에서 행사구분을 먼저 선택해주세요)</span>
         )}
-        {schoolLevel && (
-          <span className="text-primary-500"> ({schoolLevel} 프로그램만 표시 중)</span>
+        {effectiveSchoolLevel && (
+          <span className="text-primary-500"> ({effectiveSchoolLevel} 프로그램만 표시 중)</span>
         )}
       </div>
 
