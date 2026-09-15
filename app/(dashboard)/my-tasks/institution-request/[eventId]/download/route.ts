@@ -158,6 +158,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
   sheet.getCell(schoolRow, 1).value = '학교명'
   sheet.getCell(schoolRow, 1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
   sheet.getCell(schoolRow, 2).value = institutionName
+  sheet.getCell(schoolRow, 2).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
   sheet.mergeCells(schoolRow, 3, schoolRow, COL_COUNT)
   const gridTitleCell = sheet.getCell(schoolRow, 3)
   gridTitleCell.value = '직업군 별 요청사항'
@@ -240,6 +241,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
   sheet.getCell(gridDataStartRow, 1).value = '행사 시간'
   sheet.getCell(gridDataStartRow, 1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
   sheet.getCell(gridDataStartRow, 2).value = fmtTimeRange(event.event_start_at, event.event_end_at)
+  sheet.getCell(gridDataStartRow, 2).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
 
   // 기관/행사 정보 (초록 칸 - 기관에서 확인 후 필요시 수정)
   const infoRows: { label: string; value: string }[] = [
@@ -266,7 +268,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
     } else {
       valueCell.value = info.value
     }
-    valueCell.alignment = { vertical: 'middle', wrapText: true }
+    valueCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
     valueCell.fill = GREEN_FILL
     r++
   }
@@ -289,7 +291,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
       valueCell.value = 'ex) 08:50 ~ 09:30'
       valueCell.font = { italic: true, color: { argb: 'FF555555' } }
     }
-    valueCell.alignment = { vertical: 'middle', wrapText: true }
+    valueCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
     valueCell.fill = GREEN_FILL
     r++
   })
