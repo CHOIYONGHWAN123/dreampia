@@ -17,7 +17,16 @@ function decodeBase64(base64: string): Uint8Array {
 // supabase/functions/generate-agreement-pdf/index.ts의 ADMIN_INFO_INSTITUTION_BLANK와
 // 반드시 같이 맞출 것). 같은 서명 파일이 여러 행사(기관)에 재사용되므로, 기관명은 서명
 // 시점이 아니라 이렇게 행사별로 다운로드할 때마다 그 자리에 덧그린다.
-const ADMIN_INFO_INSTITUTION_TEXT = { x: 178, y: 709, size: 10 } as const
+//
+// 이 흰 사각형 + 구분선을 매번 여기서도 다시 그리는 이유: Edge Function이 이 빈칸 처리를
+// 반영하기 전에 이미 서명을 마친 멘토는 원본 PDF에 예시 문구 "ㅇㅇ학교"가 그대로 남아있다.
+// 그 위에 기관명만 덧그리면 두 텍스트가 겹쳐 보이므로, 신규/구버전 문서 구분 없이 항상 먼저
+// 흰 사각형으로 덮은 뒤에 기관명을 쓴다.
+const ADMIN_INFO_INSTITUTION_BLANK = {
+  box: { x: 172, y: 700, width: 60, height: 26 },
+  divider: { x1: 57.6, x2: 537.6, y: 721.88, thickness: 0.75 },
+  text: { x: 178, y: 709, size: 10 },
+} as const
 
 // 이미 서명 완료된 admin_info_consent PDF 바이트에 기관명만 덧그린다. 원본 스토리지 파일은
 // 건드리지 않고, 이 요청의 zip에 담길 사본에만 반영한다.
@@ -26,8 +35,15 @@ async function overlayInstitutionName(pdfBytes: ArrayBuffer, institutionName: st
   pdfDoc.registerFontkit(fontkit)
   const font = await pdfDoc.embedFont(decodeBase64(PRETENDARD_REGULAR_BASE64), { subset: false })
   const [page] = pdfDoc.getPages()
-  const p = ADMIN_INFO_INSTITUTION_TEXT
-  page.drawText(institutionName, { x: p.x, y: p.y, size: p.size, font, color: rgb(0, 0, 0) })
+  const { box, divider, text } = ADMIN_INFO_INSTITUTION_BLANK
+  page.drawRectangle({ x: box.x, y: box.y, width: box.width, height: box.height, color: rgb(1, 1, 1) })
+  page.drawLine({
+    start: { x: divider.x1, y: divider.y },
+    end: { x: divider.x2, y: divider.y },
+    thickness: divider.thickness,
+    color: rgb(0, 0, 0),
+  })
+  page.drawText(institutionName, { x: text.x, y: text.y, size: text.size, font, color: rgb(0, 0, 0) })
   return pdfDoc.save()
 }
 
