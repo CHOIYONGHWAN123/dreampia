@@ -166,14 +166,16 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   }
   const unitIds = [...new Set(rows.map((r) => r.occupation_program_unit_id).filter((v): v is string => !!v))]
 
-  const [mentorsRes, unitsRes, mopRes] = await Promise.all([
+  const [mentorsRes, unitsRes, mopRes, programsRes] = await Promise.all([
     supabase
       .from('mentors')
       .select('id, name, mentor_unique_code, criminal_record_consent_file_url, admin_info_consent_file_url')
       .in('id', mentorIds),
     unitIds.length
-      ? supabase.from('occupation_program_unit').select('id, title, syllabus').in('id', unitIds)
-      : Promise.resolve({ data: [] as { id: string; title: string; syllabus: string | null }[] }),
+      ? supabase.from('occupation_program_unit').select('id, title, syllabus, occupation_programs_id').in('id', unitIds)
+      : Promise.resolve({
+          data: [] as { id: string; title: string; syllabus: string | null; occupation_programs_id: string | null }[],
+        }),
     unitIds.length
       ? supabase
           .from('mentor_occupation_programs')
@@ -183,6 +185,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       : Promise.resolve({
           data: [] as { mentor_id: string; occupation_program_unit_id: string; profile_file_url: string | null }[],
         }),
+    // 파일명에 넣을 "요청 직업군"(occupations.name)은 유닛 -> 프로그램 -> 직업군으로
+    // 두 단계 거쳐야 해서, recruiting/actions.ts와 같은 방식으로 전체를 가져와 매핑한다.
+    unitIds.length
+      ? supabase.from('occupation_programs').select('id, occupation_id')
+      : Promise.resolve({ data: [] as { id: string; occupation_id: string | null }[] }),
   ])
 
   const mentors = mentorsRes.data ?? []
@@ -190,6 +197,23 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const profileUrlByMentorUnit = new Map(
     (mopRes.data ?? []).map((m) => [`${m.mentor_id}_${m.occupation_program_unit_id}`, m.profile_file_url])
   )
+
+  const programMap = new Map((programsRes.data ?? []).map((p) => [p.id, p]))
+  const occupationIds = [
+    ...new Set((programsRes.data ?? []).map((p) => p.occupation_id).filter((v): v is string => !!v)),
+  ]
+  const { data: occupationsData } =
+    occupationIds.length > 0
+      ? await supabase.from('occupations').select('id, name').in('id', occupationIds)
+      : { data: [] as { id: string; name: string }[] }
+  const occupationMap = new Map((occupationsData ?? []).map((o) => [o.id, o]))
+
+  function occupationNameForUnit(unitId: string): string {
+    const unit = unitMap.get(unitId)
+    const program = unit?.occupation_programs_id ? programMap.get(unit.occupation_programs_id) : undefined
+    const occupation = program?.occupation_id ? occupationMap.get(program.occupation_id) : undefined
+    return occupation?.name ?? '기타'
+  }
 
   // 강사별로 이 행사에서 맡은 유닛들, 그리고 회보서(교시 여러 개면 처음 값 하나만)를 모은다.
   const unitIdsByMentor = new Map<string, Set<string>>()
@@ -209,15 +233,32 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const tasks: FileTask[] = []
   for (const mentor of mentors) {
     const mentorUnitIds = [...(unitIdsByMentor.get(mentor.id) ?? [])]
+    const mentorNamePart = sanitize(mentor.name)
+
+    // 같은 요청 직업군 안에 유닛이 여러 개면 직업군명 하나로는 구분이 안 되므로,
+    // 그 경우엔 직업군명 대신 겹치는 유닛명을 전부 이어붙여 구분한다.
+    const unitIdsByOccupation = new Map<string, string[]>()
+    for (const unitId of mentorUnitIds) {
+      const occName = occupationNameForUnit(unitId)
+      const list = unitIdsByOccupation.get(occName) ?? []
+      list.push(unitId)
+      unitIdsByOccupation.set(occName, list)
+    }
 
     for (const unitId of mentorUnitIds) {
       const unit = unitMap.get(unitId)
-      const suffix = mentorUnitIds.length > 1 ? `_${sanitize(unit?.title ?? unitId)}` : ''
+      const occName = occupationNameForUnit(unitId)
+      const siblingUnitIds = unitIdsByOccupation.get(occName) ?? [unitId]
+      const occupationPart =
+        siblingUnitIds.length > 1
+          ? sanitize(siblingUnitIds.map((id) => unitMap.get(id)?.title ?? id).join('+'))
+          : sanitize(occName)
+      const namePrefix = `${mentorNamePart}_${occupationPart}`
 
       const profileUrl = profileUrlByMentorUnit.get(`${mentor.id}_${unitId}`) ?? null
       tasks.push({
         mentorId: mentor.id,
-        fileName: `프로필${suffix}${extFromPath(profileUrl)}`,
+        fileName: `${namePrefix}_프로필${extFromPath(profileUrl)}`,
         missingLabel: `${mentor.name} - 프로필${unit?.title ? `(${unit.title})` : ''}`,
         fetcher: () => fetchPublicFile(profileUrl),
       })
@@ -225,7 +266,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       const syllabusUrl = unit?.syllabus ?? null
       tasks.push({
         mentorId: mentor.id,
-        fileName: `강의계획안${suffix}${extFromPath(syllabusUrl)}`,
+        fileName: `${namePrefix}_강의계획안${extFromPath(syllabusUrl)}`,
         missingLabel: `${mentor.name} - 강의계획안${unit?.title ? `(${unit.title})` : ''}`,
         fetcher: () => fetchPublicFile(syllabusUrl),
       })
@@ -234,7 +275,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     if (crimeCheckMethod === '동의서') {
       tasks.push({
         mentorId: mentor.id,
-        fileName: `성범죄경력조회동의서${extFromPath(mentor.criminal_record_consent_file_url)}`,
+        fileName: `${mentorNamePart}_성범죄경력조회동의서${extFromPath(mentor.criminal_record_consent_file_url)}`,
         missingLabel: `${mentor.name} - 성범죄경력조회동의서`,
         fetcher: async () => {
           const buffer = await fetchPrivateFile(supabase, 'consent-file', mentor.criminal_record_consent_file_url)
@@ -252,7 +293,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       const path = crimeCheckPathByMentor.get(mentor.id) ?? null
       tasks.push({
         mentorId: mentor.id,
-        fileName: `회보서${extFromPath(path)}`,
+        fileName: `${mentorNamePart}_회보서${extFromPath(path)}`,
         missingLabel: `${mentor.name} - 회보서`,
         fetcher: () => fetchPrivateFile(supabase, 'criminal-background-check', path),
       })
@@ -260,7 +301,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
     tasks.push({
       mentorId: mentor.id,
-      fileName: `행정정보조회동의서${extFromPath(mentor.admin_info_consent_file_url)}`,
+      fileName: `${mentorNamePart}_행정정보조회동의서${extFromPath(mentor.admin_info_consent_file_url)}`,
       missingLabel: `${mentor.name} - 행정정보조회동의서`,
       fetcher: async () => {
         const buffer = await fetchPrivateFile(supabase, 'consent-file', mentor.admin_info_consent_file_url)
